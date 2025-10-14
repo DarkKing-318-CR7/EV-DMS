@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Dealer Login • EV-DMS</title>
+   <link rel="stylesheet" href="/css/style.css">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+   <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css">
+   <link href="https://fonts.googleapis.com/css2?family=Spartan:wght@300;400;500;600&display=swap" rel="stylesheet">
+   <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="overlay"></div>
+
+<div class="login-container">
+   <!-- Left info -->
+   <div>
+      <div class="logo">
+         <i class="fas fa-bolt"></i>
+         <span>EV-DMS</span>
+      </div>
+      <div class="register">
+         <div>Welcome to Dealer Portal</div>
+         <p>
+            Sign in to access your dealership dashboard — manage vehicle inventory,
+            create sales quotes, and track orders efficiently with EVM.
+         </p>
+         <div class="social">
+            <a data-toggle="tooltip" title="Vehicle Management"><i class="fas fa-car"></i></a>
+            <a data-toggle="tooltip" title="Dealer Network"><i class="fas fa-network-wired"></i></a>
+            <a data-toggle="tooltip" title="Reports"><i class="fas fa-chart-line"></i></a>
+         </div>
+      </div>
+   </div>
+
+   <!-- Right login form -->
+   <div class="form-login">
+      <form action="#" method="POST" class="form" id="form-login" novalidate>
+         <h3 class="heading">Dealer Login</h3>
+         <div class="spacer"></div>
+
+         <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input id="email" name="email" type="text" placeholder="dealer@evdms.com" class="form-control">
+            <span class="form-message"></span>
+         </div>
+
+         <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input id="password" name="password" type="password" placeholder="Enter password" class="form-control">
+            <span class="form-message"></span>
+         </div>
+
+         <div class="sign-up">
+            <div>
+               <button type="submit" class="form-submit">Login</button>
+               <i class="fas fa-chevron-right"></i>
+            </div>
+         </div>
+      </form>
+   </div>
+</div>
+
+<script src="/js/validate.js"></script>
+<script>
+   document.addEventListener('DOMContentLoaded', function () {
+      Validator({
+         form: '#form-login',
+         formGroupSelector: '.form-group',
+         errorSelector: '.form-message',
+         rules: [
+            Validator.isEmail('#email'),
+            Validator.minLength('#password', 6),
+         ],
+         onSubmit: function (data) {
+            console.log('Dealer login data:', data);
+            alert('Login successful (demo).');
+         }
+      });
+   });
+</script>
+</body>
+</html>
