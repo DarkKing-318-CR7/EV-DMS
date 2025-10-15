@@ -4,17 +4,31 @@
 <aside th:fragment="sidebar" class="sidebar">
     <h4>Navigation</h4>
     <nav class="menu">
-        <a href="/dealer/home" th:classappend="${activePage=='home'} ? ' active'"><i class="fas fa-home"></i> Dashboard</a>
-        <a href="/dealer/vehicles" th:classappend="${activePage=='vehicles'} ? ' active'"><i class="fas fa-car"></i> Vehicles</a>
-        <a href="/dealer/quotes" th:classappend="${activePage=='quotes'} ? ' active'"><i class="fas fa-file-invoice-dollar"></i> Quotes</a>
-        <a href="/dealer/orders" th:classappend="${activePage=='orders'} ? ' active'"><i class="fas fa-shopping-cart"></i> Orders</a>
-        <a href="/dealer/customers" th:classappend="${activePage=='customers'} ? ' active'"><i class="fas fa-user-friends"></i> Customers</a>
-        <a href="/dealer/test-drive" th:classappend="${activePage=='test-drive'} ? ' active'"><i class="fas fa-road"></i> Test Drive</a>
-        <a href="/dealer/promotions" th:classappend="${activePage=='promotions'} ? ' active'"><i class="fas fa-percent"></i> Promotions</a>
-        <a href="/dealer/reports" th:classappend="${activePage=='reports'} ? ' active'"><i class="fas fa-chart-bar"></i> Reports</a>
-        <a href="/dealer/settings" th:classappend="${activePage=='settings'} ? ' active'"><i class="fas fa-cog"></i> Settings</a>
-        <a href="/dealer/profile" th:classappend="${activePage=='profile'} ? ' active'"><i class="fas fa-user-circle"></i> Profile</a>
-        <a href="/dealer/support" th:classappend="${activePage=='support'} ? ' active'"><i class="fas fa-question-circle"></i> Support</a>
+        <!-- Dealer menu -->
+        <section class="menu-group" id="dealer-menu">
+            <h4>Dealer</h4>
+            <a href="/dealer/dashboard">Dashboard</a>
+            <a href="/dealer/vehicles">Vehicles</a>
+            <a href="/dealer/customers">Customers</a>
+            <a href="/dealer/test-drive">Test Drive</a>
+            <a href="/dealer/quotes">Quotes</a>
+            <a href="/dealer/orders">Orders</a>
+            <a href="/dealer/promotions">Promotions</a>
+            <a href="/dealer/reports">Reports</a>
+        </section>
+
+        <!-- Admin menu -->
+        <section class="menu-group" id="admin-menu">
+            <h4>Admin</h4>
+            <a href="/admin/dashboard">Dashboard</a>
+            <a href="/admin/dealers">Dealers</a>
+            <a href="/admin/users">Users</a>
+            <a href="/admin/settings">Settings</a>
+            <a href="/admin/reports">Reports</a>
+            <a href="/admin/support">Support</a>
+        </section>
+
+
     </nav>
 </aside>
 </body>
