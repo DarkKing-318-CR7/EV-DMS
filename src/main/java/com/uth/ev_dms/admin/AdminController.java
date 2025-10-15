@@ -25,4 +25,6 @@ public class AdminController {
 
     @GetMapping("/support")
     public String support() { return "support"; }
+
+
 }

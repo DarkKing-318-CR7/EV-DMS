@@ -37,13 +37,13 @@
 
    <!-- Right login form -->
    <div class="form-login">
-      <form action="#" method="POST" class="form" id="form-login" novalidate>
+      <form action="/login" method="POST" class="form" id="form-login" novalidate>
          <h3 class="heading">Dealer Login</h3>
          <div class="spacer"></div>
 
          <div class="form-group">
-            <label for="email" class="form-label">Email</label>
-            <input id="email" name="email" type="text" placeholder="dealer@evdms.com" class="form-control">
+            <label>Email</label>
+            <input type="text" name="username" id="email" placeholder="Username or Email" required>
             <span class="form-message"></span>
          </div>
 
@@ -71,15 +71,12 @@
          formGroupSelector: '.form-group',
          errorSelector: '.form-message',
          rules: [
-            Validator.isEmail('#email'),
-            Validator.minLength('#password', 6),
-         ],
-         onSubmit: function (data) {
-            console.log('Dealer login data:', data);
-            alert('Login successful (demo).');
-         }
+            Validator.isRequired('#email', 'Vui lòng nhập tên đăng nhập'),
+            Validator.minLength('#password', 6, 'Mật khẩu tối thiểu 6 ký tự'),
+         ]
       });
    });
+
 </script>
 </body>
 </html>
