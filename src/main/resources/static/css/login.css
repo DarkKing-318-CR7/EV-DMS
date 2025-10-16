@@ -73,7 +73,7 @@ body{
    width: 170%;
    height: 170%;
    position: absolute;
-   background-image: url('/image/nen.png'); /* ✅ đúng đường dẫn */
+   background-image: url('static/image/nen.png'); /* ✅ đúng đường dẫn */
    z-index: 2;
    filter: blur(13px);
    background-repeat: no-repeat;
@@ -85,7 +85,7 @@ body{
    width: 1090px;
    z-index: 3;
    height: 580px;
-   background-image: url('/image/nen.png'); /* ✅ dùng cùng 1 ảnh */
+   background-image: url('static/image/nen.png'); /* ✅ dùng cùng 1 ảnh */
    background-repeat: no-repeat;
    background-size: cover;
    display: flex;

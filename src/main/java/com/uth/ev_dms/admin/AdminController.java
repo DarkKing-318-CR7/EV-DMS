@@ -9,20 +9,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class AdminController {
 
     @GetMapping({"", "/", "/dashboard"})
-    public String dashboard() { return "home"; } // hoặc "dashboard-admin"
+    public String dashboard() { return "admin/dashboard"; } // templates/admin/dashboard.html
 
     @GetMapping("/dealers")
-    public String dealers() { return "dealers"; }
+    public String dealers() { return "admin/dealers"; }
 
     @GetMapping("/users")
-    public String users() { return "users"; }
+    public String users() { return "admin/users"; }
 
     @GetMapping("/settings")
-    public String settings() { return "settings"; }
+    public String settings() { return "admin/settings"; }
 
     @GetMapping("/reports")
-    public String reports() { return "reports"; }
+    public String reports() { return "admin/reports"; }
 
     @GetMapping("/support")
-    public String support() { return "support"; }
+    public String support() { return "admin/support"; }
 }
