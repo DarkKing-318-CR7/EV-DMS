@@ -71,4 +71,10 @@ public class DealerController {
     public String profile() {
         return "profile";
     }
+
+    @GetMapping("/")
+    public String index() {
+        return "redirect:/home"; // chuyển hướng sang trang /home
+    }
+
 }
