@@ -54,4 +54,7 @@ public class DealerController {
     // ho so ca nhan (neu dat o common thi doi thanh "common/profile")
     @GetMapping("/profile")
     public String profile() { return "common/profile"; }
+
+    @GetMapping("/dashboard")
+    public String dashboard() { return "dealer/dashboard"; }
 }
