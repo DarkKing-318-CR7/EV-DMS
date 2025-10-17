@@ -1,80 +1,34 @@
 package com.uth.ev_dms.controllers;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
+@RequestMapping("/dealer")
 public class DealerController {
 
-    // Common
-    @GetMapping("/home")
-    public String home(Model model){
+    @GetMapping({"", "/", "/home"})
+    public String home(Model model) {
         model.addAttribute("pageTitle", "Dealer Home");
         model.addAttribute("activePage", "home");
-        model.addAttribute("userEmail", "dealer@evdms.com");
-        return "home";
+        return "dealer/dashboard";
     }
 
-    // === Trang quản lý xe ===
-    @GetMapping("/dealer/vehicles")
-    public String vehicles() {
-        return "vehicles";
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        model.addAttribute("pageTitle", "Dealer Dashboard");
+        model.addAttribute("activePage", "dashboard");
+        return "dealer/dashboard";
     }
 
-    @GetMapping("/dealer/vehicle-detail")
-    public String vehicleDetail() {
-        return "vehicle-detail";
-    }
-
-    @GetMapping("/dealer/inventory")
-    public String inventory() {
-        return "inventory";
-    }
-
-    // === Trang khách hàng mới thêm ===
-    @GetMapping("/dealer/customers")
-    public String customers() {
-        return "customers";
-    }
-
-    // === Trang lịch hẹn lái thử ===
-    @GetMapping("/dealer/test-drive")
-    public String testDrive() {
-        return "test-drive";
-    }
-
-    // === Trang đơn hàng và báo giá ===
-    @GetMapping("/dealer/orders")
-    public String orders() {
-        return "orders";
-    }
-
-    @GetMapping("/dealer/quotes")
-    public String quotes() {
-        return "quotes";
-    }
-
-    // === Trang khuyến mãi ===
-    @GetMapping("/dealer/promotions")
-    public String promotions() {
-        return "promotions";
-    }
-
-    // === Trang báo cáo ===
-    @GetMapping("/dealer/reports")
-    public String reports() {
-        return "reports";
-    }
-
-    // === Trang hồ sơ cá nhân ===
-    @GetMapping("/dealer/profile")
-    public String profile() {
-        return "profile";
-    }
-
-    @GetMapping("/")
-    public String index() {
-        return "redirect:/home"; // chuyển hướng sang trang /home
-    }
-
+    @GetMapping("/vehicles") public String vehicles() { return "dealer/vehicles"; }
+    @GetMapping("/customers") public String customers() { return "dealer/customers"; }
+    @GetMapping("/test-drive") public String testDrive() { return "dealer/test-drive"; }
+    @GetMapping("/quotes") public String quotes() { return "dealer/quotes"; }
+    @GetMapping("/orders") public String orders() { return "dealer/orders"; }
+    @GetMapping("/promotions") public String promotions() { return "dealer/promotions"; }
+    @GetMapping("/reports") public String reports() { return "dealer/reports"; }
+    @GetMapping("/profile") public String profile() { return "common/profile"; }
 }
