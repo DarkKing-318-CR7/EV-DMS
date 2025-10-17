@@ -11,4 +11,9 @@ public class AuthController {
 
     @GetMapping("/")
     public String root() { return "redirect:/login"; } // hoặc "home" public nếu bạn muốn
+
+    @GetMapping("/logout")
+    public String logout(){
+        return "login";
+    }
 }

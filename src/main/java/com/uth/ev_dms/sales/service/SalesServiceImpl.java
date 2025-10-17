@@ -1,7 +1,7 @@
 package com.uth.ev_dms.sales.service;
 
+import com.uth.ev_dms.repositories.*;
 import com.uth.ev_dms.sales.domain.*;
-import com.uth.ev_dms.sales.repo.*;
 import com.uth.ev_dms.sales.service.dto.CreateQuoteDTO;
 import com.uth.ev_dms.sales.service.dto.CreateQuoteItemDTO;
 import org.springframework.stereotype.Service;
