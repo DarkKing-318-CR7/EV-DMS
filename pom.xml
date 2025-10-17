@@ -101,8 +101,14 @@
             <version>9.4.0</version> <!-- hoặc 9.4.0 nếu bạn dùng -->
         </dependency>
 
+		<dependency>
+			<groupId>org.thymeleaf.extras</groupId>
+			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
+		</dependency>
 
-    </dependencies>
+
+
+	</dependencies>
 
 	<build>
 		<plugins>

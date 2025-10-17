@@ -13,4 +13,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // neu muon dang nhap bang email thi bo sung:
     @EntityGraph(attributePaths = "roles")
     Optional<User> findByEmail(String email);
+
 }

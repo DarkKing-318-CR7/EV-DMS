@@ -14,7 +14,7 @@ public class MyUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         var u = userRepo.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Not found: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
         var authorities = u.getRoles().stream()
                 .map(r -> new SimpleGrantedAuthority(r.getName())) // "ROLE_ADMIN"
@@ -22,8 +22,8 @@ public class MyUserDetailsService implements UserDetailsService {
 
         return new org.springframework.security.core.userdetails.User(
                 u.getUsername(),
-                u.getPassword(),          // BCrypt trong DB
-                u.isEnabled(),            // enabled
+                u.getPassword(),
+                u.isEnabled(),
                 true, true, true,
                 authorities
         );
