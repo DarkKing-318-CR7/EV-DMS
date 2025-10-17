@@ -5,16 +5,23 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.security.Principal;
+
 @Controller
 @RequestMapping("/dealer") // prefix chung cho toan bo trang dealer
 public class DealerController {
 
     // home dealer: /dealer, /dealer/, /dealer/home
     @GetMapping({"", "/", "/home"})
-    public String home(Model model) {
+    public String home(Model model, Principal principal) {
         model.addAttribute("pageTitle", "Dealer Home");
         model.addAttribute("activePage", "home");
-        model.addAttribute("userEmail", "dealer@evdms.com");
+        if (principal != null) {
+            model.addAttribute("userEmail", principal.getName()); // lấy email đăng nhập
+        } else {
+            model.addAttribute("userEmail", "dealer@example.com");
+        }
+
         return "dealer/home";
     }
 
@@ -54,7 +61,4 @@ public class DealerController {
     // ho so ca nhan (neu dat o common thi doi thanh "common/profile")
     @GetMapping("/profile")
     public String profile() { return "common/profile"; }
-
-    @GetMapping("/dashboard")
-    public String dashboard() { return "dealer/dashboard"; }
 }
