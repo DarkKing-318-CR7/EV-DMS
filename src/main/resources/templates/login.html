@@ -36,50 +36,61 @@
    </div>
 
    <!-- Right login form -->
-   <div class="form-login">
-      <form action="#" method="POST" class="form" id="form-login" novalidate>
-         <h3 class="heading">Dealer Login</h3>
-         <div class="spacer"></div>
+    <div class="form-login">
+        <form th:action="@{/login}" method="post" class="form" id="form-login">
+            <h3 class="heading">Dealer Login</h3>
 
-         <div class="form-group">
-            <label for="email" class="form-label">Email</label>
-            <input id="email" name="email" type="text" placeholder="dealer@evdms.com" class="form-control">
-            <span class="form-message"></span>
-         </div>
+            <!-- thong bao khi that bai / dang xuat -->
+            <div th:if="${param.error}" class="alert alert-danger">Sai tai khoan hoac mat khau.</div>
+            <div th:if="${param.logout}" class="alert alert-success">Ban da dang xuat.</div>
 
-         <div class="form-group">
-            <label for="password" class="form-label">Password</label>
-            <input id="password" name="password" type="password" placeholder="Enter password" class="form-control">
-            <span class="form-message"></span>
-         </div>
-
-         <div class="sign-up">
-            <div>
-               <button type="submit" class="form-submit">Login</button>
-               <i class="fas fa-chevron-right"></i>
+            <div class="form-group">
+                <label for="username" class="form-label">Email / Username</label>
+                <!-- TEN FIELD PHAI LA 'username' -->
+                <input id="username" name="username" type="text" placeholder="admin hoac dealer@evdms.com" class="form-control" required>
             </div>
-         </div>
-      </form>
-   </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <!-- TEN FIELD PHAI LA 'password' -->
+                <input id="password" name="password" type="password" placeholder="Enter password" class="form-control" required>
+            </div>
+
+            <!-- CSRF token (bat buoc neu khong disable CSRF) -->
+<!--            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />-->
+            <input type="hidden"
+                   th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+
+            <div class="sign-up">
+                <div>
+                    <button type="submit" class="form-submit">Login</button>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
-<script src="/js/validate.js"></script>
+ <!-- <script src="/js/validate.js"></script> -->
 <script>
-   document.addEventListener('DOMContentLoaded', function () {
-      Validator({
-         form: '#form-login',
-         formGroupSelector: '.form-group',
-         errorSelector: '.form-message',
-         rules: [
-            Validator.isEmail('#email'),
-            Validator.minLength('#password', 6),
-         ],
-         onSubmit: function (data) {
-            console.log('Dealer login data:', data);
-            alert('Login successful (demo).');
-         }
-      });
-   });
+    document.addEventListener('DOMContentLoaded', function () {
+        Validator({
+            form: '#form-login',
+            formGroupSelector: '.form-group',
+            errorSelector: '.form-message',
+            rules: [
+                // kiem tra rong thay vi bat buoc la email
+                Validator.isRequired('#username'),
+                Validator.minLength('#password', 6),
+            ],
+            onSubmit: function (data) {
+                // Khi form hop le -> gui that toi Spring Security
+                document.querySelector('#form-login').submit();
+            }
+        });
+    });
 </script>
 </body>
 </html>
