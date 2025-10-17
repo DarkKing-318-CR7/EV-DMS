@@ -22,7 +22,7 @@
     <div th:replace="fragments/topbar :: topbar"></div>
 
     <div class="layout">
-        <aside th:replace="fragments/sidebar :: sidebar"></aside>
+        <aside th:replace="~{fragments/sidebar-router}"></aside>
         <main class="content" th:insert="${content}"></main>
     </div>
 </div>

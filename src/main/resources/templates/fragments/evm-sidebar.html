@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav class="sidebar" sec:authorize="hasRole('EVM_STAFF')" th:fragment="sidebar(active)">
+    <ul>
+        <li th:classappend="${active=='dashboard' ? 'active' : ''}">
+            <a th:href="@{/evm/dashboard}">Dashboard</a>
+        </li>
+
+        <li class="section">Products</li>
+        <li th:classappend="${active=='products' ? 'active' : ''}">
+            <a th:href="@{/evm/products}">Products (view/maintain theo scope)</a>
+        </li>
+
+        <li th:classappend="${active=='inventory' ? 'active' : ''}">
+            <a th:href="@{/evm/inventory}">Inventory &amp; Allocation (khu vực)</a>
+        </li>
+
+        <li th:classappend="${active=='dealer-orders' ? 'active' : ''}">
+            <a th:href="@{/evm/dealer-orders}">Dealer Orders (Approve/Allocate)</a>
+        </li>
+
+        <li th:classappend="${active=='promotions' ? 'active' : ''}">
+            <a th:href="@{/evm/promotions}">Promotions (Create/Apply phạm vi)</a>
+        </li>
+
+        <li th:classappend="${active=='reports' ? 'active' : ''}">
+            <a th:href="@{/evm/reports}">Reports (khu vực/Dealer phụ trách)</a>
+        </li>
+
+        <li th:classappend="${active=='support' ? 'active' : ''}">
+            <a th:href="@{/support}">Support</a>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>

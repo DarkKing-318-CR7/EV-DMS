@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<!-- Chỉ một trong các dòng dưới sẽ render tùy theo role -->
+<div sec:authorize="hasRole('ADMIN')"
+     th:replace="~{fragments/admin-sidebar :: sidebar(active=${active})}"></div>
+
+<div sec:authorize="hasRole('EVM_STAFF')"
+     th:replace="~{fragments/evm-sidebar :: sidebar(active=${active})}"></div>
+
+<div sec:authorize="hasRole('DEALER_MANAGER')"
+     th:replace="~{fragments/manager-sidebar :: sidebar(active=${active})}"></div>
+
+<div sec:authorize="hasRole('DEALER_STAFF')"
+     th:replace="~{fragments/staff-sidebar :: sidebar(active=${active})}"></div>
+</body>
+</html>

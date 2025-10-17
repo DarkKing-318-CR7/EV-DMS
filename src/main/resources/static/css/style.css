@@ -296,3 +296,107 @@ p {
     .search { display: none; }
     h2 { font-size: 18px; }
 }
+
+/* ===========================
+   SIDEBAR UL / LI STYLE
+   =========================== */
+
+.sidebar {
+    position: sticky;
+    top: 88px;                       /* khớp topbar */
+    width: 260px;
+    min-height: 540px;
+    padding: 16px 10px 24px 10px;
+    border-radius: 18px;
+    background: rgba(20, 22, 32, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05),
+    0 8px 28px rgba(0,0,0,0.35);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar .section {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e6ecff;
+    margin: 8px 12px 14px;
+    text-shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+
+/* ===== UL - LI ===== */
+.sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.25) transparent;
+}
+.sidebar ul::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar ul::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,.25);
+    border-radius: 10px;
+}
+
+/* ===== LI / A ===== */
+.sidebar ul li {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.sidebar ul li a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #e9edff;
+    text-decoration: none;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid transparent;
+    transition: all 0.18s ease;
+}
+
+/* Hover */
+.sidebar ul li a:hover {
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(255,255,255,0.08);
+    transform: translateY(-1px);
+}
+
+/* Active (thêm bằng th:classappend) */
+.sidebar ul li.active > a,
+.sidebar ul li a.active {
+    background: linear-gradient(135deg, rgba(120,126,255,.25), rgba(88,96,255,.18));
+    border-color: rgba(148,163,255,.35);
+    box-shadow: 0 6px 18px rgba(86,93,255,.25);
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Icon nếu bạn thêm Font Awesome */
+.sidebar ul li a i {
+    width: 18px;
+    text-align: center;
+    font-size: 15px;
+    opacity: 0.9;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 100%;
+        min-height: unset;
+        position: relative;
+        top: 0;
+    }
+}
