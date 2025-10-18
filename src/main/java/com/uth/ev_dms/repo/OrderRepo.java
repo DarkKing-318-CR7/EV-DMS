@@ -1,6 +1,6 @@
-package com.uth.ev_dms.repositories;
+package com.uth.ev_dms.repo;
 
-import com.uth.ev_dms.sales.domain.OrderHdr;
+import com.uth.ev_dms.domain.OrderHdr;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

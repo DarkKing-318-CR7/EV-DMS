@@ -1,7 +1,7 @@
-package com.uth.ev_dms.reporting.service;
+package com.uth.ev_dms.service;
 
-import com.uth.ev_dms.reporting.demain.Promotion;
-import com.uth.ev_dms.reporting.repo.PromotionRepo;
+import com.uth.ev_dms.domain.Promotion;
+import com.uth.ev_dms.repo.PromotionRepo;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

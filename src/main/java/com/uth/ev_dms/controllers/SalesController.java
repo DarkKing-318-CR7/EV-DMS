@@ -1,11 +1,11 @@
 package com.uth.ev_dms.controllers;
 
-import com.uth.ev_dms.sales.domain.OrderHdr;
-import com.uth.ev_dms.sales.domain.Payment;
-import com.uth.ev_dms.sales.domain.Quote;
-import com.uth.ev_dms.sales.service.SalesService;
-import com.uth.ev_dms.sales.service.dto.CreateQuoteDTO;
-import com.uth.ev_dms.sales.service.dto.PaymentRequestDTO;
+import com.uth.ev_dms.domain.OrderHdr;
+import com.uth.ev_dms.domain.Payment;
+import com.uth.ev_dms.domain.Quote;
+import com.uth.ev_dms.service.SalesService;
+import com.uth.ev_dms.service.dto.CreateQuoteDTO;
+import com.uth.ev_dms.service.dto.PaymentRequestDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

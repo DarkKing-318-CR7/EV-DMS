@@ -1,4 +1,4 @@
-package com.uth.ev_dms.repositories;
+package com.uth.ev_dms.repo;
 
 import com.uth.ev_dms.auth.User;
 import java.util.Optional;

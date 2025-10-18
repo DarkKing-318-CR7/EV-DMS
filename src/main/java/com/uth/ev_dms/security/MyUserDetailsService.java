@@ -1,6 +1,6 @@
 package com.uth.ev_dms.security;
 
-import com.uth.ev_dms.repositories.UserRepository;
+import com.uth.ev_dms.repo.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;

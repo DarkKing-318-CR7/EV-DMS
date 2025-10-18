@@ -1,6 +1,6 @@
-package com.uth.ev_dms.reporting.repo;
+package com.uth.ev_dms.repo;
 
-import com.uth.ev_dms.reporting.demain.Promotion;
+import com.uth.ev_dms.domain.Promotion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

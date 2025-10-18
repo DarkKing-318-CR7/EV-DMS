@@ -1,7 +1,7 @@
-package com.uth.ev_dms.reporting.web;
+package com.uth.ev_dms.controllers;
 
-import com.uth.ev_dms.reporting.demain.Promotion;
-import com.uth.ev_dms.reporting.service.PromotionService;
+import com.uth.ev_dms.domain.Promotion;
+import com.uth.ev_dms.service.PromotionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

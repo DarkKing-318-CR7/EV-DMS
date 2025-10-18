@@ -1,4 +1,4 @@
-package com.uth.ev_dms.reporting.demain;
+package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
