@@ -1,7 +1,10 @@
 package com.uth.ev_dms.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+
+
 
 @Entity
 @Table(name = "order_item")
@@ -10,8 +13,9 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
+    @JsonBackReference
     private OrderHdr order;
 
     private Long vehicleId;
