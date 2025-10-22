@@ -25,8 +25,10 @@
         </li>
 
         <li th:classappend="${active=='orders' ? 'active' : ''}">
-            <a th:href="@{/manager/orders}">Orders (Pending/All)</a>
+            <a th:href="@{/dealer/orders}">Orders (Pending/All)</a>
+
         </li>
+
 
         <li th:classappend="${active=='promotions' ? 'active' : ''}">
             <a th:href="@{/manager/promotions}">Promotions (Apply)</a>
