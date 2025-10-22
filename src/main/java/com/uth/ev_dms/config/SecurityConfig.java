@@ -1,13 +1,15 @@
 package com.uth.ev_dms.config;
 
-import com.uth.ev_dms.security.MyUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -16,19 +18,17 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final MyUserDetailsService myUserDetailsService;
+    private final UserDetailsService myUserDetailsService;
 
-    public SecurityConfig(MyUserDetailsService myUserDetailsService) {
+    public SecurityConfig(UserDetailsService myUserDetailsService) {
         this.myUserDetailsService = myUserDetailsService;
     }
 
-    // ===== ENCODER =====
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // ===== AUTH PROVIDER =====
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -42,40 +42,54 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // ===== SECURITY RULES =====
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(auth -> auth
-                        // Static resources + login page
-                        .requestMatchers("/css/**", "/js/**", "/image/**", "/login", "/error").permitAll()
+                // 1) CSRF: bỏ cho các API bạn đang test (để POST không bị 403 do csrf)
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/evm/**", "/dealer/**"))
 
-                        // ADMIN routes
+                // 2) Phân quyền chi tiết theo vai trò
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/css/**","/js/**","/image/**","/images/**","/fonts/**","/webjars/**",
+                                "/favicon.ico","/login","/error","/error/**"
+                        ).permitAll()
+
+                        // Admin
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // Quotes routes (specific first)
-                        .requestMatchers("/dealer/quotes/my/**").hasAnyRole("DEALER_STAFF","ADMIN")
-                        .requestMatchers("/dealer/quotes/pending/**").hasAnyRole("DEALER_MANAGER","ADMIN")
+                        // Dealer Staff xem đơn của mình
+                        .requestMatchers("/dealer/orders/my/**")
+                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
 
-                        // Dealer module general routes (after quotes)
-                        .requestMatchers("/dealer/**").hasAnyRole("DEALER_MANAGER", "DEALER_STAFF", "EVM_STAFF", "ADMIN")
+                        // Dealer Manager xem/pending toàn đại lý
+                        .requestMatchers("/dealer/orders/**")
+                        .hasAnyRole("DEALER_MANAGER","ADMIN")
 
-                        // Default rule: all must be authenticated
+                        // EVM: xem pending + duyệt allocate
+                        .requestMatchers(HttpMethod.GET,  "/evm/orders/pending").hasAnyRole("EVM_STAFF","ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate").hasAnyRole("EVM_STAFF","ADMIN")
+                        // nếu còn các GET/POST EVM khác:
+                        .requestMatchers("/evm/orders/**").hasAnyRole("EVM_STAFF","ADMIN")
+
                         .anyRequest().authenticated()
                 )
 
-                // Form login
+                // 3) Trang lỗi quyền
+                .exceptionHandling(ex -> ex.accessDeniedPage("/error/403"))
+
+                // 4) Login form như cũ
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .usernameParameter("username")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/post-login", true) // chuyển hướng theo role
+                        .defaultSuccessUrl("/post-login", true)
                         .failureUrl("/login?error")
                         .permitAll()
                 )
 
-                // Logout config
+                // 5) Logout như cũ
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
@@ -84,12 +98,12 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // CSRF
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+                // 6) Thêm httpBasic để test API nhanh bằng cURL/Postman
+                .httpBasic(Customizer.withDefaults())
 
-                // Provider
                 .authenticationProvider(authenticationProvider());
 
+        http.sessionManagement(session -> session.sessionFixation().migrateSession());
         return http.build();
     }
 }

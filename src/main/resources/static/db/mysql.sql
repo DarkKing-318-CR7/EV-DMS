@@ -71,3 +71,45 @@ CREATE TABLE IF NOT EXISTS installment_plan (
                                                 monthly_amount DECIMAL(12,2),
                                                 interest_rate DECIMAL(5,2)
 );
+CREATE TABLE IF NOT EXISTS order_hdr (
+                                         id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                         dealer_id BIGINT NOT NULL,
+                                         customer_id BIGINT NOT NULL,
+                                         quote_id BIGINT NULL,
+                                         status VARCHAR(32) NOT NULL,
+    created_at DATETIME NOT NULL
+    );
+
+CREATE TABLE IF NOT EXISTS order_item (
+                                          id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                          order_id BIGINT NOT NULL,
+                                          trim_id BIGINT NOT NULL,
+                                          qty INT NOT NULL,
+                                          unit_price DECIMAL(15,2) NOT NULL,
+    discount_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+    CONSTRAINT fk_order_item_hdr FOREIGN KEY (order_id) REFERENCES order_hdr(id)
+    );
+
+CREATE TABLE IF NOT EXISTS payment (
+                                       id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                       order_id BIGINT NOT NULL,
+                                       type VARCHAR(20) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    method VARCHAR(60),
+    ref_no VARCHAR(120),
+    paid_at DATETIME NOT NULL,
+    CONSTRAINT fk_payment_order FOREIGN KEY (order_id) REFERENCES order_hdr(id)
+    );
+
+CREATE TABLE IF NOT EXISTS installment_plan (
+                                                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                                                order_id BIGINT UNIQUE NOT NULL,
+                                                bank VARCHAR(120),
+    tenor_months INT,
+    down_payment DECIMAL(15,2),
+    interest_rate DECIMAL(9,4),
+    monthly_amount DECIMAL(15,2),
+    approved_at DATETIME NULL,
+    CONSTRAINT fk_installment_order FOREIGN KEY (order_id) REFERENCES order_hdr(id)
+    );
+
