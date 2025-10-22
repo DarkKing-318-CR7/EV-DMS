@@ -2,21 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en"
       th:with="active='products', pageTitle='Create Vehicle'"
       th:replace="~{layout :: layout(~{::main})}">
-
 <main>
-    <link rel="stylesheet" th:href="@{/css/forms.css}">
-
     <section class="page-header">
         <h1>Create Vehicle</h1>
     </section>
 
     <section class="card form-card">
-        <form th:object="${vehicle}" th:action="@{/admin/products}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <form th:action="@{/admin/products}" method="post" th:object="${vehicle}" class="form-grid" novalidate>
             <div class="field">
                 <label>Model Code *</label>
                 <input th:field="*{modelCode}" placeholder="EV6" required>
             </div>
+
             <div class="field">
                 <label>Model Name *</label>
                 <input th:field="*{modelName}" placeholder="EV6 GT-Line" required>
@@ -30,16 +27,17 @@
             <div class="field">
                 <label>Body Type</label>
                 <select th:field="*{bodyType}">
-                    <option value="">— Select —</option>
-                    <option value="SUV">SUV</option>
-                    <option value="Sedan">Sedan</option>
-                    <option value="Hatchback">Hatchback</option>
-                    <option value="Crossover">Crossover</option>
-                    <option value="Coupe">Coupe</option>
-                    <option value="Pickup">Pickup</option>
-                    <option value="Van">Van</option>
+                    <option th:value="">— Select —</option>
+                    <option th:value="SUV">SUV</option>
+                    <option th:value="Sedan">Sedan</option>
+                    <option th:value="Hatchback">Hatchback</option>
+                    <option th:value="Crossover">Crossover</option>
+                    <option th:value="Coupe">Coupe</option>
+                    <option th:value="Pickup">Pickup</option>
+                    <option th:value="Van">Van</option>
                 </select>
             </div>
+
             <div class="field sm">
                 <label>Warranty (months)</label>
                 <input type="number" min="0" step="1" th:field="*{warrantyMonths}" placeholder="36">
@@ -49,10 +47,9 @@
                 <a class="btn btn-outline" th:href="@{/admin/products}">Cancel</a>
                 <button class="btn btn-gradient" type="submit">Save</button>
             </div>
-
-
         </form>
     </section>
+
     <script>
         const mc = document.querySelector('[name="modelCode"]');
         if (mc) mc.addEventListener('input', e => e.target.value = e.target.value.toUpperCase());

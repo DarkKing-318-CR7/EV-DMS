@@ -20,8 +20,13 @@ public class ProductService {
     private final PriceListRepo priceListRepo;
 
     // ===== Vehicle =====
-    public Vehicle saveVehicle(Vehicle v) {
-        // (dự phòng) nếu không dùng @PrePersist
+    @Transactional
+    public Vehicle saveVehicle(Vehicle v){
+        // ví dụ: unique modelCode
+        if (v.getModelCode() == null || v.getModelCode().isBlank())
+            throw new IllegalArgumentException("Model code is required");
+        if (vehicleRepo.existsByModelCodeAndIdNot(v.getModelCode(), v.getId() == null ? -1L : v.getId()))
+            throw new IllegalStateException("Model code already exists");
         if (v.getWarrantyMonths() == null) v.setWarrantyMonths(0);
         return vehicleRepo.save(v);
     }

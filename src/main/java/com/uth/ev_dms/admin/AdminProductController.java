@@ -47,7 +47,7 @@ public class AdminProductController {
     }
 
     // ========== EDIT FORM ==========
-    @GetMapping("/products/{id}/edit")
+    @GetMapping("/{id}/edit")
     public String editVehicleForm(@PathVariable Long id, Model model){
         var v = productService.getVehicleOrThrow(id);
         model.addAttribute("vehicle", v);
@@ -57,7 +57,7 @@ public class AdminProductController {
     }
 
     // ========== UPDATE ==========
-    @PostMapping("/products/{id}")
+    @PostMapping("/{id}")
     public String updateVehicle(@PathVariable Long id, @ModelAttribute("vehicle") Vehicle vehicle){
         vehicle.setId(id);                     // đảm bảo đúng id
         productService.saveVehicle(vehicle);   // service sẽ validate
