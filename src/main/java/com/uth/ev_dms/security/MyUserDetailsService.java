@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 public class MyUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepo;
-    public MyUserDetailsService(UserRepository userRepo) { this.userRepo = userRepo; }
+
+    public MyUserDetailsService(UserRepository userRepo) {
+        this.userRepo = userRepo;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -17,7 +20,7 @@ public class MyUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
         var authorities = u.getRoles().stream()
-                .map(r -> new SimpleGrantedAuthority(r.getName())) // "ROLE_ADMIN"
+                .map(r -> new SimpleGrantedAuthority(r.getName())) // ex: ROLE_ADMIN
                 .toList();
 
         return new org.springframework.security.core.userdetails.User(

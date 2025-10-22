@@ -1,5 +1,6 @@
 package com.uth.ev_dms.config;
 
+import com.uth.ev_dms.security.MyUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -7,29 +8,27 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import com.uth.ev_dms.security.MyUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserDetailsService myUserDetailsService;
+    private final MyUserDetailsService myUserDetailsService;
 
-    public SecurityConfig(UserDetailsService myUserDetailsService) {
+    public SecurityConfig(MyUserDetailsService myUserDetailsService) {
         this.myUserDetailsService = myUserDetailsService;
     }
 
-    // BCrypt cho các mật khẩu đã hash trong DB
+    // ===== ENCODER =====
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Provider dùng UserDetailsService + BCrypt
+    // ===== AUTH PROVIDER =====
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -43,40 +42,40 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    // ===== SECURITY RULES =====
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Phân quyền URL
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép static assets + trang login
-                        .requestMatchers(
-                                "/css/**", "/js/**", "/image/**", "/fonts/**", "/webjars/**",
-                                "/favicon.ico", "/login", "/error"
-                        ).permitAll()
+                        // Static resources + login page
+                        .requestMatchers("/css/**", "/js/**", "/image/**", "/login", "/error").permitAll()
 
-                        // Khu vực Admin
+                        // ADMIN routes
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // Khu vực Dealer (3 role của đại lý + admin)
-                        .requestMatchers("/dealer/**")
-                        .hasAnyRole("DEALER_MANAGER","DEALER_STAFF","EVM_STAFF","ADMIN")
+                        // Quotes routes (specific first)
+                        .requestMatchers("/dealer/quotes/my/**").hasAnyRole("DEALER_STAFF","ADMIN")
+                        .requestMatchers("/dealer/quotes/pending/**").hasAnyRole("DEALER_MANAGER","ADMIN")
 
-                        // Mọi request khác phải đăng nhập
+                        // Dealer module general routes (after quotes)
+                        .requestMatchers("/dealer/**").hasAnyRole("DEALER_MANAGER", "DEALER_STAFF", "EVM_STAFF", "ADMIN")
+
+                        // Default rule: all must be authenticated
                         .anyRequest().authenticated()
                 )
 
-                // Cấu hình form login
+                // Form login
                 .formLogin(form -> form
-                        .loginPage("/login")                 // GET /login -> trang login.html
-                        .loginProcessingUrl("/login")        // POST /login -> Spring Security xử lý
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
                         .usernameParameter("username")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/post-login", true) // ĐIỀU HƯỚNG SAU KHI LOGIN THÀNH CÔNG
+                        .defaultSuccessUrl("/post-login", true) // chuyển hướng theo role
                         .failureUrl("/login?error")
                         .permitAll()
                 )
 
-                // Logout
+                // Logout config
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
@@ -85,18 +84,11 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // CSRF vẫn bật (mặc định). Nếu có API thuần JSON thì ignore tại đây.
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**")
-                )
+                // CSRF
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
 
-                // Gắn provider
+                // Provider
                 .authenticationProvider(authenticationProvider());
-
-        // (tuỳ chọn) kiểm soát session
-        http.sessionManagement(session -> session
-                .sessionFixation().migrateSession()
-        );
 
         return http.build();
     }
