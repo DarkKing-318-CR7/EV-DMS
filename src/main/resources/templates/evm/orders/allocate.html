@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Allocate Order</title></head>
+<body>
+<h2>Allocate</h2>
+<form th:action="@{|/evm/orders/${order.id}/approve-allocate|}" method="post">
+  <button type="submit">Approve & Allocate</button>
+</form>
+</body>
+</html>

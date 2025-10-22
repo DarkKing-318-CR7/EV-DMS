@@ -5,35 +5,35 @@
 <nav class="sidebar" sec:authorize="hasRole('DEALER_STAFF')" th:fragment="sidebar(active)">
     <ul>
         <li th:classappend="${active=='dashboard' ? 'active' : ''}">
-            <a th:href="@{/dealer/dashboard}">Dashboard</a>
+            <a th:href="@{/staff/dashboard}">Dashboard</a>
         </li>
 
         <li th:classappend="${active=='vehicles' ? 'active' : ''}">
-            <a th:href="@{/dealer/vehicles}">Vehicles</a>
+            <a th:href="@{/staff/vehicles}">Vehicles</a>
         </li>
 
         <li th:classappend="${active=='customers' ? 'active' : ''}">
-            <a th:href="@{/dealer/customers}">Customers (My Customers)</a>
+            <a th:href="@{/staff/customers}">Customers (My Customers)</a>
         </li>
 
         <li th:classappend="${active=='testdrive' ? 'active' : ''}">
-            <a th:href="@{/dealer/testdrives}">Test Drive (My Schedule)</a>
+            <a th:href="@{/staff/testdrives}">Test Drive (My Schedule)</a>
         </li>
 
         <li th:classappend="${active=='quotes' ? 'active' : ''}">
-            <a th:href="@{/dealer/quotes/my}">Quotes (My Quotes)</a>
+            <a th:href="@{/staff/quotes}">Quotes (My Quotes)</a>
         </li>
 
         <li th:classappend="${active=='orders' ? 'active' : ''}">
-            <a th:href="@{/dealer/orders}">Orders (My Orders)</a>
+            <a th:href="@{/dealer/orders/my}">Orders (My Orders)</a>
         </li>
 
         <li th:classappend="${active=='promotions' ? 'active' : ''}">
-            <a th:href="@{/dealer/promotions}">Promotions (Apply to Quote)</a>
+            <a th:href="@{/staff/promotions}">Promotions (Apply to Quote)</a>
         </li>
 
         <li th:classappend="${active=='reports' ? 'active' : ''}">
-            <a th:href="@{/dealer/reports}">Reports (My Performance)</a>
+            <a th:href="@{/staff/reports}">Reports (My Performance)</a>
         </li>
 
         <li th:classappend="${active=='support' ? 'active' : ''}">

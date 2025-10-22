@@ -8,88 +8,49 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class SalesServiceImpl implements SalesService {
 
     private final QuoteRepo quoteRepo;
-    private final QuoteItemRepo quoteItemRepo;
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
     private final PaymentRepo paymentRepo;
-    private final PromotionService promotionService;
-    private final PromotionAppliedRepo promotionAppliedRepo;
 
-    public SalesServiceImpl(
-            QuoteRepo quoteRepo,
-            QuoteItemRepo quoteItemRepo,
-            OrderRepo orderRepo,
-            OrderItemRepo orderItemRepo,
-            PaymentRepo paymentRepo,
-            PromotionService promotionService,
-            PromotionAppliedRepo promotionAppliedRepo
-    ) {
+    public SalesServiceImpl(QuoteRepo quoteRepo,
+                            OrderRepo orderRepo,
+                            OrderItemRepo orderItemRepo,
+                            PaymentRepo paymentRepo) {
         this.quoteRepo = quoteRepo;
-        this.quoteItemRepo = quoteItemRepo;
         this.orderRepo = orderRepo;
         this.orderItemRepo = orderItemRepo;
         this.paymentRepo = paymentRepo;
-        this.promotionService = promotionService;
-        this.promotionAppliedRepo = promotionAppliedRepo;
     }
 
-    // ==================== QUOTE CREATION ====================
     @Override
     @Transactional
     public Quote createQuote(CreateQuoteDTO dto) {
         Quote q = new Quote();
         q.setCustomerId(dto.getCustomerId());
         q.setStatus("DRAFT");
+        q.setTotalAmount(dto.getTotalAmount());
 
-        BigDecimal total = BigDecimal.ZERO;
+        // tao danh sach item
         List<QuoteItem> items = new ArrayList<>();
-
         if (dto.getItems() != null) {
             for (CreateQuoteItemDTO it : dto.getItems()) {
                 QuoteItem qi = new QuoteItem();
                 qi.setVehicleId(it.getVehicleId());
                 qi.setQuantity(it.getQuantity());
                 qi.setUnitPrice(it.getUnitPrice());
-                qi.setQuote(q);
+                qi.setQuote(q);          // lien ket 1-nhieu
                 items.add(qi);
-
-                total = total.add(it.getUnitPrice().multiply(BigDecimal.valueOf(it.getQuantity())));
             }
         }
-
         q.setItems(items);
-        q.setTotalAmount(total);
-        return quoteRepo.save(q);
-    }
 
-    // ==================== QUOTE WORKFLOW ====================
-
-    @Override
-    @Transactional
-    public Quote submitQuote(Long quoteId) {
-        Quote q = quoteRepo.findById(quoteId)
-                .orElseThrow(() -> new IllegalArgumentException("Quote not found"));
-        q.setStatus("PENDING");
-        return quoteRepo.save(q);
-    }
-
-    @Override
-    @Transactional
-    public Quote rejectQuote(Long quoteId, String comment) {
-        Quote q = quoteRepo.findById(quoteId)
-                .orElseThrow(() -> new IllegalArgumentException("Quote not found"));
-        q.setStatus("REJECTED");
-        q.setRejectComment(comment);
         return quoteRepo.save(q);
     }
 
@@ -99,75 +60,59 @@ public class SalesServiceImpl implements SalesService {
         Quote quote = quoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
 
-        // Cập nhật trạng thái quote
+        // cap nhat quote
         quote.setStatus("APPROVED");
         quoteRepo.save(quote);
 
-        // Tạo order mới dựa trên quote được duyệt
+        // tao order tu quote
         OrderHdr order = new OrderHdr();
         order.setQuoteId(quote.getId());
-        order.setStatus("PENDING");
-        order.setTotalAmount(quote.getFinalAmount() != null ? quote.getFinalAmount() : quote.getTotalAmount());
-        order.setCreatedAt(LocalDateTime.now());
-
+        order.setStatus(OrderStatus.NEW);              // <-- enum, khong dung String
+        order.setTotalAmount(quote.getTotalAmount());
         OrderHdr savedOrder = orderRepo.save(order);
 
-        // Chuyển từng QuoteItem -> OrderItem
-        for (QuoteItem qi : quote.getItems()) {
-            OrderItem oi = new OrderItem();
-            oi.setOrder(savedOrder);
-            oi.setVehicleId(qi.getVehicleId());
-            oi.setQuantity(qi.getQuantity());
-            oi.setUnitPrice(qi.getUnitPrice());
-            orderItemRepo.save(oi);
+        // chuyen QuoteItem -> OrderItem
+        if (quote.getItems() != null) {
+            for (QuoteItem qi : quote.getItems()) {
+                OrderItem oi = new OrderItem();
+                oi.setOrder(savedOrder);
+                oi.setTrimId(qi.getVehicleId());       // <-- khop field trong OrderItem
+                oi.setQty(qi.getQuantity());           // <-- khop field trong OrderItem
+                oi.setUnitPrice(qi.getUnitPrice());
+                orderItemRepo.save(oi);
+            }
         }
+
+        // TODO: hook InventoryService.allocateForOrder(savedOrder.getId());
 
         return savedOrder;
     }
 
+    @Override
+    public Quote submitQuote(Long quoteId) {
+        return null;
+    }
+
+    @Override
+    public Quote rejectQuote(Long quoteId, String comment) {
+        return null;
+    }
 
     @Override
     public List<Quote> findPending() {
-        return quoteRepo.findByStatus("PENDING");
+        return List.of();
     }
 
     @Override
     public List<Quote> findAll() {
-        return quoteRepo.findAll();
+        return List.of();
     }
 
-    // ==================== PROMOTION APPLY ====================
     @Override
-    @Transactional
     public Quote applyPromotions(Long quoteId, List<Long> promotionIds) {
-        Quote q = quoteRepo.findById(quoteId).orElseThrow();
-
-        var today = LocalDate.now();
-        var valid = promotionService.getValidPromotions(
-                        q.getDealerId(), q.getVehicleTrimId(), q.getRegion(), today)
-                .stream().map(Promotion::getId).collect(Collectors.toSet());
-
-        var toApply = (promotionIds == null)
-                ? List.<Long>of()
-                : promotionIds.stream().filter(valid::contains).toList();
-
-        var discount = promotionService.computeDiscount(q.getTotalAmount(), toApply);
-        q.setAppliedDiscount(discount);
-        q.setFinalAmount(q.getTotalAmount().subtract(discount).max(BigDecimal.ZERO));
-        quoteRepo.save(q);
-
-        for (Long pid : toApply) {
-            PromotionApplied pa = new PromotionApplied();
-            pa.setQuoteId(q.getId());
-            pa.setPromotionId(pid);
-            pa.setDiscountAmount(null);
-            pa.setAppliedAt(LocalDateTime.now());
-            promotionAppliedRepo.save(pa);
-        }
-        return q;
+        return null;
     }
 
-    // ==================== PAYMENT ====================
     @Override
     @Transactional
     public Payment makeCashPayment(Long orderId, BigDecimal amount) {
@@ -175,19 +120,25 @@ public class SalesServiceImpl implements SalesService {
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
 
         Payment p = new Payment();
-        p.setOrderId(order.getId());
-        p.setPaymentType("cash");
+        p.setOrder(order);                             // <-- khong dung setOrderId
+        p.setType(PaymentType.CASH);                   // <-- enum, khong dung String
         p.setAmount(amount);
+        // p.setMethod("cash"); // neu muon luu phuong thuc
         return paymentRepo.save(p);
     }
 
     @Override
     @Transactional
     public Payment makeInstallmentPayment(Long orderId, BigDecimal amount) {
+        OrderHdr order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
         Payment p = new Payment();
-        p.setOrderId(orderId);
-        p.setPaymentType("installment");
+        p.setOrder(order);
+        p.setType(PaymentType.INSTALLMENT);
         p.setAmount(amount);
+        // p.setMethod("installment");
         return paymentRepo.save(p);
     }
+
 }
