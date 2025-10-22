@@ -1,0 +1,12 @@
+package com.uth.ev_dms.repo;
+
+
+
+import com.uth.ev_dms.domain.Trim;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface TrimRepo extends JpaRepository<Trim, Long> {
+    List<Trim> findByVehicleId(Long vehicleId);
+}
