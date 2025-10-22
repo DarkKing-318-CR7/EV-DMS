@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết đơn • EVM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background:#f6f7fb }
+        .card { border:0; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,.06) }
+        .badge { font-weight:600 }
+        .stat-pill { border-radius:14px; padding:.35rem .75rem; background:#fff; border:1px solid #e5e7eb }
+        .stepper { display:flex; gap:8px; align-items:center; }
+        .stepper .dot { width:10px; height:10px; border-radius:50%; background:#d1d5db }
+        .stepper .dot.active { background:#0d6efd }
+        .stepper .bar { flex:1; height:2px; background:#e5e7eb }
+        .stepper .bar.active { background:#0d6efd }
+        .sticky-actions { position:sticky; top:1rem }
+        .table > :not(caption) > * > * { padding-top:.8rem; padding-bottom:.8rem }
+        .table tfoot th, .table tfoot td { font-weight:700 }
+        .chip { border-radius:999px; padding:.25rem .6rem; border:1px solid #e5e7eb; background:#fff; font-size:.85rem }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/evm/orders}">
+            <i class="bi bi-lightning-charge me-2"></i>EV-DMS • EVM
+        </a>
+        <div class="navbar-nav">
+            <a class="nav-link" th:href="@{/evm/orders}">Tất cả</a>
+            <a class="nav-link" th:href="@{/evm/orders/pending}">Đang chờ</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/evm/orders}">Đơn hàng</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Chi tiết</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap align-items-center gap-3">
+            <div class="me-auto">
+                <h3 class="m-0">
+                    Đơn #<span th:text="${order.id}">0</span>
+                </h3>
+                <div class="text-muted small mt-1">
+                    Tạo lúc:
+                    <span th:text="${#temporals.format(order.createdAt,'dd/MM/yyyy HH:mm')}">--</span>
+                    • Báo giá:
+                    <span th:text="${order.quoteId != null ? order.quoteId : '—'}">—</span>
+                </div>
+            </div>
+
+            <!-- Trạng thái -->
+            <span class="badge"
+                  th:classappend="${
+                      (order.status?.name()=='NEW')?' bg-secondary' :
+                      (order.status?.name()=='PENDING_ALLOC')?' bg-warning text-dark' :
+                      (order.status?.name()=='ALLOCATED')?' bg-info' :
+                      (order.status?.name()=='DELIVERED')?' bg-success' :
+                      (order.status?.name()=='CANCELLED')?' bg-danger' : ' bg-secondary'
+                  }"
+                  th:text="${order.status}">NEW</span>
+
+            <!-- Tổng tiền -->
+            <div class="stat-pill">
+                Tổng tiền:
+                <strong>
+                    <span th:text="${#numbers.formatDecimal(order.totalAmount,0,'POINT',0,'COMMA')}">0</span> ₫
+                </strong>
+            </div>
+
+            <!-- Đã thanh toán / Còn phải thu (nếu có) -->
+            <div class="chip" th:if="${amountPaid != null}">
+                Đã thanh toán:
+                <strong><span th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+            </div>
+            <div class="chip" th:if="${balance != null}">
+                Còn phải thu:
+                <strong><span th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+            </div>
+
+        </div>
+
+        <!-- Stepper trạng thái -->
+        <div class="card-footer bg-white">
+            <div class="stepper mx-2" th:with="st=${order.status?.name()}">
+                <div class="dot"
+                     th:classappend="${{'NEW','PENDING_ALLOC','ALLOCATED','DELIVERED'}.contains(st)} ? ' active'"></div>
+                <div class="bar"
+                     th:classappend="${{'PENDING_ALLOC','ALLOCATED','DELIVERED'}.contains(st)} ? ' active'"></div>
+                <div class="dot"
+                     th:classappend="${{'PENDING_ALLOC','ALLOCATED','DELIVERED'}.contains(st)} ? ' active'"></div>
+                <div class="bar"
+                     th:classappend="${{'ALLOCATED','DELIVERED'}.contains(st)} ? ' active'"></div>
+                <div class="dot"
+                     th:classappend="${{'ALLOCATED','DELIVERED'}.contains(st)} ? ' active'"></div>
+                <div class="bar"
+                     th:classappend="${{'DELIVERED'}.contains(st)} ? ' active'"></div>
+                <div class="dot"
+                     th:classappend="${{'DELIVERED'}.contains(st)} ? ' active'"></div>
+            </div>
+            <div class="d-flex justify-content-between text-muted small px-2 mt-2">
+                <span>Mới</span><span>Chờ phân bổ</span><span>Đã phân bổ</span><span>Đã giao</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Cột trái: Thông tin + Hàng hóa + Thanh toán -->
+        <div class="col-lg-8">
+            <!-- Thông tin đơn -->
+            <div class="card">
+                <div class="card-header">Thông tin đơn</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <div><strong>Đại lý:</strong> <span th:text="${order.dealerId}">1</span></div>
+                            <div><strong>Khách hàng:</strong> <span th:text="${order.customerId}">1</span></div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div><strong>Báo giá:</strong> <span th:text="${order.quoteId != null ? order.quoteId : '—'}">—</span></div>
+                            <div><strong>Ngày tạo:</strong> <span th:text="${#temporals.format(order.createdAt,'dd/MM/yyyy HH:mm')}">--</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách xe -->
+            <div class="card mt-3">
+                <div class="card-header d-flex align-items-center">
+                    <span>Danh sách xe</span>
+                    <span class="ms-auto text-muted small" th:if="${items != null}" >
+                        Tổng dòng: <strong th:text="${#lists.size(items)}">0</strong>
+                    </span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle m-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Model/Trim</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end">Số lượng</th>
+                            <th class="text-end">Giảm</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="it : ${items}">
+                            <td th:text="${it.trimName}">EV One</td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'POINT',0,'COMMA')}">0</td>
+                            <td class="text-end" th:text="${it.qty}">1</td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(it.discountAmount,0,'POINT',0,'COMMA')}">0</td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(it.subtotal,0,'POINT',0,'COMMA')}">0</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(items)}">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-5 d-block mb-2"></i> Chưa có mặt hàng
+                            </td>
+                        </tr>
+                        </tbody>
+
+                        <!-- TỔNG tính an toàn (lọc null trước khi sum) -->
+                        <tfoot th:if="${items != null and !#lists.isEmpty(items)}"
+                               th:with="
+                                   subList=${items.?[subtotal != null].![subtotal]},
+                                   discList=${items.?[discountAmount != null].![discountAmount]},
+                                   sumSub=${#aggregates.sum(subList)},
+                                   sumDisc=${#aggregates.sum(discList)},
+                                   sumSubSafe=${sumSub != null ? sumSub : 0},
+                                   sumDiscSafe=${sumDisc != null ? sumDisc : 0},
+                                   sumTotal=${order.totalAmount != null ? order.totalAmount : sumSubSafe - sumDiscSafe}">
+                        <tr>
+                            <td colspan="4" class="text-end">Tạm tính</td>
+                            <td class="text-end">
+                                <span th:text="${#numbers.formatDecimal(sumSubSafe,0,'POINT',0,'COMMA')}">0</span> ₫
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end">Giảm giá</td>
+                            <td class="text-end">
+                                - <span th:text="${#numbers.formatDecimal(sumDiscSafe,0,'POINT',0,'COMMA')}">0</span> ₫
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end">Tổng cộng</td>
+                            <td class="text-end">
+                                <strong><span th:text="${#numbers.formatDecimal(sumTotal,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+                            </td>
+                        </tr>
+                        </tfoot>
+
+                    </table>
+                </div>
+            </div>
+
+            <!-- Thanh toán -->
+            <div class="card mt-3">
+                <div class="card-header d-flex align-items-center">
+                    <span>Thanh toán</span>
+                    <div class="ms-auto small text-muted">
+                        <span th:if="${amountPaid != null}">
+                          Đã thanh toán:
+                          <strong><span th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+                        </span>
+                        <span class="ms-3" th:if="${balance != null}">
+                          Còn lại:
+                          <strong><span th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table m-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Loại</th>
+                                <th class="text-end">Số tiền</th>
+                                <th>Tham chiếu</th>
+                                <th>Thời gian</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="p : ${payments}">
+                                <td th:text="${p.id}">1</td>
+                                <td th:text="${p.type}">CASH</td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(p.amount,0,'POINT',0,'COMMA')}">0</td>
+                                <td>
+                                    <span th:text="${p.refNo}">ref</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2"
+                                            onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </td>
+                                <td th:text="${#temporals.format(p.paidAt,'dd/MM/yyyy HH:mm')}">--</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(payments)}">
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-cash-coin fs-5 d-block mb-2"></i> Chưa có thanh toán
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kế hoạch trả góp (nếu có) -->
+            <div class="card mt-3" th:if="${installment != null}">
+                <div class="card-header">Kế hoạch trả góp</div>
+                <div class="card-body row g-2">
+                    <div class="col-6"><strong>Ngân hàng:</strong> <span th:text="${installment.bank}">Bank</span></div>
+                    <div class="col-6"><strong>Kỳ:</strong> <span th:text="${installment.tenorMonths}">12</span> tháng</div>
+                    <div class="col-6"><strong>Trả trước:</strong> <span th:text="${#numbers.formatDecimal(installment.downPayment,0,'POINT',0,'COMMA')}">0</span> ₫</div>
+                    <div class="col-6"><strong>Lãi suất:</strong> <span th:text="${installment.interestRate}">0.1</span></div>
+                    <div class="col-6"><strong>Mỗi kỳ:</strong> <span th:text="${#numbers.formatDecimal(installment.monthlyAmount,0,'POINT',0,'COMMA')}">0</span> ₫</div>
+                    <div class="col-6"><strong>Duyệt lúc:</strong>
+                        <span th:text="${installment.approvedAt != null ? #temporals.format(installment.approvedAt,'dd/MM/yyyy HH:mm') : 'Chưa duyệt'}">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Hành động (sticky) + Nhật ký -->
+        <div class="col-lg-4">
+            <div class="sticky-actions">
+                <div class="card">
+                    <div class="card-header">Hành động</div>
+                    <div class="card-body d-grid gap-2">
+
+                        <!-- Duyệt & phân bổ (Modal xác nhận) -->
+                        <button type="button" class="btn btn-success w-100"
+                                data-bs-toggle="modal" data-bs-target="#confirmAllocateModal"
+                                th:disabled="${order.status != T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC
+                                  and order.status != T(com.uth.ev_dms.domain.OrderStatus).NEW}">
+                            <i class="bi bi-check2-circle me-1"></i> Duyệt & Phân bổ
+                        </button>
+
+                        <!-- Hủy đơn (nếu còn hủy được) -->
+                        <button type="button" class="btn btn-outline-danger w-100"
+                                data-bs-toggle="modal" data-bs-target="#confirmCancelModal"
+                                th:disabled="${order.status == T(com.uth.ev_dms.domain.OrderStatus).DELIVERED
+                                  or order.status == T(com.uth.ev_dms.domain.OrderStatus).CANCELLED}">
+                            <i class="bi bi-x-octagon me-1"></i> Hủy đơn
+                        </button>
+
+                        <a class="btn btn-outline-secondary w-100" th:href="@{/evm/orders}">
+                            <i class="bi bi-arrow-left me-1"></i> Quay lại
+                        </a>
+
+                        <!-- Nhật ký phân bổ -->
+                        <button class="btn btn-light border w-100" type="button"
+                                data-bs-toggle="offcanvas" data-bs-target="#allocLogOffcanvas">
+                            <i class="bi bi-clock-history me-1"></i> Nhật ký phân bổ
+                        </button>
+
+                        <!-- In / Tải PDF -->
+                        <button class="btn btn-outline-primary w-100" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i> In / Lưu PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Offcanvas: Nhật ký phân bổ -->
+            <div class="offcanvas offcanvas-end" tabindex="-1" id="allocLogOffcanvas">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title">Nhật ký phân bổ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <div th:if="${allocLogs != null and !#lists.isEmpty(allocLogs)}">
+                        <div class="list-group">
+                            <div class="list-group-item" th:each="log : ${allocLogs}">
+                                <div class="d-flex justify-content-between">
+                                    <strong th:text="${log.message}">Phân bổ 2 xe → Dealer 1</strong>
+                                    <span class="text-muted small" th:text="${#temporals.format(log.createdAt,'dd/MM/yyyy HH:mm')}">--</span>
+                                </div>
+                                <div class="small text-muted" th:text="${log.actor}">evm_user</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-muted text-center" th:if="${allocLogs == null or #lists.isEmpty(allocLogs)}">
+                        Chưa có nhật ký
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận Duyệt & Phân bổ -->
+<div class="modal fade" id="confirmAllocateModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form th:action="@{|/evm/orders/${order.id}/approve-allocate|}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Xác nhận</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Xác nhận <strong>duyệt & phân bổ</strong> cho đơn #<span th:text="${order.id}">0</span>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success">Xác nhận</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận Hủy đơn -->
+<div class="modal fade" id="confirmCancelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form th:action="@{|/evm/orders/${order.id}/cancel|}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Hủy đơn</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Bạn có chắc muốn <strong>hủy</strong> đơn #<span th:text="${order.id}">0</span>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger">Hủy đơn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

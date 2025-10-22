@@ -1,12 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Quote • EV-DMS</title>
-  <link rel="stylesheet" href="/css/quote-create.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Quote • EV-DMS</title>
+    <link rel="stylesheet" href="/css/quote-create.css">
 </head>
 <body>
-   Create Quote
+
+<h1>Create Quote</h1>
+
+<form th:action="@{/dealer/quotes/my/save}" method="post">
+    <div>
+        <label>Customer ID:</label>
+        <input type="number" name="customerId" placeholder="Enter customer ID" required>
+    </div>
+
+    <div>
+        <label>Region:</label>
+        <input type="text" name="region" placeholder="north / central / south">
+    </div>
+
+    <div>
+        <label>Dealer ID:</label>
+        <input type="number" name="dealerId" placeholder="Dealer ID (optional)">
+    </div>
+
+    <div>
+        <label>Vehicle Trim ID:</label>
+        <input type="number" name="vehicleTrimId" placeholder="Trim ID (optional)">
+    </div>
+
+    <div>
+        <label>Total Amount:</label>
+        <input type="number" step="0.01" name="totalAmount" placeholder="Total amount" required>
+    </div>
+
+    <!-- ========== Chọn Khuyến mãi (Promotion) ========== -->
+    <div>
+        <label>Apply Promotions:</label>
+        <select name="promotionIds" multiple>
+            <option th:each="p : ${promotions}"
+                    th:value="${p.id}"
+                    th:text="${p.name + ' (' + p.discountPercent + '%)'}">
+            </option>
+        </select>
+        <small>Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều khuyến mãi</small>
+    </div>
+
+    <!-- ========== Sản phẩm (nếu CreateQuoteDTO có danh sách items) ========== -->
+    <div>
+        <label>Items:</label>
+        <textarea name="items" placeholder="Tạm thời nhập mô tả đơn giản"></textarea>
+    </div>
+
+    <button type="submit">Save Quote</button>
+</form>
+
+<hr>
+<a href="/dealer/quotes/my">← Back to My Quotes</a>
+
 </body>
 </html>

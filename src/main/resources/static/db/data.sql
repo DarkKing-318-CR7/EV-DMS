@@ -30,6 +30,16 @@ INSERT INTO users_roles (user_id, role_id)
 VALUES ((SELECT id FROM users WHERE username = 'evm1'),
         (SELECT id FROM roles WHERE name = 'ROLE_EVM_STAFF'));
 
+------------------------------------
+insert into vehicle_model(id, name) values (1,'EV One');
+insert into vehicle_trim(id, model_id, name, msrp) values (11,1,'EV One Standard', 35000.00);
+
+insert into customer(id, full_name, phone, email) values (101,'Nguyen Van A','0900000001','a@example.com');
+
+-- ton kho demo (neu da co bang inventory)
+insert into inventory(id, trim_id, qty_onhand) values (1001, 11, 5);
+
+
 
 
 INSERT INTO customers (ten, email, sdt, diachi, ngaytao) VALUES

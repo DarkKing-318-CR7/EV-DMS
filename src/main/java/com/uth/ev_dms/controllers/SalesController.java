@@ -8,7 +8,7 @@ import com.uth.ev_dms.service.dto.CreateQuoteDTO;
 import com.uth.ev_dms.service.dto.PaymentRequestDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/v1/sales")
 public class SalesController {
@@ -21,9 +21,11 @@ public class SalesController {
 
     // POST /api/v1/sales/quotes
     @PostMapping("/quotes")
-    public Quote createQuote(@RequestBody CreateQuoteDTO dto) {
-        return salesService.createQuote(dto);
+    public ResponseEntity<Quote> createQuote(@RequestBody CreateQuoteDTO dto) {
+        Quote quote = salesService.createQuote(dto);
+        return ResponseEntity.status(201).body(quote);
     }
+
 
     // PATCH /api/v1/sales/quotes/{id}/approve
 //    @PatchMapping("/quotes/{id}/approve")
@@ -43,7 +45,7 @@ public class SalesController {
         return salesService.makeInstallmentPayment(id, request.getAmount());
     }
 
-    @PostMapping("/quotes/{id}/approve")
+    @PatchMapping("/quotes/{id}/approve")
     public ResponseEntity<OrderHdr> approveQuote(@PathVariable Long id) {
         OrderHdr order = salesService.approveQuote(id);
         return ResponseEntity.ok(order);
