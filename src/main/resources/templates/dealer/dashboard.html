@@ -1,7 +1,25 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout(~{::main})">
-<main>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{/layout :: layout(~{::content})}">
+<body>
+
+<!-- ============================= DASHBOARD PAGE CONTENT ============================= -->
+<div th:fragment="content">
     <h2>Dealer Dashboard</h2>
     <p>KPIs, today’s tasks, and recent activities.</p>
-</main>
+
+    <div class="cards">
+        <div class="card">
+            <h5>Total Quotes</h5>
+            <div class="kpi" th:text="${totalQuotes}">0</div>
+        </div>
+
+        <div class="card">
+            <h5>Pending Quotes</h5>
+            <div class="kpi" th:text="${pendingQuotes}">0</div>
+        </div>
+    </div>
+</div>
+
+</body>
 </html>

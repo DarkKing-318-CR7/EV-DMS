@@ -1,1 +1,78 @@
+/* =======================
+   QUOTE CREATE FORM STYLE
+   ======================= */
+
+body {
+    color: #fff;
+    background: transparent;
+    font-family: 'Spartan', sans-serif;
+}
+
+.container {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 28px 36px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+    margin: 40px auto;
+}
+
+h1 {
+    font-size: 26px;
+    margin-bottom: 20px;
+    color: #e6ecff;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+label {
+    font-size: 14px;
+    opacity: .9;
+    margin-bottom: 4px;
+}
+
+input, select, textarea {
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    outline: none;
+    transition: border 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: rgba(120,126,255,0.6);
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(86,93,255,0.45);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+button:hover {
+    background: rgba(86,93,255,0.6);
+}
+
+a {
+    display: inline-block;
+    margin-top: 12px;
+    color: #a4b1ff;
+    text-decoration: none;
+    text-align: center;
+}
+a:hover { text-decoration: underline; }
 /* Create Quote styles - scaffold */
