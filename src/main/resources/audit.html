@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Audit Log</title></head>
+<body>
+<h2>Lịch sử hoạt động</h2>
+<table border="1">
+  <tr><th>Người dùng</th><th>Hành động</th><th>Thời gian</th></tr>
+  <tr th:each="log : ${logs}">
+    <td th:text="${log.username}"></td>
+    <td th:text="${log.action}"></td>
+    <td th:text="${log.timestamp}"></td>
+  </tr>
+</table>
+</body>
+</html>
