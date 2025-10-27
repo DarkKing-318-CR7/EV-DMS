@@ -7,55 +7,51 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "payment")
 public class Payment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long orderId;
-    private String paymentType; // cash / installment
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private OrderHdr order;
+    private String method;          // CASH/CARD/TRANSFER/INSTALLMENT
     private BigDecimal amount;
-    private LocalDateTime paymentDate = LocalDateTime.now();
+    private LocalDateTime paidAt = LocalDateTime.now();
+    private String note;
 
-    // ==========================
-    // Getters & Setters
-    // ==========================
-    public Long getId() {
-        return id;
-    }
+    @Enumerated(EnumType.STRING)
+    private PaymentType type;
+    private String refNo;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 
-    public Long getOrderId() {
-        return orderId;
-    }
+    public Long getId() {return id;}
 
-    public void setOrderId(Long orderId) {
-        this.orderId = orderId;
-    }
+    public OrderHdr getOrder() {return order;}
 
-    public String getPaymentType() {
-        return paymentType;
-    }
+    public void setOrder(OrderHdr order) {this.order = order;}
 
-    public void setPaymentType(String paymentType) {
-        this.paymentType = paymentType;
-    }
+    public PaymentType getType() {return type;}
 
-    public BigDecimal getAmount() {
-        return amount;
-    }
+    public void setType(PaymentType type) {this.type = type;}
 
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
+    public BigDecimal getAmount() {return amount;}
 
-    public LocalDateTime getPaymentDate() {
-        return paymentDate;
-    }
+    public void setAmount(BigDecimal amount) {this.amount = amount;}
 
-    public void setPaymentDate(LocalDateTime paymentDate) {
-        this.paymentDate = paymentDate;
-    }
+    public String getMethod() {return method;}
+
+    public void setMethod(String method) {this.method = method;}
+
+    public String getRefNo() {return refNo;}
+
+    public void setRefNo(String refNo) {this.refNo = refNo;}
+
+    public LocalDateTime getPaidAt() {return paidAt;}
+
+    public void setPaidAt(LocalDateTime paidAt) {this.paidAt = paidAt;}
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+
 }

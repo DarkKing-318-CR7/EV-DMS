@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đơn hàng • Dealer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/dealer/home}">EV-DMS</a>
+        <div class="navbar-nav">
+            <a class="nav-link active" th:href="@{/dealer/orders}">Đơn hàng</a>
+            <a class="nav-link" th:href="@{/dealer/vehicles}">Danh mục xe</a>
+            <a class="nav-link" th:href="@{/dealer/customers}">Khách hàng</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-3">
+        <h3 class="me-auto m-0">Tất cả đơn hàng</h3>
+        <form class="d-flex" method="get" th:action="@{/dealer/orders}">
+            <input class="form-control me-2" type="search" name="q" placeholder="Tìm theo mã/khách hàng">
+            <button class="btn btn-primary">Tìm</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle m-0">
+                <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>khách hàng</th>
+                    <th>trạng thái</th>
+                    <th>tổng tiền</th>
+                    <th>tạo lúc</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="o, iStat : ${orders}">
+                    <td th:text="${o.id}">1</td>
+                    <td th:text="${o.customerName}">nguyen van a</td>
+                    <td>
+                        <span class="badge rounded-pill bg-secondary" th:text="${o.status}">NEW</span>
+                    </td>
+                    <td th:text="${#numbers.formatDecimal(o.totalAmount,0,'POINT',0,'COMMA')}">0</td>
+                    <td th:text="${#temporals.format(o.createdAt,'dd/MM/yyyy HH:mm')}">--</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{|/dealer/orders/${o.id}|}">Chi tiết</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(orders)}">
+                    <td colspan="6" class="text-center text-muted py-4">Chưa có đơn hàng</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

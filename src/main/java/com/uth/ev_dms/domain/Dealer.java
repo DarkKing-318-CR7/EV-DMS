@@ -1,31 +1,22 @@
 package com.uth.ev_dms.domain;
 
-
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import lombok.*;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
-
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Table(name = "dealers",
-        indexes = {@Index(columnList = "code", unique = true),
-                @Index(columnList = "region")})
-@Getter @Setter @NoArgsConstructor
-public class Dealer extends BaseAudit {
+@Table(name = "dealer")
+@Getter @Setter
+public class Dealer {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @NotBlank
-    @Column(nullable = false, unique = true, length = 32)
-    private String code;
-
-    @NotBlank
-    @Column(nullable = false, length = 128)
+    @Column(nullable=false, length=150)
     private String name;
 
-    @Column(length = 32)
-    private String region;            // VD: NORTH, SOUTH...
+    private String address;
+    private String phone;
+    private Long regionId;
 
-    @Column(nullable = false)
-    private Boolean active = true;
 }
