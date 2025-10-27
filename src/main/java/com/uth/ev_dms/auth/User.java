@@ -1,5 +1,7 @@
 package com.uth.ev_dms.auth;
 
+import com.uth.ev_dms.domain.Dealer;   // ✅ thêm
+import com.uth.ev_dms.domain.Region;   // ✅ thêm
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Set;
@@ -31,4 +33,13 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
+
+    // ✅ thêm 2 quan hệ dưới đây
+    @ManyToOne
+    @JoinColumn(name = "dealer_id")     // cột khóa ngoại trong bảng users
+    private Dealer dealer;
+
+    @ManyToOne
+    @JoinColumn(name = "region_id")     // cột khóa ngoại trong bảng users
+    private Region region;
 }
