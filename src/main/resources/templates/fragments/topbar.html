@@ -2,21 +2,28 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="topbar" class="topbar">
+
+    <!-- Logo / Brand -->
     <div class="brand">
-        <i class="fas fa-bolt"></i>
+        <i class="fa-solid fa-bolt"></i>
         <span>EV-DMS Dealer</span>
     </div>
 
+    <!-- Search Bar -->
     <div class="search">
-        <i class="fas fa-search"></i>
+        <i class="fa-solid fa-magnifying-glass"></i>
         <input type="text" placeholder="Search vehicles, orders, quotes..." />
     </div>
 
+    <!-- User Info -->
     <div class="user">
-        <span th:text="${username} ?: 'dealer@example.com'"></span>
-        <div class="avatar"><i class="fas fa-user"></i></div>
-        <a class="btn" href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <i class="fa-solid fa-user"></i>
+        <span th:text="${user != null ? user.email : 'dealer@example.com'}">dealer@example.com</span>
+        <form th:action="@{/logout}" method="post" style="display:inline;">
+            <button type="submit" class="btn">Logout</button>
+        </form>
     </div>
+
 </div>
 </body>
 </html>

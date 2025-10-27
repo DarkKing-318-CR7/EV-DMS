@@ -1,64 +1,90 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Quote • EV-DMS</title>
-    <link rel="stylesheet" href="/css/quote-create.css">
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout :: layout(~{::content})">
+
 <body>
+<div th:fragment="content" class="container">
 
-<h1>Create Quote</h1>
+    <h1>Create New Quote</h1>
 
-<form th:action="@{/dealer/quotes/my/save}" method="post">
-    <div>
-        <label>Customer ID:</label>
-        <input type="number" name="customerId" placeholder="Enter customer ID" required>
-    </div>
+    <form th:action="@{/dealer/quotes/my/save}" method="post" th:object="${quote}">
+        <!-- Customer -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label for="customerId">Customer ID:</label>
+            <input type="number" id="customerId" name="customerId"
+                   class="form-control" th:field="*{customerId}" required>
+        </div>
 
-    <div>
-        <label>Region:</label>
-        <input type="text" name="region" placeholder="north / central / south">
-    </div>
+        <!-- Status -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label for="status">Status:</label>
+            <select id="status" name="status" th:field="*{status}" class="form-control">
+                <option value="DRAFT">DRAFT</option>
+                <option value="PENDING">PENDING</option>
+            </select>
+        </div>
 
-    <div>
-        <label>Dealer ID:</label>
-        <input type="number" name="dealerId" placeholder="Dealer ID (optional)">
-    </div>
+        <!-- Items -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label>Quote Items:</label>
+            <div id="items-container">
+                <div class="item-row" th:each="item,iterStat : *{items}">
+                    <input type="text" placeholder="Vehicle ID" th:field="*{items[__${iterStat.index}__].vehicleId}"
+                           style="width: 160px; margin-right: 8px;">
+                    <input type="number" placeholder="Quantity" th:field="*{items[__${iterStat.index}__].quantity}"
+                           style="width: 100px;">
+                </div>
+            </div>
+            <button type="button" id="add-item-btn" class="btn btn-secondary" style="margin-top: 8px;">
+                + Add Item
+            </button>
+        </div>
 
-    <div>
-        <label>Vehicle Trim ID:</label>
-        <input type="number" name="vehicleTrimId" placeholder="Trim ID (optional)">
-    </div>
+        <!-- Promotions -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label>Apply Promotions:</label>
+            <div>
+                <div th:each="promo : ${promotions}">
+                    <input type="checkbox" name="promotionIds"
+                           th:value="${promo.id}">
+                    <span th:text="${promo.name}"></span>
+                </div>
+            </div>
+        </div>
 
-    <div>
-        <label>Total Amount:</label>
-        <input type="number" step="0.01" name="totalAmount" placeholder="Total amount" required>
-    </div>
+        <!-- Total Amount -->
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label for="totalAmount">Total Amount:</label>
+            <input type="number" step="0.01" id="totalAmount" name="totalAmount"
+                   class="form-control" th:field="*{totalAmount}">
+        </div>
 
-    <!-- ========== Chọn Khuyến mãi (Promotion) ========== -->
-    <div>
-        <label>Apply Promotions:</label>
-        <select name="promotionIds" multiple>
-            <option th:each="p : ${promotions}"
-                    th:value="${p.id}"
-                    th:text="${p.name + ' (' + p.discountPercent + '%)'}">
-            </option>
-        </select>
-        <small>Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều khuyến mãi</small>
-    </div>
+        <!-- Submit -->
+        <div style="margin-top: 16px;">
+            <button type="submit" class="btn btn-primary">Save Quote</button>
+            <a href="/dealer/quotes/my" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
 
-    <!-- ========== Sản phẩm (nếu CreateQuoteDTO có danh sách items) ========== -->
-    <div>
-        <label>Items:</label>
-        <textarea name="items" placeholder="Tạm thời nhập mô tả đơn giản"></textarea>
-    </div>
+</div>
 
-    <button type="submit">Save Quote</button>
-</form>
+<!-- Optional JS for adding items -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const container = document.getElementById("items-container");
+        const addBtn = document.getElementById("add-item-btn");
 
-<hr>
-<a href="/dealer/quotes/my">← Back to My Quotes</a>
+        addBtn.addEventListener("click", () => {
+            const div = document.createElement("div");
+            div.className = "item-row";
+            div.innerHTML = `
+                <input type="text" name="items[].vehicleId" placeholder="Vehicle ID" style="width: 160px; margin-right: 8px;">
+                <input type="number" name="items[].quantity" placeholder="Quantity" style="width: 100px;">
+            `;
+            container.appendChild(div);
+        });
+    });
+</script>
 
 </body>
 </html>
