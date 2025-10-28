@@ -11,7 +11,8 @@ import java.util.List;
 public interface OrderRepo extends JpaRepository<OrderHdr, Long> {
 
     // Dealer Staff – “Đơn của tôi”
-    List<OrderHdr> findBySalesStaffIdOrderByIdDesc(Long staffId);
+    List<OrderHdr> findBySalesStaffIdAndDealerIdOrderByIdDesc(Long salesStaffId, Long dealerId);
+
 
     // Dealer Manager – tất cả đơn theo đại lý
     @Query("select o from OrderHdr o where o.dealerId = :dealerId order by o.id desc")
@@ -45,4 +46,9 @@ public interface OrderRepo extends JpaRepository<OrderHdr, Long> {
     """)
     List<OrderHdr> findByStatusAndDealerRegion(@Param("status") OrderStatus status,
                                                @Param("regionId") Long regionId);
+    // Dealer Staff – “Đơn của tôi”
+    List<OrderHdr> findBySalesStaffIdOrderByIdDesc(Long salesStaffId);
+
+
+
 }

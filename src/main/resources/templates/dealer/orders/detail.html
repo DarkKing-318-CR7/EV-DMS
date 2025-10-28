@@ -98,7 +98,7 @@
                         </table>
                     </div>
 
-                    <!-- Form thanh toan tien mat -->
+                    <!-- Form thanh toán tiền mặt -->
                     <form class="row gy-2 gx-2 align-items-end"
                           th:action="@{|/dealer/orders/${order.id}/pay-cash|}" method="post">
                         <div class="col-md-4">
@@ -122,19 +122,27 @@
             <div class="card">
                 <div class="card-header">Hành động</div>
                 <div class="card-body d-grid gap-2">
-                    <form th:action="@{|/dealer/orders/${order.id}/allocate|}" method="post">
-                        <button class="btn btn-success w-100"
+                    <!-- Flash -->
+                    <div th:if="${ok != null or error != null}">
+                        <div class="alert alert-success" th:if="${ok != null}" th:text="${ok}"></div>
+                        <div class="alert alert-danger" th:if="${error != null}" th:text="${error}"></div>
+                    </div>
+
+                    <!-- Xin cấp xe -->
+                    <form th:action="@{|/dealer/orders/${order.id}/allocate|}" method="post" class="d-grid">
+                        <button class="btn btn-warning"
                                 th:disabled="${order.status != T(com.uth.ev_dms.domain.OrderStatus).NEW}">
-                            Allocate tồn kho
+                            Xin cấp xe
                         </button>
                     </form>
-                    <form th:action="@{|/dealer/orders/${order.id}/cancel|}" method="post">
-                        <button class="btn btn-outline-danger w-100"
-                                th:disabled="${order.status == T(com.uth.ev_dms.domain.OrderStatus).CANCELLED}">
-                            Hủy đơn
-                        </button>
+
+                    <!-- Hủy đơn (khi NEW) -->
+                    <form th:if="${order.status == T(com.uth.ev_dms.domain.OrderStatus).NEW}"
+                          th:action="@{|/dealer/orders/${order.id}/cancel|}" method="post">
+                        <button class="btn btn-outline-danger w-100">Hủy đơn</button>
                     </form>
-                    <a class="btn btn-outline-secondary w-100" th:href="@{/dealer/orders}">Quay lại danh sách</a>
+
+                    <a class="btn btn-outline-secondary w-100" th:href="@{/dealer/orders}">Quay lại</a>
                 </div>
             </div>
 

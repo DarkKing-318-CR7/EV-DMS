@@ -125,4 +125,67 @@ public class OrderServiceImpl implements OrderService {
     private String generateOrderNo() {
         return "ODR-" + System.currentTimeMillis();
     }
+
+
+    @Transactional
+    public OrderHdr cancel(Long orderId) {
+        OrderHdr order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getStatus() == OrderStatus.ALLOCATED || order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Không thể hủy đơn đã được phân bổ hoặc đã giao.");
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        return orderRepo.save(order);
+    }
+    @Transactional
+    @Override
+    public OrderHdr cancelByDealer(Long orderId, Long dealerId, Long actorId) {
+        var o = orderRepo.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
+        if (!o.getDealerId().equals(dealerId)) {
+            throw new SecurityException("FORBIDDEN_DEALER");
+        }
+        if (o.getStatus() != OrderStatus.NEW) {
+            throw new IllegalStateException("ORDER_CANNOT_CANCEL_IN_STATUS_" + o.getStatus());
+        }
+        o.setStatus(OrderStatus.CANCELLED);
+        // optional: o.setCancelledBy(actorId); o.setCancelledAt(Instant.now());
+        return orderRepo.save(o);
+    }
+    @Transactional
+    @Override
+    public OrderHdr deallocateByEvm(Long orderId, Long actorId, String reason) {
+        var o = orderRepo.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
+        if (o.getStatus() != OrderStatus.ALLOCATED) {
+            throw new IllegalStateException("ONLY_ALLOCATED_CAN_BE_DEALLOCATED");
+        }
+        // TODO: trả xe về pool tồn kho, rollback các bản ghi phân bổ… (nếu bạn có bảng Allocation)
+        o.setStatus(OrderStatus.PENDING_ALLOC);
+        // optional log: allocationLogRepo.save(new AllocationLog(orderId, "DEALLOCATE", actorId, reason))
+        return orderRepo.save(o);
+    }
+
+    @Transactional
+    @Override
+    public OrderHdr cancelByEvm(Long orderId, Long actorId, String reason) {
+        var o = orderRepo.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
+
+        if (o.getStatus() == OrderStatus.ALLOCATED) {
+            throw new IllegalStateException("DEALLOCATE_FIRST");
+        }
+        if (o.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("DELIVERED_CANNOT_CANCEL");
+        }
+        if (o.getStatus() == OrderStatus.CANCELLED) return o;
+
+        // Cho phép: NEW, PENDING_ALLOC
+        o.setStatus(OrderStatus.CANCELLED);
+        // optional: o.setCancelledBy(actorId); o.setCancelReason(reason);
+        return orderRepo.save(o);
+    }
+
 }
