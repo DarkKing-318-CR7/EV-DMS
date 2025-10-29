@@ -29,12 +29,15 @@ public class DealerOrderController {
     // GET /dealer/orders/my
     @GetMapping("/my")
     public String myOrders(Model model, Principal principal) {
-        Long staffId = userService.findIdByUsername(principal.getName());
-        var orders = orderService.findMine(staffId);
+        String username = principal.getName();
+        Long staffId = userService.findIdByUsername(username);
+        Long dealerId = userService.findDealerIdByUsername(username);
+
+        var orders = orderRepo.findBySalesStaffIdAndDealerIdOrderByIdDesc(staffId, dealerId);
+
         model.addAttribute("orders", orders);
         return "dealer/orders/my-list";
     }
-
     // GET /dealer/orders
     @GetMapping
     public String listAll(Model model, Principal principal) {
@@ -50,6 +53,7 @@ public class DealerOrderController {
         orderService.submitForAllocation(orderId);
         return "redirect:/dealer/orders";
     }
+
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         var order = orderRepo.findById(id)
@@ -59,6 +63,7 @@ public class DealerOrderController {
         model.addAttribute("payments", order.getPayments());
         return "dealer/orders/detail"; // ✅ đường dẫn tới template
     }
+
     @PostMapping("/{id}/allocate")
     public String allocate(@PathVariable Long id, RedirectAttributes ra) {
         OrderHdr o = orderRepo.findById(id)
@@ -74,19 +79,7 @@ public class DealerOrderController {
     }
 
     // huỷ đơn
-    @PostMapping("/{id}/cancel")
-    public String cancel(@PathVariable Long id, RedirectAttributes ra) {
-        OrderHdr o = orderRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("ORDER_NOT_FOUND"));
-        if (o.getStatus() == OrderStatus.NEW) {
-            o.setStatus(OrderStatus.CANCELLED);
-            orderRepo.save(o);
-            ra.addFlashAttribute("ok", "Đã huỷ đơn.");
-        } else {
-            ra.addFlashAttribute("error", "Chỉ huỷ được đơn trạng thái NEW.");
-        }
-        return "redirect:/dealer/orders/" + id;
-    }
+
 
     // thanh toán tiền mặt demo (tuỳ bạn có entity Payment hay không)
     @PostMapping("/{id}/pay-cash")
@@ -97,5 +90,29 @@ public class DealerOrderController {
         ra.addFlashAttribute("ok", "Đã ghi nhận thanh toán (demo).");
         return "redirect:/dealer/orders/" + id;
     }
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable Long id, RedirectAttributes ra, Principal p) {
+        var dealerId = userService.findDealerIdByUsername(p.getName());
+        orderService.cancelByDealer(id, dealerId, null);
+        ra.addFlashAttribute("ok", "Đã hủy đơn #" + id);
+        return "redirect:/dealer/orders";
+    }
+    @PostMapping("/{id}/request-allocate")
+    public String requestAllocate(@PathVariable Long id, Principal p, RedirectAttributes ra) {
+        OrderHdr o = orderRepo.findById(id).orElseThrow();
+        if (o.getStatus() != OrderStatus.NEW) {
+            ra.addFlashAttribute("err", "Chỉ đơn NEW mới được xin cấp.");
+            return "redirect:/dealer/orders/" + id;
+        }
+        o.setStatus(OrderStatus.PENDING_ALLOC);
+        // ghi ai gửi yêu cầu nếu muốn
+        Long uid = userService.getUserId(p);
+        o.setCreatedBy(uid); // hoặc field riêng requestBy
+        orderRepo.save(o);
+        ra.addFlashAttribute("ok", "Đã gửi yêu cầu cấp xe (PENDING_ALLOC).");
+        return "redirect:/dealer/orders/" + id;
+    }
+
+
 
 }

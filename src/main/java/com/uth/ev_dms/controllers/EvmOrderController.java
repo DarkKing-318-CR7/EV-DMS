@@ -8,11 +8,14 @@ import com.uth.ev_dms.repo.OrderRepo;
 import com.uth.ev_dms.service.OrderService;
 import com.uth.ev_dms.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -61,4 +64,31 @@ public class EvmOrderController {
 
         return "evm/orders/detail";
     }
+    @PostMapping("/{id}/approve-allocate")
+    public String approveAllocate(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+            orderService.allocate(id);
+            ra.addFlashAttribute("ok", "Đã duyệt & phân bổ thành công đơn #" + id);
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Lỗi khi duyệt: " + e.getMessage());
+        }
+        return "redirect:/evm/orders/" + id;
+    }
+    @PostMapping("/{id}/deallocate")
+    public String deallocate(@PathVariable Long id, RedirectAttributes ra) {
+        orderService.deallocateByEvm(id, null, "manual");
+        ra.addFlashAttribute("ok", "Đã thu hồi phân bổ đơn #" + id);
+        return "redirect:/evm/orders/" + id;
+    }
+
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable Long id, RedirectAttributes ra) {
+        orderService.cancelByEvm(id, null, "manual");
+        ra.addFlashAttribute("ok", "Đã hủy đơn #" + id);
+        return "redirect:/evm/orders/" + id;
+    }
+
+
+
+
 }
