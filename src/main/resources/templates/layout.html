@@ -1,32 +1,41 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:fragment="layout(content)">   <!-- ✅ fragment ở <html> -->
+      th:fragment="layout(content)">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle} ?: 'EV-DMS Portal'">EV-DMS Portal</title>
 
-    <!-- CSS chung -->
-    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css"> <!-- ✅ -->
+    <!-- ===== Custom CSS ===== -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/quotes.css}">
+    <link rel="stylesheet" th:href="@{/css/quote-create.css}">
+
+    <!-- ===== Google Fonts ===== -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Spartan:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css">
+
+    <!-- ===== Font Awesome LOCAL ===== -->
+    <link rel="stylesheet" th:href="@{/vendor/fontawesome/css/all.min.css}">
 </head>
+
 <body>
 <div class="overlay"></div>
 
-<div class="page">
-    <div th:replace="fragments/topbar :: topbar"></div>
+<div class="page-wrapper">
+    <!-- topbar -->
+    <header th:replace="fragments/topbar :: topbar"></header>
 
-    <div class="layout">
-        <aside th:replace="~{fragments/sidebar-router}"></aside>
-        <main class="content" th:insert="${content}"></main>
+    <!-- main layout -->
+    <div class="main-layout">
+        <aside th:replace="fragments/sidebar-router :: sidebar"></aside>
+        <main class="main-content" th:insert="${content}"></main>
     </div>
 </div>
 
-<script th:src="@{/js/main.js}" src="/js/main.js"></script>
+<script th:src="@{/js/main.js}"></script>
 </body>
 </html>

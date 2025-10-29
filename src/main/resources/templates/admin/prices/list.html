@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='products', pageTitle=${'Prices · ' + trim.trimName}"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
+
+    <section class="page-header">
+        <h1 th:text="${'Price List · ' + trim.trimName}">Price List</h1>
+        <p class="subtitle">
+            Vehicle:
+            <a th:href="@{'/admin/products/' + ${trim.vehicle.id}}" th:text="${trim.vehicle.modelName}">Model</a>
+        </p>
+        <div style="display:flex; gap:10px;">
+            <a class="btn btn-outline" th:href="@{'/admin/products/' + ${trim.vehicle.id}}">← Back to Vehicle</a>
+            <a class="btn btn-gradient" th:href="@{'/admin/trims/' + ${trim.id} + '/prices/create'}">+ Add Price</a>
+        </div>
+    </section>
+
+    <section class="card" style="padding:0;">
+        <div class="table-wrapper" style="padding: 0 20px 20px;">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>MSRP</th>
+                    <th>Effective From</th>
+                    <th>Effective To</th>
+                    <th>Status</th>
+                    <th style="width:160px;"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${prices}">
+                    <td th:text="${#numbers.formatDecimal(p.msrp, 0, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td th:text="${#temporals.format(p.effectiveFrom, 'dd/MM/yyyy')}">01/10/2025</td>
+                    <td th:text="${p.effectiveTo != null ? #temporals.format(p.effectiveTo, 'dd/MM/yyyy') : '-'}">-</td>
+                    <td>
+                        <span th:text="${p.active} ? 'Active' : 'Inactive'">Active</span>
+                    </td>
+                    <td>
+                        <form th:action="@{'/admin/prices/' + ${p.id} + '/deactivate'}" method="post" style="display:inline;">
+                            <input type="hidden" name="trimId" th:value="${trim.id}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button class="btn btn-outline" type="submit" th:disabled="${!p.active}">Deactivate</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div th:if="${#lists.isEmpty(prices)}" class="empty-state" style="padding:20px; text-align:center;">
+                Chưa có bảng giá nào. <a th:href="@{'/admin/trims/' + ${trim.id} + '/prices/create'}">Tạo ngay.</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+</html>

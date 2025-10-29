@@ -89,6 +89,31 @@ public class SalesServiceImpl implements SalesService {
     }
 
     @Override
+    public Quote submitQuote(Long quoteId) {
+        return null;
+    }
+
+    @Override
+    public Quote rejectQuote(Long quoteId, String comment) {
+        return null;
+    }
+
+    @Override
+    public List<Quote> findPending() {
+        return List.of();
+    }
+
+    @Override
+    public List<Quote> findAll() {
+        return List.of();
+    }
+
+    @Override
+    public Quote applyPromotions(Long quoteId, List<Long> promotionIds) {
+        return null;
+    }
+
+    @Override
     @Transactional
     public Payment makeCashPayment(Long orderId, BigDecimal amount) {
         OrderHdr order = orderRepo.findById(orderId)

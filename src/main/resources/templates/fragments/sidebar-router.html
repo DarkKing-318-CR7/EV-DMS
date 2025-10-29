@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="sidebar">   <!-- fragment -->
 <body>
-<!-- Chỉ một trong các dòng dưới sẽ render tùy theo role -->
 <div sec:authorize="hasRole('ADMIN')"
      th:replace="~{fragments/admin-sidebar :: sidebar(active=${active})}"></div>
 

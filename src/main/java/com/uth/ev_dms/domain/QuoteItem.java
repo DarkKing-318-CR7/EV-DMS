@@ -2,6 +2,7 @@ package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "quote_item")
@@ -10,8 +11,9 @@ public class QuoteItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "quote_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "quote_id", referencedColumnName = "id", nullable = false)
+    @JsonBackReference
     private Quote quote;
 
     private Long vehicleId;
