@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:with="active='products', pageTitle='Create Vehicle'"
-      th:replace="~{layout :: layout(~{::main})}">
+      th:with="active='products', pageTitle='Create Vehicle'">
+
+<body>
+<div th:replace="layout :: layout(~{::main})"></div>
+
 <main>
     <section class="page-header">
         <h1>Create Vehicle</h1>
@@ -27,14 +30,14 @@
             <div class="field">
                 <label>Body Type</label>
                 <select th:field="*{bodyType}">
-                    <option th:value="">— Select —</option>
-                    <option th:value="SUV">SUV</option>
-                    <option th:value="Sedan">Sedan</option>
-                    <option th:value="Hatchback">Hatchback</option>
-                    <option th:value="Crossover">Crossover</option>
-                    <option th:value="Coupe">Coupe</option>
-                    <option th:value="Pickup">Pickup</option>
-                    <option th:value="Van">Van</option>
+                    <option value="">— Select —</option>
+                    <option>SUV</option>
+                    <option>Sedan</option>
+                    <option>Hatchback</option>
+                    <option>Crossover</option>
+                    <option>Coupe</option>
+                    <option>Pickup</option>
+                    <option>Van</option>
                 </select>
             </div>
 
@@ -49,10 +52,6 @@
             </div>
         </form>
     </section>
-
-    <script>
-        const mc = document.querySelector('[name="modelCode"]');
-        if (mc) mc.addEventListener('input', e => e.target.value = e.target.value.toUpperCase());
-    </script>
 </main>
+</body>
 </html>
