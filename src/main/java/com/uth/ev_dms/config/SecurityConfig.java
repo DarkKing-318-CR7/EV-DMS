@@ -58,19 +58,30 @@ public class SecurityConfig {
                         // Admin
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // Dealer Staff xem đơn của mình
+                        // Dealer Staff xem "Đơn của tôi"
                         .requestMatchers("/dealer/orders/my/**")
                         .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
 
-                        // Dealer Manager xem/pending toàn đại lý
-                        .requestMatchers("/dealer/orders/**")
+                        // ===== Dealer Orders =====
+                        // Cho xem chi tiết / list cho cả staff & manager
+                        .requestMatchers(HttpMethod.GET, "/dealer/orders/**")
+                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
+
+                        // Hành động chỉ Manager (ví dụ duyệt/allocate…)
+                        .requestMatchers(HttpMethod.POST, "/dealer/orders/*/allocate")
                         .hasAnyRole("DEALER_MANAGER","ADMIN")
 
-                        // EVM: xem pending + duyệt allocate
-                        .requestMatchers(HttpMethod.GET,  "/evm/orders/pending").hasAnyRole("EVM_STAFF","ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate").hasAnyRole("EVM_STAFF","ADMIN")
-                        // nếu còn các GET/POST EVM khác:
-                        .requestMatchers("/evm/orders/**").hasAnyRole("EVM_STAFF","ADMIN")
+                        // Hủy: cho staff cũng được (nếu nghiệp vụ cho phép)
+                        .requestMatchers(HttpMethod.POST, "/dealer/orders/*/cancel")
+                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
+
+                        // ===== EVM =====
+                        .requestMatchers(HttpMethod.GET,  "/evm/orders/pending")
+                        .hasAnyRole("EVM_STAFF","ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate")
+                        .hasAnyRole("EVM_STAFF","ADMIN")
+                        .requestMatchers("/evm/orders/**")
+                        .hasAnyRole("EVM_STAFF","ADMIN")
 
                         .anyRequest().authenticated()
                 )
