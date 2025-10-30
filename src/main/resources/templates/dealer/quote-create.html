@@ -2,89 +2,209 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
       th:replace="layout :: layout(~{::content})">
 
+<head>
+    <meta charset="UTF-8">
+    <title>Create Quote</title>
+    <style>
+        /* Vùng tổng thể */
+        form {
+            color: #fff;
+            font-family: 'Spartan', sans-serif;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #ddd;
+        }
+
+        input, select {
+            background-color: #1f1f2b;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 8px 10px;
+            border-radius: 6px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #6ea8fe;
+            box-shadow: 0 0 4px #6ea8fe;
+        }
+
+        /* ========== Hàng item-row (căn lề tuyệt đối) ========== */
+        #items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 270px 90px 150px 45px; /* 4 cột cố định */
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .item-row select, .item-row input {
+            background-color: #2a2a38;
+            border: 1px solid #555;
+            color: #fff;
+            width: 100%;
+        }
+
+        .remove-item-btn {
+            background: #c0392b;
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 6px 8px;
+            transition: background 0.2s ease;
+        }
+
+        .remove-item-btn:hover {
+            background: #e74c3c;
+        }
+
+        /* ===== Buttons ===== */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #4a6cf7, #6ea8fe);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        /* Tổng tiền */
+        #totalAmount {
+            background-color: #2a2a38;
+            color: #fff;
+            font-weight: bold;
+            border: 1px solid #666;
+        }
+
+        /* ======= Căn lề tuyệt đối cho các dòng item ======= */
+        #items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 600px; /* tổng độ rộng thống nhất */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 270px 90px 150px 45px; /* cột cố định, không xê dịch */
+            gap: 10px;
+            align-items: center;
+            justify-items: stretch;
+        }
+
+        .item-row select,
+        .item-row input {
+            width: 100%;
+        }
+
+        .item-row button {
+            width: 100%;
+            height: 36px;
+        }
+    </style>
+
+
+</head>
+
 <body>
 <div th:fragment="content" class="container">
 
-    <h1>Create New Quote</h1>
+    <h1 style="text-align:center; margin-bottom: 24px;">Create New Quote</h1>
 
-    <form th:action="@{/dealer/quotes/my/save}" method="post" th:object="${quote}">
+    <form th:action="@{/dealer/quotes/my/save}" method="post" th:object="${quote}" style="max-width: 600px; margin: auto;">
+
         <!-- Customer -->
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group">
             <label for="customerId">Customer ID:</label>
             <input type="number" id="customerId" name="customerId"
                    class="form-control" th:field="*{customerId}" required>
         </div>
 
         <!-- Status -->
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group">
             <label for="status">Status:</label>
-            <select id="status" name="status" th:field="*{status}" class="form-control">
+            <select id="status" name="status" th:field="*{status}">
                 <option value="DRAFT">DRAFT</option>
                 <option value="PENDING">PENDING</option>
             </select>
         </div>
 
         <!-- Items -->
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group">
             <label>Quote Items:</label>
-            <div id="items-container">
-                <div class="item-row" th:each="item,iterStat : *{items}">
-                    <input type="text" placeholder="Vehicle ID" th:field="*{items[__${iterStat.index}__].vehicleId}"
-                           style="width: 160px; margin-right: 8px;">
-                    <input type="number" placeholder="Quantity" th:field="*{items[__${iterStat.index}__].quantity}"
-                           style="width: 100px;">
-                </div>
-            </div>
+            <div id="items-container"></div>
+
             <button type="button" id="add-item-btn" class="btn btn-secondary" style="margin-top: 8px;">
                 + Add Item
             </button>
         </div>
 
         <!-- Promotions -->
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group">
             <label>Apply Promotions:</label>
             <div>
                 <div th:each="promo : ${promotions}">
-                    <input type="checkbox" name="promotionIds"
-                           th:value="${promo.id}">
+                    <input type="checkbox" name="promotionIds" th:value="${promo.id}">
                     <span th:text="${promo.name}"></span>
                 </div>
             </div>
         </div>
 
         <!-- Total Amount -->
-        <div class="form-group" style="margin-bottom: 12px;">
+        <div class="form-group">
             <label for="totalAmount">Total Amount:</label>
             <input type="number" step="0.01" id="totalAmount" name="totalAmount"
-                   class="form-control" th:field="*{totalAmount}">
+                   th:field="*{totalAmount}" readonly>
         </div>
 
         <!-- Submit -->
-        <div style="margin-top: 16px;">
+        <div style="margin-top: 20px; text-align:center;">
             <button type="submit" class="btn btn-primary">Save Quote</button>
             <a href="/dealer/quotes/my" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 
+    <!-- =================== JS SECTION =================== -->
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        window._vehicles = /*[[${vehicles}]]*/ [];
+        console.log("✅ Vehicles injected:", window._vehicles);
+        /*]]>*/
+    </script>
+
+    <script th:src="@{/js/quote-create.js}"></script>
+
 </div>
-
-<!-- Optional JS for adding items -->
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const container = document.getElementById("items-container");
-        const addBtn = document.getElementById("add-item-btn");
-
-        addBtn.addEventListener("click", () => {
-            const div = document.createElement("div");
-            div.className = "item-row";
-            div.innerHTML = `
-                <input type="text" name="items[].vehicleId" placeholder="Vehicle ID" style="width: 160px; margin-right: 8px;">
-                <input type="number" name="items[].quantity" placeholder="Quantity" style="width: 100px;">
-            `;
-            container.appendChild(div);
-        });
-    });
-</script>
-
 </body>
 </html>
