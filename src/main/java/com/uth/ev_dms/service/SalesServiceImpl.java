@@ -36,7 +36,8 @@ public class SalesServiceImpl implements SalesService {
         q.setCustomerId(dto.getCustomerId());
         q.setStatus("DRAFT");
         q.setTotalAmount(dto.getTotalAmount());
-
+        q.setAppliedDiscount(BigDecimal.ZERO);
+        q.setFinalAmount(dto.getTotalAmount());
         // tao danh sach item
         List<QuoteItem> items = new ArrayList<>();
         if (dto.getItems() != null) {
@@ -60,52 +61,70 @@ public class SalesServiceImpl implements SalesService {
         Quote quote = quoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
 
-        // cap nhat quote
+        // Cập nhật trạng thái quote
         quote.setStatus("APPROVED");
         quoteRepo.save(quote);
 
-        // tao order tu quote
+        // Tạo mã đơn tự động (ví dụ: ORD-20251030-00011)
+        String orderNo = "ORD-" + java.time.LocalDate.now() + "-" + quote.getId();
+
+        // Tạo order từ quote
         OrderHdr order = new OrderHdr();
         order.setQuoteId(quote.getId());
-        order.setStatus(OrderStatus.NEW);              // <-- enum, khong dung String
+        order.setOrderNo(orderNo); // ✅ thêm dòng này
+        order.setStatus(OrderStatus.NEW);
         order.setTotalAmount(quote.getTotalAmount());
+
+        // Gán thêm các field bắt buộc nếu có
+        order.setCreatedAt(java.time.LocalDateTime.now());
+        order.setDepositAmount(BigDecimal.ZERO);
+        order.setPaidAmount(BigDecimal.ZERO);
+        order.setBalanceAmount(order.getTotalAmount());
+
         OrderHdr savedOrder = orderRepo.save(order);
 
-        // chuyen QuoteItem -> OrderItem
+        // Copy items từ Quote sang Order
         if (quote.getItems() != null) {
             for (QuoteItem qi : quote.getItems()) {
                 OrderItem oi = new OrderItem();
                 oi.setOrder(savedOrder);
-                oi.setTrimId(qi.getVehicleId());       // <-- khop field trong OrderItem
-                oi.setQty(qi.getQuantity());           // <-- khop field trong OrderItem
+                oi.setTrimId(qi.getVehicleId());
+                oi.setQty(qi.getQuantity());
                 oi.setUnitPrice(qi.getUnitPrice());
                 orderItemRepo.save(oi);
             }
         }
 
-        // TODO: hook InventoryService.allocateForOrder(savedOrder.getId());
-
         return savedOrder;
     }
 
+
     @Override
+    @Transactional
     public Quote submitQuote(Long quoteId) {
-        return null;
+        Quote q = quoteRepo.findById(quoteId)
+                .orElseThrow(() -> new IllegalArgumentException("Quote not found"));
+        q.setStatus("PENDING");
+        return quoteRepo.save(q);
     }
 
     @Override
+    @Transactional
     public Quote rejectQuote(Long quoteId, String comment) {
-        return null;
+        Quote q = quoteRepo.findById(quoteId)
+                .orElseThrow(() -> new IllegalArgumentException("Quote not found"));
+        q.setStatus("REJECTED");
+        q.setRejectComment(comment);
+        return quoteRepo.save(q);
     }
 
     @Override
     public List<Quote> findPending() {
-        return List.of();
+        return quoteRepo.findByStatus("PENDING"); // ✅ Dành cho Manager
     }
-
     @Override
     public List<Quote> findAll() {
-        return List.of();
+        return quoteRepo.findAll(); // ✅ Lấy toàn bộ quote từ DB
     }
 
     @Override
