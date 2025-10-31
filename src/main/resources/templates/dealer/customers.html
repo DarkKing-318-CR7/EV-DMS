@@ -1,10 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout(~{::body})">
 <body>
+<div th:fragment="content">
+    <h2>Quan ly khach hang</h2>
+    <form id="f-add">
+        <input name="ten" placeholder="Ten khach hang" required>
+        <input name="email" placeholder="Email" required type="email">
+        <input name="sdt" placeholder="So dien thoai" required>
+        <input name="diachi" placeholder="Dia chi">
+        <button type="submit">Them</button>
+    </form>
+    <hr>
+    <table id="tb"></table>
+</div>
 
+<script>
+    async function load() {
+        const res = await fetch('/api/v1/crm/customers');
+        const data = await res.json();
+        const tb = document.getElementById('tb');
+        tb.innerHTML = '<tr><th>ID</th><th>Ten</th><th>Email</th><th>SDT</th><th>Dia chi</th></tr>' +
+            data.map(x=>`<tr><td>${x.id}</td><td>${x.ten}</td><td>${x.email}</td><td>${x.sdt}</td><td>${x.diachi??''}</td></tr>`).join('');
+    }
+    document.getElementById('f-add').addEventListener('submit', async e=>{
+        e.preventDefault();
+        const f = e.target;
+        const body = {ten:f.ten.value,email:f.email.value,sdt:f.sdt.value,diachi:f.diachi.value};
+        const r = await fetch('/api/v1/crm/customers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if(r.ok){ f.reset(); load(); } else { alert('Loi them khach hang'); }
+    });
+    load();
+</script>
 </body>
 </html>

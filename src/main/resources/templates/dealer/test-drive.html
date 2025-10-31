@@ -1,10 +1,62 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="utf-8">
+    <title>Manager - Test Drives</title>
+    <style>
+        body{font-family:system-ui,Arial;margin:24px}
+        table{border-collapse:collapse;width:100%}
+        th,td{border:1px solid #ccc;padding:8px}
+        th{background:#f5f5f5;text-align:left}
+        form{display:inline}
+    </style>
 </head>
 <body>
+<h2>Lich lai thu (Manager)</h2>
+
+<!-- simple filters -->
+<form method="get" th:action="@{/manager/testdrives}">
+    Tu ngay: <input type="date" name="from" th:value="${from}">
+    Den ngay: <input type="date" name="to" th:value="${to}">
+    Trang thai:
+    <select name="status">
+        <option th:value="${null}" th:selected="${status == null}">Tat ca</option>
+        <option th:each="st : ${T(com.uth.ev_dms.domain.TestDriveStatus).values()}"
+                th:value="${st}" th:text="${st}"
+                th:selected="${status == st}"></option>
+    </select>
+    <button type="submit">Loc</button>
+    <a th:href="@{/manager/testdrives}">Xoa loc</a>
+</form>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Khach hang</th>
+        <th>Xe</th>
+        <th>Thoi gian</th>
+        <th>Trang thai</th>
+        <th>Hanh dong</th>
+    </tr>
+    <tr th:each="td : ${list}">
+        <td th:text="${td.id}">1</td>
+        <td th:text="${td.customerName}">Nguyen Van A</td>
+        <td th:text="${td.vehicleName}">Hyundai Ioniq 5</td>
+        <td th:text="${#temporals.format(td.scheduleAt,'dd/MM/yyyy HH:mm')}">02/11/2025 09:00</td>
+        <td th:text="${td.status}">REQUESTED</td>
+        <td>
+            <form th:action="@{|/manager/testdrives/${td.id}/approve|}" method="post">
+                <button type="submit">Approve</button>
+            </form>
+            <form th:action="@{|/manager/testdrives/${td.id}/complete|}" method="post">
+                <button type="submit">Done</button>
+            </form>
+            <form th:action="@{|/manager/testdrives/${td.id}/cancel|}" method="post">
+                <button type="submit">Cancel</button>
+            </form>
+        </td>
+    </tr>
+</table>
 
 </body>
 </html>

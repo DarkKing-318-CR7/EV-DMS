@@ -11,6 +11,7 @@ public interface UserService {
     Long getUserId(Principal principal);
     Long getDealerId(Principal principal);
     Long findRegionIdByUsername(String username);
+    
 
 
     boolean hasRole(Principal principal, String role); // role vi du: "ROLE_DEALER_MANAGER"
