@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch lái thử (Manager)</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/test-drive.css}">
+</head>
+<body class="td-bg">
+
+<div class="td-shell">
+    <!-- Header -->
+    <header class="td-header glass">
+        <div class="td-title">
+            <h1>Lịch lái thử</h1>
+            <span class="td-sub">Manager</span>
+        </div>
+        <div class="td-actions">
+            <a class="btn" th:href="@{/dealer/test-drive/my}">↩ Staff view</a>
+            <a class="btn btn-primary" th:href="@{/dealer/test-drive/form}">+ Tạo lịch</a>
+        </div>
+    </header>
+
+    <!-- Filters -->
+    <section class="td-filters glass">
+        <form method="get" th:action="@{/manager/testdrives}" class="td-filters-grid">
+            <label class="f">
+                <span>Từ ngày</span>
+                <input type="date" name="from" th:value="${from}">
+            </label>
+            <label class="f">
+                <span>Đến ngày</span>
+                <input type="date" name="to" th:value="${to}">
+            </label>
+            <label class="f">
+                <span>Trạng thái</span>
+                <select name="status">
+                    <option value="" th:selected="${status == null or status == ''}">Tất cả</option>
+                    <option value="REQUESTED" th:selected="${status == 'REQUESTED'}">REQUESTED</option>
+                    <option value="CONFIRMED" th:selected="${status == 'CONFIRMED'}">CONFIRMED</option>
+                    <option value="COMPLETED" th:selected="${status == 'COMPLETED'}">COMPLETED</option>
+                    <option value="CANCELLED" th:selected="${status == 'CANCELLED'}">CANCELLED</option>
+                </select>
+            </label>
+            <div class="f f-actions">
+                <button class="btn btn-primary" type="submit">Lọc</button>
+                <a class="btn" th:href="@{/manager/testdrives}">Xoá lọc</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Table / Empty -->
+    <section class="td-card glass">
+        <table class="td-table" th:if="${not #lists.isEmpty(list)}">
+            <thead>
+            <tr>
+                <th style="width:80px">ID</th>
+                <th style="min-width:180px">Khách hàng</th>
+                <th style="min-width:120px">Điện thoại</th>
+                <th style="min-width:140px">Xe</th>
+                <th style="min-width:160px">Địa điểm</th>
+                <th style="min-width:170px">Thời gian</th>
+                <th>Ghi chú</th>
+                <th style="min-width:130px">Trạng thái</th>
+                <th style="min-width:260px;text-align:right">Hành động</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="td : ${list}">
+                <td th:text="${td.id}">1</td>
+                <td th:text="${td.customerName}">Nguyễn Văn A</td>
+                <td th:text="${td.customerPhone}">0909...</td>
+                <td th:text="${td.vehicleName}">EV-01</td>
+                <td th:text="${td.location}">Showroom Q1</td>
+                <td th:text="${#temporals.format(td.scheduleAt,'dd/MM/yyyy HH:mm')}">30/10/2025 10:00</td>
+                <td th:text="${td.notes}">...</td>
+                <td>
+                    <span class="badge" th:classappend="' ' + ${td.status}" th:text="${td.status}">REQUESTED</span>
+                </td>
+                <td class="td-row-actions">
+                    <a class="btn" th:href="@{|/dealer/test-drive/detail/${td.id}|}">Chi tiết</a>
+                    <form th:if="${td.status.name()=='REQUESTED'}"
+                          th:action="@{|/manager/testdrives/${td.id}/approve|}" method="post">
+                        <button class="btn btn-ok" type="submit">Approve</button>
+                    </form>
+                    <form th:if="${td.status.name()!='CANCELLED' and td.status.name()!='COMPLETED'}"
+                          th:action="@{|/manager/testdrives/${td.id}/cancel|}" method="post">
+                        <button class="btn btn-danger" type="submit">Cancel</button>
+                    </form>
+                    <form th:if="${td.status.name()=='CONFIRMED'}"
+                          th:action="@{|/manager/testdrives/${td.id}/done|}" method="post">
+                        <button class="btn btn-primary" type="submit">Done</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="td-empty" th:if="${#lists.isEmpty(list)}">
+            <div class="td-empty-body">
+                <h3>Chưa có lịch</h3>
+                <p>Tạo lịch mới để bắt đầu quản lý thử nghiệm lái xe.</p>
+                <a class="btn btn-primary" th:href="@{/dealer/test-drive/form}">+ Tạo lịch ngay</a>
+            </div>
+        </div>
+    </section>
+
+</div>
+</body>
+</html>
