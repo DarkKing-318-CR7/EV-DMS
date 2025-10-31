@@ -1,28 +1,46 @@
 package com.uth.ev_dms.domain;
 
-
-import lombok.*;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import lombok.*;
 
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "inventories",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"dealer_id", "trim_id"}),
-        indexes = {@Index(columnList = "dealer_id"), @Index(columnList = "trim_id")})
-@Getter @Setter @NoArgsConstructor
-public class Inventory extends BaseAudit {
+@Table(name = "inventories")
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
+public class Inventory {
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "dealer_id", nullable = false)
-    private Dealer dealer;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "trim_id", nullable = false)
+    // Trim cụ thể (ví dụ: EV6 GT-Line AWD Long Range)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "trim_id")
     private Trim trim;
 
-    @NotNull
-    @Min(0)
-    @Column(nullable = false)
-    private Integer quantity = 0;
+    // Loại vị trí: "EVM" (kho tổng), sau này có thể "DEALER"
+    @Column(name = "location_type")
+    private String locationType;
+
+    // Số lượng hiện có
+    @Column(name = "qty_on_hand")
+    private Integer qtyOnHand;
+
+    // Audit nhẹ
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    public void touchTs() {
+        this.updatedAt = LocalDateTime.now();
+        if (locationType == null || locationType.isBlank()) {
+            this.locationType = "EVM";
+        }
+        if (qtyOnHand == null) {
+            this.qtyOnHand = 0;
+        }
+    }
 }
