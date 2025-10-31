@@ -1,6 +1,7 @@
-package com.uth.ev_dms.crm;
+package com.uth.ev_dms.domain;
 
-import com.uth.ev_dms.crm.dto.CustomerCreateDto;
+import com.uth.ev_dms.service.dto.CustomerCreateDto;
+import com.uth.ev_dms.repo.CustomerRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

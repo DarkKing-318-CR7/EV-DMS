@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Tạo lịch lái thử</title>
+  <style>label{display:block;margin-top:8px}input,textarea{width:360px}</style>
+</head>
+<body>
+<h2>Tạo lịch lái thử</h2>
+<p><a th:href="@{/dealer/test-drive/my}">← Quay lại danh sách</a></p>
+
+<form id="tdForm" onsubmit="return submitForm()">
+  <label>Customer name <input name="customerName" required></label>
+  <label>Customer phone <input name="customerPhone"></label>
+  <label>Vehicle name <input name="vehicleName" required></label>
+  <label>Location <input name="location"></label>
+  <label>Schedule at (yyyy-MM-ddTHH:mm)
+    <input name="scheduleAt" type="datetime-local" required>
+  </label>
+  <label>Notes <textarea name="notes" rows="3"></textarea></label>
+  <label>Assigned staff ID (optional) <input name="assignedStaffId" type="number"></label>
+
+  <button type="submit">Create</button>
+</form>
+
+<script>
+  async function submitForm() {
+    const f = document.getElementById('tdForm');
+    const dto = {
+      customerName: f.customerName.value,
+      customerPhone: f.customerPhone.value,
+      vehicleName: f.vehicleName.value,
+      location: f.location.value,
+      scheduleAt: f.scheduleAt.value ? new Date(f.scheduleAt.value).toISOString() : null,
+      notes: f.notes.value,
+      assignedStaffId: f.assignedStaffId.value ? Number(f.assignedStaffId.value) : null
+    };
+    const res = await fetch('/api/crm/test-drives', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(dto)
+    });
+    if (res.ok) {
+      window.location = '/dealer/test-drive/my';
+    } else {
+      const txt = await res.text();
+      alert('Lỗi tạo lịch: ' + txt);
+    }
+    return false;
+  }
+</script>
+</body>
+</html>

@@ -12,16 +12,18 @@ import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/staff/testdrives")
-public class StaffTestDriveController {
+@RequestMapping("/dealer/test-drive")
+public class DealerTestDriveController {
 
     private final TestDriveService testDriveService;
     private final UserService userService;
 
-    @GetMapping
-    public String list(Model model, Principal principal) {
+    // Staff filter: "My Schedule"
+    @GetMapping("/my")
+    public String mySchedule(Model model, Principal principal) {
         Long staffId = userService.findIdByUsername(principal.getName());
         model.addAttribute("list", testDriveService.findMineAssigned(staffId));
-        return "staff/testdrives"; // trỏ tới templates/staff/testdrives.html
+        // dùng chung template list của dealer/staff
+        return "dealer/test-drive/list";
     }
 }
