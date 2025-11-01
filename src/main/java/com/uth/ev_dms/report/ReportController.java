@@ -6,15 +6,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class ReportController {
-    private final ReportService reportService;
+    private final ReportService service;
 
-    public ReportController(ReportService reportService) {
-        this.reportService = reportService;
+    public ReportController(ReportService service) {
+        this.service = service;
     }
 
     @GetMapping("/reports")
-    public String getReports(Model model) {
-        model.addAttribute("salesReport", reportService.getSalesReport());
+    public String reports(Model model) {
+        model.addAllAttributes(service.getSalesReport());
         return "reports/report";
     }
 }
