@@ -8,15 +8,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReportRepository extends JpaRepository<Order, Long> {
 
-    // Tổng doanh thu
-    @Query("SELECT SUM(o.totalPrice) FROM Order o")
+    @Query("SELECT COALESCE(SUM(o.totalPrice),0) FROM Order o")
     Double getTotalRevenue();
 
-    // Tổng số đơn hàng
     @Query("SELECT COUNT(o.id) FROM Order o")
     Long getTotalOrders();
 
-    // Xe bán chạy nhất
-    @Query("SELECT o.vehicle.modelName FROM Order o GROUP BY o.vehicle.modelName ORDER BY COUNT(o.id) DESC LIMIT 1")
+    // JPQL doesn't support LIMIT; use native query
+    @Query(value = "SELECT v.model_name FROM orders o JOIN vehicles v ON o.vehicle_id = v.id GROUP BY v.model_name ORDER BY COUNT(o.id) DESC LIMIT 1", nativeQuery = true)
     String getTopVehicle();
 }
