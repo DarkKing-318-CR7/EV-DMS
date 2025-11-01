@@ -1,37 +1,48 @@
 package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "inventory_adjustments")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
 public class InventoryAdjustment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // kho nào bị chỉnh
+    // quan hệ tới inventory cha
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inventory_id")
+    @JoinColumn(name = "inventory_id", nullable = false)
     private Inventory inventory;
 
-    // +10, -3 ...
-    @Column(name = "delta_qty")
+    // số lượng thay đổi (+5, -2, v.v.)
+    @Column(name = "delta_qty", nullable = false)
     private Integer deltaQty;
 
-    @Column(name = "reason")
+    // lý do chỉnh kho
+    @Column(name = "reason", length = 255)
     private String reason;
 
+    // thời điểm ghi nhận event (có vẻ là thời điểm thực tế thay đổi stock)
+    @Column(name = "created_at_event")
+    private LocalDateTime createdAtEvent;
+
+    // audit chung
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @PrePersist
-    public void touch() {
-        this.createdAt = LocalDateTime.now();
-    }
+    @Column(name = "created_by", length = 255)
+    private String createdBy;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "updated_by", length = 255)
+    private String updatedBy;
 }

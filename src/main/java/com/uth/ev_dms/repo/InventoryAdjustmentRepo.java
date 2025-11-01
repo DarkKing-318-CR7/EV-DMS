@@ -2,8 +2,8 @@ package com.uth.ev_dms.repo;
 
 import com.uth.ev_dms.domain.InventoryAdjustment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-@Repository
+import java.util.List;
+
 public interface InventoryAdjustmentRepo extends JpaRepository<InventoryAdjustment, Long> {
 }

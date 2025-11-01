@@ -1,14 +1,21 @@
 package com.uth.ev_dms.service.impl;
 
 import com.uth.ev_dms.domain.Inventory;
+import com.uth.ev_dms.domain.InventoryAdjustment;
 import com.uth.ev_dms.domain.OrderItem;
+import com.uth.ev_dms.repo.InventoryAdjustmentRepo;
 import com.uth.ev_dms.repo.InventoryRepo;
 import com.uth.ev_dms.service.InventoryService;
+import com.uth.ev_dms.service.dto.InventoryUpdateRequest;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +23,7 @@ import java.util.List;
 public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepo inventoryRepo;
+    private final InventoryAdjustmentRepo inventoryAdjustmentRepo;
 
     // ===============================
     // ========== ORDER FLOW =========
@@ -80,26 +88,17 @@ public class InventoryServiceImpl implements InventoryService {
     // ========== ADMIN INVENTORY ========
     // ===================================
     @Override
-    public List<Inventory> listAll() {
+    public List<Inventory> findAll() {
         return inventoryRepo.findAll();
     }
 
     @Override
-    public Inventory getOrThrow(Long id) {
-        return inventoryRepo.findById(id)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Không tìm thấy Inventory id=" + id));
+    public Optional<Inventory> findById(Long id) {
+        return inventoryRepo.findById(id);
     }
 
     @Override
     public Inventory save(Inventory inv) {
-        // Ở đây có thể validate nhẹ: không âm qty, locationType = "EVM" nếu null...
-        if (inv.getQtyOnHand() == null || inv.getQtyOnHand() < 0) {
-            inv.setQtyOnHand(0);
-        }
-        if (inv.getLocationType() == null || inv.getLocationType().isBlank()) {
-            inv.setLocationType("EVM"); // default kho tổng
-        }
         return inventoryRepo.save(inv);
     }
 
@@ -107,4 +106,74 @@ public class InventoryServiceImpl implements InventoryService {
     public void delete(Long id) {
         inventoryRepo.deleteById(id);
     }
+
+    @Override
+    @Transactional
+    public Inventory createInventory(Inventory inv, String createdBy) {
+
+        // onInsert() của entity sẽ lo createdAt/updatedAt/locationType/default qty
+        Inventory saved = inventoryRepo.save(inv);
+
+        // log nhập kho ban đầu
+        Integer onHand = (saved.getQtyOnHand() == null) ? 0 : saved.getQtyOnHand();
+        if (onHand > 0) {
+            LocalDateTime now = LocalDateTime.now();
+
+            InventoryAdjustment adj = new InventoryAdjustment();
+            adj.setInventory(saved);
+            adj.setDeltaQty(onHand);     // từ 0 lên onHand
+            adj.setReason("Initial stock");
+            adj.setCreatedAtEvent(now);
+            adj.setCreatedAt(now);
+            adj.setUpdatedAt(now);
+            adj.setCreatedBy(createdBy);
+            adj.setUpdatedBy(createdBy);
+
+            inventoryAdjustmentRepo.save(adj);
+        }
+
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public Inventory updateInventory(InventoryUpdateRequest req, String updatedBy) {
+
+        Inventory current = inventoryRepo.findById(req.getId())
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Inventory not found: " + req.getId())
+                );
+
+        Integer oldQty = (current.getQtyOnHand() == null) ? 0 : current.getQtyOnHand();
+        Integer newQty = (req.getQtyOnHand() == null) ? 0 : req.getQtyOnHand();
+
+        // cập nhật số lượng
+        current.setQtyOnHand(req.getQtyOnHand());
+        // giữ đồng bộ cột quantity
+        current.setQuantity(req.getQtyOnHand());
+
+        // updatedAt sẽ được set trong @PreUpdate
+        Inventory saved = inventoryRepo.save(current);
+
+        int delta = newQty - oldQty;
+        if (delta != 0) {
+            LocalDateTime now = LocalDateTime.now();
+
+            InventoryAdjustment adj = new InventoryAdjustment();
+            adj.setInventory(saved);
+            adj.setDeltaQty(delta);
+            adj.setReason(req.getNote());
+            adj.setCreatedAtEvent(now);
+            adj.setCreatedAt(now);
+            adj.setUpdatedAt(now);
+            adj.setCreatedBy(updatedBy);
+            adj.setUpdatedBy(updatedBy);
+
+            inventoryAdjustmentRepo.save(adj);
+        }
+
+        return saved;
+    }
+
+
 }
