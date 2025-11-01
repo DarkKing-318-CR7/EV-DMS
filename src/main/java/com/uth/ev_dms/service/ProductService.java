@@ -113,5 +113,9 @@ public class ProductService {
         return trimRepo.findAll();
     }
 
+    public List<Trim> getAllTrims() {
+        return trimRepo.findAll();
+    }
+
 
 }

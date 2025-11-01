@@ -2,6 +2,10 @@ package com.uth.ev_dms.service;
 
 import com.uth.ev_dms.domain.Inventory;
 import com.uth.ev_dms.domain.OrderItem;
+import com.uth.ev_dms.service.dto.InventoryUpdateRequest;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface InventoryService {
     // được OrderServiceImpl dùng:
@@ -9,8 +13,20 @@ public interface InventoryService {
     void releaseForOrder(Long orderId);
 
     // thêm cho UI Admin Inventory:
-    java.util.List<Inventory> listAll();
-    Inventory getOrThrow(Long id);
+    List<Inventory> findAll();
+
+    Optional<Inventory> findById(Long id);
+
     Inventory save(Inventory inv);
+
     void delete(Long id);
+
+    /**
+     * Update tồn kho (số lượng, trạng thái...) và ghi log điều chỉnh.
+     * @param req dữ liệu người dùng submit từ form
+     * @param updatedBy username đang đăng nhập
+     * @return inventory sau khi cập nhật
+     */
+    Inventory updateInventory(InventoryUpdateRequest req, String updatedBy);
+    Inventory createInventory(Inventory inv, String createdBy);
 }
