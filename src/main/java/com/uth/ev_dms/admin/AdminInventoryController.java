@@ -136,6 +136,20 @@ public class AdminInventoryController {
         return "redirect:/admin/inventory?success=1";
     }
 
+    @GetMapping("/{id}/history")
+    public String viewHistory(@PathVariable Long id, Model model) {
+
+        Inventory inv = inventoryService.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Inventory not found: " + id));
+
+        model.addAttribute("inventory", inv);
+        model.addAttribute("history", inventoryService.getAdjustmentsForInventory(id));
+        model.addAttribute("pageTitle", "Inventory History");
+        model.addAttribute("active", "inventory");
+
+        return "admin/inventory/history";
+    }
+
 
     // 5. Delete
     @PostMapping("/{id}/delete")

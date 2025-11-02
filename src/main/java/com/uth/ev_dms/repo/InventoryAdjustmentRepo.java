@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface InventoryAdjustmentRepo extends JpaRepository<InventoryAdjustment, Long> {
+    List<InventoryAdjustment> findByInventoryIdOrderByCreatedAtEventDesc(Long inventoryId);
 }

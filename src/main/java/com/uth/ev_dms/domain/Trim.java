@@ -12,6 +12,8 @@ public class Trim {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
+    @Getter
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "vehicle_id")
     @ToString.Exclude
@@ -39,4 +41,14 @@ public class Trim {
     }
     @PreUpdate
     void preUpdate() { updatedAt = Instant.now(); }
+
+    @Column(name = "regional_name")
+    private String regionalName;  // tên thương mại khu vực
+
+    @Column(name = "availability_note")
+    private String availabilityNote; // ghi chú nội bộ / hạn chế bán
+
+    @Column(name = "available")
+    private Boolean available;
+
 }

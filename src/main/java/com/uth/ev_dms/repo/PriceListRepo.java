@@ -53,4 +53,6 @@ public interface PriceListRepo extends JpaRepository<PriceList, Long> {
             @Param("modelCode") String modelCode,
             @Param("today") LocalDate today
     );
+
+    List<PriceList> findByTrimId(Long trimId);
 }

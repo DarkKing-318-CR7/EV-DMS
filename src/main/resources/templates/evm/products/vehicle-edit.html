@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active=${active}, pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <link rel="stylesheet" th:href="@{/css/forms.css}">
+    <section class="page-header">
+        <div class="left">
+            <h1 th:text="${pageTitle}">Edit Vehicle</h1>
+            <p class="subtitle">Chỉnh thông tin thương mại trong phạm vi EVM (không đổi spec gốc)</p>
+        </div>
+    </section>
+
+    <section class="card form-card">
+        <form th:action="@{'/evm/products/vehicle/' + ${form.id} + '/edit'}"
+              th:object="${form}"
+              method="post">
+
+            <input type="hidden" th:field="*{id}"/>
+
+            <!-- read-only info -->
+            <div class="field-group">
+                <div class="field">
+                    <label>Model Code</label>
+                    <input th:value="*{modelCode}" readonly/>
+                </div>
+                <div class="field">
+                    <label>Model Name</label>
+                    <input th:value="*{modelName}" readonly/>
+                </div>
+                <div class="field">
+                    <label>Body Type</label>
+                    <input th:value="*{bodyType}" readonly/>
+                </div>
+                <div class="field">
+                    <label>Warranty (months)</label>
+                    <input th:value="*{warrantyMonths}" readonly/>
+                </div>
+            </div>
+
+            <hr/>
+
+            <!-- editable by EVM -->
+            <div class="field">
+                <label>Regional Status</label>
+                <select th:field="*{regionalStatus}">
+                    <option value="AVAILABLE">AVAILABLE</option>
+                    <option value="LIMITED">LIMITED</option>
+                    <option value="STOP_SELLING">STOP_SELLING</option>
+                </select>
+                <p class="help-text">Trạng thái bán trong khu vực của bạn</p>
+            </div>
+
+            <div class="field">
+                <label>Sales Note (Ghi chú nội bộ)</label>
+                <textarea th:field="*{salesNote}" rows="2"
+                          placeholder="Ví dụ: Chỉ bán fleet, hạn chế retail..."></textarea>
+            </div>
+
+            <div class="field">
+                <label>Marketing Desc (Mô tả thị trường)</label>
+                <textarea th:field="*{marketingDesc}" rows="3"
+                          placeholder="Ví dụ: SUV 7 chỗ pin 95kWh, ưu tiên khách doanh nghiệp..."></textarea>
+            </div>
+
+            <div class="actions">
+                <a class="btn btn-outline" th:href="@{'/evm/products'}">Cancel</a>
+                <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+
+        </form>
+    </section>
+</main>
+</html>

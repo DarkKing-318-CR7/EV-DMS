@@ -175,5 +175,10 @@ public class InventoryServiceImpl implements InventoryService {
         return saved;
     }
 
+    @Override
+    public List<InventoryAdjustment> getAdjustmentsForInventory(Long inventoryId) {
+        return inventoryAdjustmentRepo.findByInventoryIdOrderByCreatedAtEventDesc(inventoryId);
+    }
+
 
 }

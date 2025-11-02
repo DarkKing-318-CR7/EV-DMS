@@ -20,6 +20,11 @@ AdminController {
         this.roleRepo = roleRepo;
     }
 
+    @GetMapping("/dashboard")
+    public String home(){
+        return "admin/dashboard";
+    }
+
     @GetMapping("/users")
     public String listUsers(Model model) {
         model.addAttribute("users", userRepo.findAll());
