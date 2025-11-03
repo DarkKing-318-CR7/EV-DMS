@@ -14,7 +14,6 @@ public class Inventory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     // Trim cụ thể (ví dụ: EV6 GT-Line AWD Long Range)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trim_id")
@@ -23,11 +22,9 @@ public class Inventory {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dealer_id", nullable = false)
     private Dealer dealer;
-
     // Loại vị trí: "EVM" (kho tổng), sau này có thể "DEALER"
     @Column(name = "location_type")
     private String locationType;
-
     // Số lượng hiện có
     @Column(name = "qty_on_hand")
     private Integer qtyOnHand;
@@ -35,7 +32,6 @@ public class Inventory {
     @Column(name = "quantity")
     private Integer quantity;
 
-    // Audit nhẹ
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
