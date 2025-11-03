@@ -9,14 +9,22 @@ public class InventoryServiceNoop implements InventoryService {
 
     @Override
     public boolean allocateForOrder(OrderItem item) {
-        // Không thực hiện trừ tồn thật, chỉ log giả lập
-        System.out.println("[NOOP] Allocate vehicleId=" + item.getVehicleId() + ", qty=" + item.getQty());
-        return true; // luôn trả true để không chặn luồng allocate
+        // Không làm gì (mock)
+        return true;
+    }
+
+    @Override
+    public void allocateForOrder(Long orderId) {
+        // Không làm gì (mock)
+    }
+
+    @Override
+    public void shipForOrder(Long orderId) {
+        // Không làm gì (mock)
     }
 
     @Override
     public void releaseForOrder(Long orderId) {
-        // Không thực hiện trả tồn thật, chỉ log giả lập
-        System.out.println("[NOOP] Release inventory for orderId=" + orderId);
+        // Không làm gì (mock)
     }
 }

@@ -53,7 +53,12 @@ public class OrderItem {
     public BigDecimal getLineAmount() { return lineAmount; }
     public void setLineAmount(BigDecimal lineAmount) { this.lineAmount = lineAmount; }
 
-
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
 
 
