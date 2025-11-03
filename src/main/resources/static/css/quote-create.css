@@ -1,78 +1,69 @@
-/* =======================
-   QUOTE CREATE FORM STYLE
-   ======================= */
-
-body {
-    color: #fff;
-    background: transparent;
-    font-family: 'Spartan', sans-serif;
+/* Card */
+.container{
+  max-width:720px!important;
+  margin:24px 0 48px 72px!important;
+  padding:24px 32px!important;
+  border-radius:12px;
+  background:rgba(30,30,45,.6);
+  box-shadow:0 0 18px rgba(0,0,0,.25);
+  text-align:left!important;
 }
 
-.container {
-    backdrop-filter: blur(12px);
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 28px 36px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    max-width: 600px;
-    margin: 40px auto;
+/* Form rows: label 180px + control phần còn lại */
+.container form .form-group{
+  display:flex!important;
+  align-items:center!important;
+  gap:16px!important;
+  margin-bottom:14px!important;
+  width:100%!important;
+}
+.container form .form-group>label{
+  width:180px!important;
+  flex:0 0 180px!important;
+  margin:0!important;
+  text-align:right!important;
+  font-weight:600;
+  color:#e0e0e0;
+}
+.container form .form-group>input,
+.container form .form-group>select,
+.container form .form-group>div:not(.keep-size){
+  flex:1 1 auto!important;
+  min-width:0!important;
 }
 
-h1 {
-    font-size: 26px;
-    margin-bottom: 20px;
-    color: #e6ecff;
-    text-align: center;
+/* Inputs */
+.container form input,.container form select{
+  width:100%;
+  padding:10px 12px;
+  background:#1f1f2b;color:#fff;border:1px solid #555;border-radius:8px;
+}
+.container form input:focus,.container form select:focus{
+  outline:none;border-color:#6ea8fe;box-shadow:0 0 4px #6ea8fe;
 }
 
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
+/* Quote Items */
+.form-group.quote-items{align-items:center!important;gap:12px!important;}
+#add-item-btn{background:#6c63ff;border:none;border-radius:6px;color:#fff;font-weight:600;padding:6px 12px;cursor:pointer}
+#add-item-btn:hover{background:#857dff}
 
-label {
-    font-size: 14px;
-    opacity: .9;
-    margin-bottom: 4px;
-}
+/* Hàng chứa items: label rỗng + khối full width */
+.form-group.items-block{align-items:flex-start!important}
+.form-group.items-block>label{visibility:hidden}
+#items-container{display:flex;flex-direction:column;gap:10px;width:100%}
 
-input, select, textarea {
-    padding: 10px 12px;
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 10px;
-    background: rgba(255,255,255,0.08);
-    color: #fff;
-    outline: none;
-    transition: border 0.2s;
-}
+/* Một dòng item: select | qty | unit price | delete */
+.item-row{display:grid;grid-template-columns:1fr 100px 150px 44px;gap:10px;align-items:center;width:100%}
+.item-row select,.item-row input{background:#2a2a38;border:1px solid #555;color:#fff;border-radius:6px}
+.remove-item-btn{height:38px;background:#e74c3c;border:none;color:#fff;border-radius:6px;cursor:pointer}
+.remove-item-btn:hover{background:#c0392b}
 
-input:focus, select:focus, textarea:focus {
-    border-color: rgba(120,126,255,0.6);
-}
+/* Apply Promotions đúng lưới */
+.promotion-list{flex:1;display:flex;flex-wrap:wrap;gap:8px 16px;padding-top:6px}
+.promo-chip{display:flex;align-items:center;gap:6px}
 
-button {
-    margin-top: 10px;
-    padding: 10px 14px;
-    border: none;
-    border-radius: 12px;
-    background: rgba(86,93,255,0.45);
-    color: #fff;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-}
-button:hover {
-    background: rgba(86,93,255,0.6);
-}
-
-a {
-    display: inline-block;
-    margin-top: 12px;
-    color: #a4b1ff;
-    text-decoration: none;
-    text-align: center;
-}
-a:hover { text-decoration: underline; }
-/* Create Quote styles - scaffold */
+/* Buttons */
+.actions{display:flex!important;justify-content:center!important;gap:10px!important;margin-top:8px!important}
+.btn{padding:10px 18px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
+.btn-primary{background:linear-gradient(90deg,#4a6cf7,#6ea8fe);color:#fff}
+.btn-secondary{background:#6c757d;color:#fff}
