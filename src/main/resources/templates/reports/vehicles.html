@@ -1,10 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="stylesheet" href="/css/evdms-theme.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Vehicle Report</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
 </head>
 <body>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Vehicle Inventory Report</h2>
 
+    <form th:action="@{/reports/vehicles}" method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label">Model</label>
+            <input type="text" name="model" class="form-control" placeholder="Enter model">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option value="">All</option>
+                <option value="Available">Available</option>
+                <option value="Allocated">Allocated</option>
+                <option value="Sold">Sold</option>
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
+
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>VIN</th>
+            <th>Model</th>
+            <th>Trim</th>
+            <th>Status</th>
+            <th>Dealer</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="vehicle, iterStat : ${vehicles}">
+            <td th:text="${iterStat.index + 1}"></td>
+            <td th:text="${vehicle.vin}"></td>
+            <td th:text="${vehicle.model}"></td>
+            <td th:text="${vehicle.trim}"></td>
+            <td>
+                <span th:text="${vehicle.status}" class="badge bg-info"></span>
+            </td>
+            <td th:text="${vehicle.dealerName}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(vehicles)}">
+            <td colspan="6" class="text-center text-muted">No vehicles found.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-end mt-3">
+        <a th:href="@{/reports/vehicles/export/excel}" class="btn btn-success me-2">Export Excel</a>
+        <a th:href="@{/reports/vehicles/export/pdf}" class="btn btn-danger">Export PDF</a>
+    </div>
+</div>
 </body>
 </html>
