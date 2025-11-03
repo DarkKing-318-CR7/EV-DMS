@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -178,6 +180,29 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public List<InventoryAdjustment> getAdjustmentsForInventory(Long inventoryId) {
         return inventoryAdjustmentRepo.findByInventoryIdOrderByCreatedAtEventDesc(inventoryId);
+    }
+
+
+    @Override
+    public Map<Long, Integer> getStockByTrimForDealer(Long dealerId) {
+        var invList = inventoryRepo.findByDealer_Id(dealerId);
+
+        Map<Long, Integer> stockMap = new HashMap<>();
+        for (var inv : invList) {
+            if (inv.getTrim() == null) continue;
+
+            Long trimId = inv.getTrim().getId();
+            Integer qty = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
+
+            stockMap.merge(trimId, qty, Integer::sum);
+        }
+
+        System.out.println("=== SERVICE stockMap ===");
+        stockMap.forEach((tid, q) ->
+                System.out.println("trimId=" + tid + " qty=" + q)
+        );
+
+        return stockMap;
     }
 
 

@@ -6,6 +6,7 @@ import com.uth.ev_dms.domain.OrderItem;
 import com.uth.ev_dms.service.dto.InventoryUpdateRequest;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface InventoryService {
@@ -31,4 +32,5 @@ public interface InventoryService {
     Inventory updateInventory(InventoryUpdateRequest req, String updatedBy);
     Inventory createInventory(Inventory inv, String createdBy);
     public List<InventoryAdjustment> getAdjustmentsForInventory(Long inventoryId);
+    Map<Long, Integer> getStockByTrimForDealer(Long dealerId);
 }

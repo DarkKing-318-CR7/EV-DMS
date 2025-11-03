@@ -293,4 +293,9 @@ public class ProductService {
         priceListRepo.save(pl);
     }
 
+    public Vehicle getVehicleById(Long id) {
+        return vehicleRepo.findById(id)
+                .orElse(null);
+    }
+
 }
