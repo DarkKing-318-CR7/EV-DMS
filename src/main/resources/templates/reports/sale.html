@@ -1,14 +1,9 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <link rel="stylesheet" href="/css/evdms-theme.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active=${active}, pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
 
-    <meta charset="UTF-8">
-    <title>Sales Report</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
-</head>
-<body>
+<main>
 <div class="container mt-4">
     <h2 class="text-center mb-4">Sales Report</h2>
 
@@ -61,5 +56,5 @@
         <a th:href="@{/reports/sale/export/pdf}" class="btn btn-danger">Export PDF</a>
     </div>
 </div>
-</body>
+</main>
 </html>
