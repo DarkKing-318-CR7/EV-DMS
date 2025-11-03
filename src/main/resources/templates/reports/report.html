@@ -1,16 +1,45 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Báo cáo</title>
-</head>
-<body>
-<h1>Báo cáo doanh số</h1>
-<div>
-    <p>Tổng doanh thu: <strong th:text="${totalRevenue}">0</strong></p>
-    <p>Tổng số đơn hàng: <strong th:text="${totalOrders}">0</strong></p>
-    <p>Xe bán chạy nhất: <strong th:text="${topVehicle}">N/A</strong></p>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active=${active}, pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Reports Dashboard</h2>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <i class="bi bi-bar-chart-line fs-1 text-primary mb-3"></i>
+                    <h5 class="card-title">Sales Report</h5>
+                    <p class="text-muted">View all sales performance and trends.</p>
+                    <a th:href="@{/reports/sale}" class="btn btn-outline-primary w-100">View Sales</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <i class="bi bi-car-front fs-1 text-success mb-3"></i>
+                    <h5 class="card-title">Vehicles Report</h5>
+                    <p class="text-muted">Track vehicle inventory and allocation data.</p>
+                    <a th:href="@{/reports/vehicles}" class="btn btn-outline-success w-100">View Vehicles</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <i class="bi bi-clipboard-data fs-1 text-warning mb-3"></i>
+                    <h5 class="card-title">Custom Reports</h5>
+                    <p class="text-muted">Generate on-demand reports for managers.</p>
+                    <a th:href="@{/reports/custom}" class="btn btn-outline-warning w-100">Generate</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<p><a th:href="@{/}">Quay lại</a></p>
-</body>
+</main>
 </html>
