@@ -113,3 +113,20 @@ CREATE TABLE IF NOT EXISTS installment_plan (
     CONSTRAINT fk_installment_order FOREIGN KEY (order_id) REFERENCES order_hdr(id)
     );
 
+USE ev_dms;
+
+CREATE TABLE test_drives (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL,
+    customer_phone VARCHAR(20),
+    vehicle_name VARCHAR(100),
+    location VARCHAR(255),
+    schedule_at DATETIME,
+    notes TEXT,
+    status ENUM('REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED') DEFAULT 'REQUESTED',
+    created_by_id BIGINT,
+    assigned_staff_id BIGINT,
+    CONSTRAINT fk_testdrives_created_by FOREIGN KEY (created_by_id) REFERENCES users(id),
+    CONSTRAINT fk_testdrives_assigned_staff FOREIGN KEY (assigned_staff_id) REFERENCES users(id)
+);
+

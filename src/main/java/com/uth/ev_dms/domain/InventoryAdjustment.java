@@ -1,33 +1,48 @@
 package com.uth.ev_dms.domain;
 
-
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "inventory_adjustments",
-        indexes = {@Index(columnList = "createdAt"), @Index(columnList = "reason")})
-@Getter @Setter @NoArgsConstructor
-public class InventoryAdjustment extends BaseAudit {
+@Table(name = "inventory_adjustments")
+@Getter
+@Setter
+public class InventoryAdjustment {
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // quan hệ tới inventory cha
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inventory_id", nullable = false)
     private Inventory inventory;
 
-    @NotNull
-    @Column(nullable = false)
-    private Integer deltaQty;              // +10 allocate, -5 recall...
+    // số lượng thay đổi (+5, -2, v.v.)
+    @Column(name = "delta_qty", nullable = false)
+    private Integer deltaQty;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 16, nullable = false)
-    private AdjReason reason = AdjReason.ADJUST;
+    // lý do chỉnh kho
+    @Column(name = "reason", length = 255)
+    private String reason;
 
-    @Column(nullable = false, updatable = false)
-    private Instant createdAtEvent = Instant.now(); // thời điểm ghi nhận sự kiện (khác createdAt entity khi cần)
+    // thời điểm ghi nhận event (có vẻ là thời điểm thực tế thay đổi stock)
+    @Column(name = "created_at_event")
+    private LocalDateTime createdAtEvent;
+
+    // audit chung
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "created_by", length = 255)
+    private String createdBy;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "updated_by", length = 255)
+    private String updatedBy;
 }

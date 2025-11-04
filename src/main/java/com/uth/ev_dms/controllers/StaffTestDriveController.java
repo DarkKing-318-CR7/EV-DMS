@@ -21,7 +21,7 @@ public class StaffTestDriveController {
     @GetMapping
     public String list(Model model, Principal principal) {
         Long staffId = userService.findIdByUsername(principal.getName());
-        model.addAttribute("list", testDriveService.findMine(staffId));
-        return "staff/testdrives";
+        model.addAttribute("list", testDriveService.findMineAssigned(staffId));
+        return "staff/testdrives"; // trỏ tới templates/staff/testdrives.html
     }
 }

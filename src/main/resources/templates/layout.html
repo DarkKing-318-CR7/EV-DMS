@@ -6,12 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle} ?: 'EV-DMS Portal'">EV-DMS Portal</title>
-
     <!-- ===== Custom CSS ===== -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <link rel="stylesheet" th:href="@{/css/quotes.css}">
-    <link rel="stylesheet" th:href="@{/css/quote-create.css}">
-
     <!-- ===== Google Fonts ===== -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,16 +22,21 @@
 <div class="overlay"></div>
 
 <div class="page-wrapper">
-    <!-- topbar -->
+    <!-- ===== Topbar ===== -->
     <header th:replace="fragments/topbar :: topbar"></header>
 
-    <!-- main layout -->
+    <!-- ===== Main Layout ===== -->
     <div class="main-layout">
         <aside th:replace="fragments/sidebar-router :: sidebar"></aside>
         <main class="main-content" th:insert="${content}"></main>
     </div>
 </div>
 
+<!-- ✅ Cho phép kế thừa các script riêng của từng trang (vd: quote-create.js) -->
+<th:block th:insert="~{::script}"></th:block>
+
+<!-- ✅ Script JS chung cho toàn hệ thống -->
 <script th:src="@{/js/main.js}"></script>
+
 </body>
 </html>

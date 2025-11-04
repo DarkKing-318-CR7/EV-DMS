@@ -1,0 +1,52 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org" lang="vi">-->
+<!--<head>-->
+<!--    <meta charset="utf-8">-->
+<!--    <title>Test Drives</title>-->
+<!--    <style>table{border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px}</style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<h2 th:text="${isManager} ? 'All Test Drives (Manager)' : 'My Schedule (Staff)'">Test Drives</h2>-->
+
+<!--<p>-->
+<!--    <a th:href="@{/dealer/test-drive/my}">My Schedule</a> |-->
+<!--    <a th:href="@{/dealer/test-drive/manager}">Manager View</a> |-->
+<!--    <a th:href="@{/dealer/test-drive/form}">New Test Drive</a>-->
+<!--</p>-->
+
+<!--<table>-->
+<!--    <thead>-->
+<!--    <tr>-->
+<!--        <th>ID</th><th>Khách</th><th>Phone</th><th>Xe</th><th>Địa điểm</th>-->
+<!--        <th>Thời gian</th><th>Ghi chú</th><th>Trạng thái</th><th>Hành động</th>-->
+<!--    </tr>-->
+<!--    </thead>-->
+<!--    <tbody>-->
+<!--    <tr th:each="td : ${list}">-->
+<!--        <td><a th:href="@{|/dealer/test-drive/detail/${td.id}|}" th:text="${td.id}">1</a></td>-->
+<!--        <td th:text="${td.customerName}">A</td>-->
+<!--        <td th:text="${td.customerPhone}">0909</td>-->
+<!--        <td th:text="${td.vehicleName}">EV-01</td>-->
+<!--        <td th:text="${td.location}">Showroom</td>-->
+<!--        <td th:text="${#temporals.format(td.scheduleAt,'yyyy-MM-dd HH:mm')}">...</td>-->
+<!--        <td th:text="${td.notes}">...</td>-->
+<!--        <td th:text="${td.status}">REQUESTED</td>-->
+<!--        <td>-->
+<!--            <form th:if="${isManager} and ${td.status.name()=='REQUESTED'}"-->
+<!--                  th:action="@{|/dealer/test-drive/${td.id}/approve|}" method="post" style="display:inline">-->
+<!--                <button type="submit">Approve</button>-->
+<!--            </form>-->
+<!--            <form th:if="${isManager} and ${td.status.name()!='CANCELLED'}"-->
+<!--                  th:action="@{|/dealer/test-drive/${td.id}/cancel|}" method="post" style="display:inline">-->
+<!--                <button type="submit">Cancel</button>-->
+<!--            </form>-->
+<!--            <form th:if="${isManager} and ${td.status.name()=='CONFIRMED'}"-->
+<!--                  th:action="@{|/dealer/test-drive/${td.id}/done|}" method="post" style="display:inline">-->
+<!--                <button type="submit">Done</button>-->
+<!--            </form>-->
+<!--        </td>-->
+<!--    </tr>-->
+<!--    </tbody>-->
+<!--</table>-->
+<!--</body>-->
+<!--</html>-->

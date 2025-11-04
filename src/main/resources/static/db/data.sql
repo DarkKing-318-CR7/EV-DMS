@@ -53,3 +53,31 @@ INSERT INTO customers (ten, email, sdt, diachi, ngaytao) VALUES
 ('Tran Quoc H', 'h.tran@example.com', '0977888999', '9 Nguyen Dinh Chieu, Q1, TP.HCM', '2025-10-09 17:25:00'),
 ('Bui Thi I', 'i.bui@example.com', '0901234987', '100 Dien Bien Phu, Q10, TP.HCM', '2025-10-10 09:50:00'),
 ('Dang Van K', 'k.dang@example.com', '0922334455', '67 Vo Van Tan, Q3, TP.HCM', '2025-10-11 16:10:00');
+
+USE ev_dms;
+
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE test_drives;
+SET FOREIGN_KEY_CHECKS = 1;
+USE ev_dms;
+
+-- Giả sử trong bảng users đã có sẵn một vài người dùng:
+-- id=1: admin, id=2: manager, id=3: staff A, id=4: staff B
+
+INSERT INTO test_drives (customer_name, customer_phone, vehicle_name, location, schedule_at, notes, status, created_by_id, assigned_staff_id)
+VALUES
+-- Các yêu cầu mới tạo
+('Nguyen Van A', '0909123456', 'Hyundai Ioniq 5', 'Đại lý EV Quận 7', '2025-11-02 09:00:00', 'Khách muốn lái thử bản cao cấp', 'REQUESTED', 3, NULL),
+('Tran Thi B', '0988777666', 'VinFast VF8', 'Đại lý EV Quận 1', '2025-11-02 14:30:00', 'Lái thử trong khu đô thị Vinhomes', 'REQUESTED', 3, NULL),
+
+-- Các lịch đã được xác nhận
+('Le Minh C', '0911222333', 'Kia EV6', 'Đại lý EV Thủ Đức', '2025-11-03 10:00:00', 'Đã xác nhận bởi quản lý', 'CONFIRMED', 3, 4),
+('Pham Thi D', '0977555444', 'Tesla Model Y', 'Đại lý EV Quận 3', '2025-11-03 15:00:00', 'Khách VIP, có yêu cầu riêng', 'CONFIRMED', 3, 4),
+
+-- Lịch đã hoàn tất
+('Bui Van E', '0909888777', 'VinFast VF9', 'Đại lý EV Bình Thạnh', '2025-10-30 09:30:00', 'Khách hài lòng, có khả năng mua', 'COMPLETED', 3, 4),
+('Do Thi F', '0933111222', 'BYD Atto 3', 'Đại lý EV Quận 5', '2025-10-29 14:00:00', 'Đã lái thử và ký hợp đồng', 'COMPLETED', 3, 4),
+
+-- Lịch bị hủy
+('Nguyen Van G', '0909666555', 'Hyundai Kona EV', 'Đại lý EV Quận 10', '2025-11-01 10:00:00', 'Khách bận, hủy lịch', 'CANCELLED', 3, NULL);
+

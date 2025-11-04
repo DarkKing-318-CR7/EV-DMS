@@ -1,4 +1,4 @@
-package com.uth.ev_dms.crm.dto;
+package com.uth.ev_dms.service.dto;
 
 import jakarta.validation.constraints.*;
 

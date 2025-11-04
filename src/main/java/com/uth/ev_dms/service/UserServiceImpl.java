@@ -20,14 +20,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Long findIdByUsername(String username) {
-        return userRepository.findIdByUsername(username);
+        return userRepository.findByUsername(username)
+                .map(User::getId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
     @Override
     public Long findDealerIdByUsername(String username) {
-        return userRepository.findDealerIdByUsername(username);
+        return userRepository.findByUsername(username)
+                .map(u -> u.getDealer() != null ? u.getDealer().getId() : null)
+                .orElse(null);
     }
-
 
     @Override
     public Long findRegionIdByUsername(String username) {

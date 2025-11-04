@@ -9,7 +9,7 @@
         </li>
 
         <li th:classappend="${active=='vehicles' ? 'active' : ''}">
-            <a th:href="@{/staff/vehicles}">Vehicles</a>
+            <a th:href="@{/dealer/vehicles}">Vehicles</a>
         </li>
 
         <li th:classappend="${active=='customers' ? 'active' : ''}">
@@ -21,8 +21,9 @@
         </li>
 
         <li th:classappend="${active=='quotes' ? 'active' : ''}">
-            <a th:href="@{/staff/quotes}">Quotes (My Quotes)</a>
+            <a th:href="@{/dealer/quotes/my}">Quotes (My Quotes)</a>
         </li>
+
 
         <li th:classappend="${active=='orders' ? 'active' : ''}">
             <a th:href="@{/dealer/orders/my}">Orders (My Orders)</a>
@@ -33,7 +34,7 @@
         </li>
 
         <li th:classappend="${active=='reports' ? 'active' : ''}">
-            <a th:href="@{/staff/reports}">Reports (My Performance)</a>
+            <a th:href="@{/reports}">Reports (My Performance)</a>
         </li>
 
         <li th:classappend="${active=='support' ? 'active' : ''}">

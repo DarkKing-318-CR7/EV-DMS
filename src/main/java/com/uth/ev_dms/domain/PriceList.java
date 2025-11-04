@@ -43,4 +43,10 @@ public class PriceList {
     }
     @PreUpdate
     void preUpdate() { updatedAt = Instant.now(); }
+
+    @Column(name = "base_price_vnd")
+    private Integer basePriceVnd;
+
+    @Column(name = "currency")
+    private String currency;
 }

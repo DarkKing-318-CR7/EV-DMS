@@ -1,0 +1,60 @@
+<!-- templates/admin/inventory/edit.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='inventory', pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <section class="page-header">
+        <h1 th:text="${pageTitle}">Edit Inventory</h1>
+        <p>
+            Dealer:
+            <span th:text="${inventory.dealer.name}">Dealer Name</span> |
+            Vehicle:
+            <span th:text="${inventory.vehicle.modelName}">Model Name</span>
+        </p>
+    </section>
+
+    <section class="card form-card">
+        <form th:action="@{|/admin/inventory/${form.id}/edit|}"
+              th:object="${form}"
+              method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="field">
+                <label>Quantity On Hand</label>
+                <input th:field="*{quantityOnHand}" type="number" min="0" required/>
+                <div class="error" th:if="${#fields.hasErrors('quantityOnHand')}"
+                     th:errors="*{quantityOnHand}"></div>
+            </div>
+
+            <div class="field">
+                <label>Reserved Quantity</label>
+                <input th:field="*{reservedQuantity}" type="number" min="0"/>
+                <div class="error" th:if="${#fields.hasErrors('reservedQuantity')}"
+                     th:errors="*{reservedQuantity}"></div>
+            </div>
+
+            <div class="field">
+                <label>Status</label>
+                <select th:field="*{status}">
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="HOLD">HOLD</option>
+                    <option value="OUT_OF_STOCK">OUT_OF_STOCK</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Note / Reason</label>
+                <textarea th:field="*{note}" rows="3"
+                          placeholder="Ví dụ: nhận thêm 5 xe từ kho trung tâm"></textarea>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn primary">Save Changes</button>
+                <a th:href="@{/admin/inventory}" class="btn">Cancel</a>
+            </div>
+        </form>
+    </section>
+</main>
+</html>

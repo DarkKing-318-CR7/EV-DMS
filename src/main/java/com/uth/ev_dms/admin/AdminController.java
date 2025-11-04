@@ -1,29 +1,55 @@
 package com.uth.ev_dms.admin;
 
+import com.uth.ev_dms.auth.User;
+import com.uth.ev_dms.repo.UserRepository;
+import com.uth.ev_dms.repo.RoleRepository;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/admin")
-public class AdminController {
+public class
 
-    @GetMapping({"", "/", "/dashboard"})
-    public String dashboard() { return "admin/dashboard"; } // templates/admin/dashboard.html
+AdminController {
+    private final UserRepository userRepo;
+    private final RoleRepository roleRepo;
 
-    @GetMapping("/dealers")
-    public String dealers() { return "admin/dealers"; }
+    public AdminController(UserRepository userRepo, RoleRepository roleRepo) {
+        this.userRepo = userRepo;
+        this.roleRepo = roleRepo;
+    }
+
+    @GetMapping("/dashboard")
+    public String home(){
+        return "admin/dashboard";
+    }
 
     @GetMapping("/users")
-    public String users() { return "admin/users"; }
+    public String listUsers(Model model) {
+        model.addAttribute("users", userRepo.findAll());
+        return "admin/users";
+    }
 
-    @GetMapping("/settings")
-    public String settings() { return "admin/settings"; }
+    @GetMapping("/users/{id}/edit")
+    public String editUser(@PathVariable Long id, Model model) {
+        model.addAttribute("user", userRepo.findById(id).orElse(null));
+        model.addAttribute("roles", roleRepo.findAll());
+        return "admin/user-edit";
+    }
 
-    @GetMapping("/reports")
-    public String reports() { return "admin/reports"; }
-
-    @GetMapping("/support")
-    public String support() { return "admin/support"; }
-
+    @PostMapping("/users/{id}/save")
+    public String saveUser(@PathVariable Long id, @RequestParam(value="roleIds", required=false) Long[] roleIds) {
+        User u = userRepo.findById(id).orElse(null);
+        if (u != null) {
+            u.getRoles().clear();
+            if (roleIds != null) {
+                for (Long rid : roleIds) {
+                    roleRepo.findById(rid).ifPresent(u.getRoles()::add);
+                }
+            }
+            userRepo.save(u);
+        }
+        return "redirect:/admin/users";
+    }
 }

@@ -3,39 +3,54 @@ package com.uth.ev_dms.service.impl;
 import com.uth.ev_dms.domain.*;
 import com.uth.ev_dms.repo.*;
 import com.uth.ev_dms.service.InventoryService;
-import jakarta.persistence.*;
+import com.uth.ev_dms.service.dto.InventoryUpdateRequest;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
 
-@Primary  // ✅ Ưu tiên bản này khi có nhiều bean cùng kiểu
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Primary
 @Service
 @RequiredArgsConstructor
 public class InventoryServiceImpl implements InventoryService {
 
+    // ===== Repos dùng cho ORDER FLOW =====
     private final InventoryRepo inventoryRepo;
     private final InventoryMoveRepo moveRepo;
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
 
+    // ===== Repos dùng cho ADMIN INVENTORY =====
+    private final InventoryAdjustmentRepo inventoryAdjustmentRepo;
+
     @PersistenceContext
     private EntityManager em;
 
-    // ========= Allocate cho từng item =========
+    // ===============================
+    // ========== ORDER FLOW =========
+    // ===============================
+
+    /** Allocate cho 1 item (giữ lại cho tương thích cũ) */
     @Override
     @Transactional
     public boolean allocateForOrder(OrderItem item) {
         OrderHdr order = item.getOrder();
-        if (order == null || order.getDealerId() == null)
+        if (order == null || order.getDealerId() == null) {
             throw new IllegalStateException("Order or dealerId not found for item " + item.getId());
+        }
 
         Long dealerId = order.getDealerId();
         Long trimId = resolveTrimId(item);
         int qty = item.getQty() != null ? item.getQty() : 0;
         if (qty <= 0) return true;
 
+        // Khóa hàng tồn kho theo dealer + trim
         Inventory inv = inventoryRepo.lockByDealerAndTrim(dealerId, trimId)
                 .orElseGet(() -> inventoryRepo.save(
                         Inventory.builder()
@@ -46,12 +61,14 @@ public class InventoryServiceImpl implements InventoryService {
                                 .build()
                 ));
 
-        int avail = inv.getQuantity() - inv.getReserved();
+        int avail = (inv.getQuantity() == null ? 0 : inv.getQuantity())
+                - (inv.getReserved() == null ? 0 : inv.getReserved());
         if (avail < qty) return false;
 
-        inv.setReserved(inv.getReserved() + qty);
+        inv.setReserved((inv.getReserved() == null ? 0 : inv.getReserved()) + qty);
         inventoryRepo.save(inv);
 
+        // Log di chuyển kho (RESERVE)
         moveRepo.save(InventoryMove.builder()
                 .dealerId(dealerId)
                 .trimId(trimId)
@@ -65,18 +82,20 @@ public class InventoryServiceImpl implements InventoryService {
         return true;
     }
 
-    // ========= Allocate cho cả đơn =========
+    /** Allocate nguyên đơn (all-or-nothing) */
     @Override
     @Transactional
     public void allocateForOrder(Long orderId) {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
         List<OrderItem> items = orderItemRepo.findByOrderId(orderId);
-        if (items == null || items.isEmpty())
+        if (items == null || items.isEmpty()) {
             throw new IllegalStateException("Order has no items");
+        }
 
         Long dealerId = order.getDealerId();
 
+        // 1) Pre-check: đảm bảo đủ hàng cho tất cả item
         for (OrderItem it : items) {
             Long trimId = resolveTrimId(it);
             int need = it.getQty() != null ? it.getQty() : 0;
@@ -91,19 +110,22 @@ public class InventoryServiceImpl implements InventoryService {
                                     .build()
                     ));
 
-            int avail = inv.getQuantity() - inv.getReserved();
-            if (avail < need)
+            int avail = (inv.getQuantity() == null ? 0 : inv.getQuantity())
+                    - (inv.getReserved() == null ? 0 : inv.getReserved());
+            if (avail < need) {
                 throw new IllegalStateException("Out of stock for trim=" + trimId);
+            }
         }
 
-        // Reserve all
+        // 2) Reserve all
         for (OrderItem it : items) {
-            if (!allocateForOrder(it))
+            if (!allocateForOrder(it)) {
                 throw new IllegalStateException("Allocation failed for item " + it.getId());
+            }
         }
     }
 
-    // ========= Ship =========
+    /** Giao hàng: reserved--, quantity-- */
     @Override
     @Transactional
     public void shipForOrder(Long orderId) {
@@ -118,13 +140,18 @@ public class InventoryServiceImpl implements InventoryService {
             if (qty <= 0) continue;
 
             Inventory inv = inventoryRepo.lockByDealerAndTrim(dealerId, trimId)
-                    .orElseThrow(() -> new IllegalStateException("Inventory not found"));
+                    .orElseThrow(() -> new IllegalStateException("Inventory not found (dealer="
+                            + dealerId + ", trim=" + trimId + ")"));
 
-            if (inv.getReserved() < qty || inv.getQuantity() < qty)
+            int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
+            int onHand  = inv.getQuantity() == null ? 0 : inv.getQuantity();
+
+            if (reserved < qty || onHand < qty) {
                 throw new IllegalStateException("Invalid inventory to ship for trim=" + trimId);
+            }
 
-            inv.setReserved(inv.getReserved() - qty);
-            inv.setQuantity(inv.getQuantity() - qty);
+            inv.setReserved(reserved - qty);
+            inv.setQuantity(onHand - qty);
             inventoryRepo.save(inv);
 
             moveRepo.save(InventoryMove.builder()
@@ -139,7 +166,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
-    // ========= Release =========
+    /** Hủy đơn / deallocate: giải phóng reserved */
     @Override
     @Transactional
     public void releaseForOrder(Long orderId) {
@@ -163,7 +190,8 @@ public class InventoryServiceImpl implements InventoryService {
                                     .build()
                     ));
 
-            inv.setReserved(Math.max(0, inv.getReserved() - qty));
+            int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
+            inv.setReserved(Math.max(0, reserved - qty));
             inventoryRepo.save(inv);
 
             moveRepo.save(InventoryMove.builder()
@@ -178,10 +206,108 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
+    // ===============================
+    // ========== ADMIN FLOW =========
+    // ===============================
+
+    @Override
+    public List<Inventory> findAll() {
+        return inventoryRepo.findAll();
+    }
+
+    @Override
+    public Optional<Inventory> findById(Long id) {
+        return inventoryRepo.findById(id);
+    }
+
+    @Override
+    public Inventory save(Inventory inv) {
+        return inventoryRepo.save(inv);
+    }
+
+    @Override
+    public void delete(Long id) {
+        inventoryRepo.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public Inventory createInventory(Inventory inv, String createdBy) {
+        // @PrePersist của entity sẽ set mặc định (locationType, qty, ...)
+        Inventory saved = inventoryRepo.save(inv);
+
+        Integer onHand = saved.getQtyOnHand() == null ? 0 : saved.getQtyOnHand();
+        if (onHand > 0) {
+            LocalDateTime now = LocalDateTime.now();
+            InventoryAdjustment adj = new InventoryAdjustment();
+            adj.setInventory(saved);
+            adj.setDeltaQty(onHand);             // từ 0 -> onHand
+            adj.setReason("Initial stock");
+            adj.setCreatedAtEvent(now);
+            adj.setCreatedAt(now);
+            adj.setUpdatedAt(now);
+            adj.setCreatedBy(createdBy);
+            adj.setUpdatedBy(createdBy);
+            inventoryAdjustmentRepo.save(adj);
+        }
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public Inventory updateInventory(InventoryUpdateRequest req, String updatedBy) {
+        Inventory current = inventoryRepo.findById(req.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Inventory not found: " + req.getId()));
+
+        Integer oldQty = current.getQtyOnHand() == null ? 0 : current.getQtyOnHand();
+        Integer newQty = req.getQtyOnHand() == null ? 0 : req.getQtyOnHand();
+
+        // cập nhật số lượng
+        current.setQtyOnHand(newQty);
+        // đồng bộ cột quantity (on-hand khả dụng)
+        current.setQuantity(newQty);
+
+        Inventory saved = inventoryRepo.save(current);
+
+        int delta = newQty - oldQty;
+        if (delta != 0) {
+            LocalDateTime now = LocalDateTime.now();
+            InventoryAdjustment adj = new InventoryAdjustment();
+            adj.setInventory(saved);
+            adj.setDeltaQty(delta);
+            adj.setReason(req.getNote());
+            adj.setCreatedAtEvent(now);
+            adj.setCreatedAt(now);
+            adj.setUpdatedAt(now);
+            adj.setCreatedBy(updatedBy);
+            adj.setUpdatedBy(updatedBy);
+            inventoryAdjustmentRepo.save(adj);
+        }
+        return saved;
+    }
+
+    @Override
+    public List<InventoryAdjustment> getAdjustmentsForInventory(Long inventoryId) {
+        return inventoryAdjustmentRepo.findByInventoryIdOrderByCreatedAtEventDesc(inventoryId);
+    }
+
+    @Override
+    public Map<Long, Integer> getStockByTrimForDealer(Long dealerId) {
+        var invList = inventoryRepo.findByDealer_Id(dealerId);
+        Map<Long, Integer> stockMap = new HashMap<>();
+        for (var inv : invList) {
+            if (inv.getTrim() == null) continue;
+            Long trimId = inv.getTrim().getId();
+            Integer qty = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
+            stockMap.merge(trimId, qty, Integer::sum);
+        }
+        return stockMap;
+    }
+
     // ===== Helper =====
     private Long resolveTrimId(OrderItem item) {
         if (item.getTrimId() != null) return item.getTrimId();
-        if (item.getVehicleId() != null) return item.getVehicleId();
+        if (item.getVehicleId() != null) return item.getVehicleId(); // fallback nếu model cũ dùng vehicleId
         throw new IllegalStateException("No trim or vehicle id on order item " + item.getId());
     }
 }

@@ -11,10 +11,8 @@ import java.util.Optional;
 
 public interface PriceListRepo extends JpaRepository<PriceList, Long> {
 
-    // List tất cả giá của 1 trim theo ngày hiệu lực mới → cũ
     List<PriceList> findByTrimIdOrderByEffectiveFromDesc(Long trimId);
 
-    // Lấy *giá đang hiệu lực* cho 1 trim tại 1 ngày (today), ưu tiên effectiveFrom mới nhất
     @Query("""
         select p from PriceList p
         where p.trim.id = :trimId
@@ -28,7 +26,6 @@ public interface PriceListRepo extends JpaRepository<PriceList, Long> {
             @Param("today") LocalDate today
     );
 
-    // Nếu bạn muốn lấy *1 bản ghi duy nhất* giá hiện hành:
     @Query("""
         select p from PriceList p
         where p.trim.id = :trimId
@@ -41,4 +38,21 @@ public interface PriceListRepo extends JpaRepository<PriceList, Long> {
             @Param("trimId") Long trimId,
             @Param("today") LocalDate today
     );
+
+    @Query("""
+        select p from PriceList p
+        join p.trim t
+        join t.vehicle v
+        where v.modelCode = :modelCode
+          and p.active = true
+          and (p.effectiveFrom is null or p.effectiveFrom <= :today)
+          and (p.effectiveTo   is null or p.effectiveTo   >= :today)
+        order by p.effectiveFrom desc, p.id desc
+    """)
+    Optional<PriceList> findActiveByModelCodeAtDate(
+            @Param("modelCode") String modelCode,
+            @Param("today") LocalDate today
+    );
+
+    List<PriceList> findByTrimId(Long trimId);
 }

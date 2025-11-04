@@ -8,7 +8,10 @@ import lombok.*;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -48,4 +51,19 @@ public class Vehicle {
     void preUpdate() {
         this.updatedAt = Instant.now();
     }
+
+    @Setter
+    @Getter
+    @OneToMany(mappedBy = "vehicle", fetch = FetchType.LAZY)
+    private List<Trim> trims = new ArrayList<>();
+
+
+    @Column(name = "regional_status")
+    private String regionalStatus;
+
+    @Column(name = "sales_note")
+    private String salesNote;
+
+    @Column(name = "marketing_desc")
+    private String marketingDesc;
 }
