@@ -19,6 +19,7 @@
     </div>
 
     <div class="row g-3">
+        <!-- Cột trái -->
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">Thông tin đơn</div>
@@ -26,8 +27,16 @@
                     <div class="row">
                         <div class="col-6">
                             <div class="mb-2"><strong>khách hàng (id):</strong> <span th:text="${order.customerId}">--</span></div>
+
                             <div class="mb-2"><strong>tổng tiền:</strong>
-                                <span th:text="${#numbers.formatDecimal(order.totalAmount,0,'POINT',0,'COMMA')}">0</span>
+                                <span th:text="${#numbers.formatDecimal(totalAmountSafe,0,'POINT',0,'COMMA')}">0</span>
+                            </div>
+
+                            <div class="mb-2"><strong>đã trả:</strong>
+                                <span th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</span>
+                            </div>
+                            <div class="mb-2"><strong>còn lại:</strong>
+                                <span th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</span>
                             </div>
                         </div>
                         <div class="col-6">
@@ -101,6 +110,7 @@
                     <!-- Form thanh toán tiền mặt -->
                     <form class="row gy-2 gx-2 align-items-end"
                           th:action="@{|/dealer/orders/${order.id}/pay-cash|}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         <div class="col-md-4">
                             <label class="form-label">số tiền</label>
                             <input class="form-control" name="amount" type="number" step="0.01" required>
@@ -118,27 +128,32 @@
         </div>
 
         <!-- Cột phải -->
-        <div class="col-lg-4">
+        <div class="col-lg-4"
+             th:with="
+               st=${order.status},
+               canInsModel=${canInstallment},
+               hasInsModel=${hasInstallment},
+               canInstallmentFinal=${canInsModel != null ? canInsModel : (st=='NEW' or st=='PENDING_ALLOC')},
+               hasInstallmentFinal=${hasInsModel != null ? hasInsModel : false}
+             ">
             <div class="card">
                 <div class="card-header">Hành động</div>
                 <div class="card-body d-grid gap-2">
-                    <!-- Flash -->
                     <div th:if="${ok != null or error != null}">
                         <div class="alert alert-success" th:if="${ok != null}" th:text="${ok}"></div>
                         <div class="alert alert-danger" th:if="${error != null}" th:text="${error}"></div>
                     </div>
 
-                    <!-- Xin cấp xe -->
                     <form th:action="@{|/dealer/orders/${order.id}/allocate|}" method="post" class="d-grid">
-                        <button class="btn btn-warning"
-                                th:disabled="${order.status != T(com.uth.ev_dms.domain.OrderStatus).NEW}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button class="btn btn-warning" th:disabled="${!isNew}">
                             Xin cấp xe
                         </button>
                     </form>
 
-                    <!-- Hủy đơn (khi NEW) -->
-                    <form th:if="${order.status == T(com.uth.ev_dms.domain.OrderStatus).NEW}"
+                    <form th:if="${isNew}"
                           th:action="@{|/dealer/orders/${order.id}/cancel|}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         <button class="btn btn-outline-danger w-100">Hủy đơn</button>
                     </form>
 
@@ -146,6 +161,7 @@
                 </div>
             </div>
 
+            <!-- Kế hoạch trả góp (nếu có) -->
             <div class="card mt-3" th:if="${installment != null}">
                 <div class="card-header">Kế hoạch trả góp</div>
                 <div class="card-body">
@@ -160,7 +176,71 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Form Tạo trả góp -->
+            <div class="card mt-3">
+                <div class="card-header d-flex align-items-center">
+                    <span>Tạo trả góp</span>
+                    <span class="ms-auto small text-muted" th:if="${hasInstallmentFinal}">đã có kế hoạch</span>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning py-2 mb-3" th:if="${!canInstallmentFinal}">
+                        Chỉ cho phép khi trạng thái <strong>NEW</strong> hoặc <strong>PENDING_ALLOC</strong>.
+                    </div>
+                    <div class="alert alert-info py-2 mb-3" th:if="${hasInstallmentFinal}">
+                        Đơn đã có kế hoạch trả góp — không thể tạo thêm.
+                    </div>
+
+                    <form th:action="@{|/dealer/orders/${order.id}/installment|}" method="post" class="row g-2">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="col-6">
+                            <label class="form-label">Kỳ (tháng)</label>
+                            <input class="form-control" name="months" type="number" min="3" value="12" required
+                                   th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Trả trước</label>
+                            <input class="form-control" name="downPayment" type="number" step="0.01"
+                                   placeholder="50000000" required
+                                   th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary w-100"
+                                    th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
+                                Tạo kế hoạch trả góp
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card mt-3">
+                <div class="card-header">Timeline</div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <div><strong>Tạo đơn</strong></div>
+                            <small class="text-muted" th:text="${#temporals.format(order.createdAt,'dd/MM/yyyy HH:mm')}">--</small>
+                        </li>
+                        <li class="mb-2">
+                            <div><strong>Trạng thái hiện tại</strong>: <span th:text="${order.status}">NEW</span></div>
+                        </li>
+                        <li class="mb-2" th:each="p : ${payments}">
+                            <div>
+                                <strong>Thanh toán</strong>
+                                <span th:text="${#numbers.formatDecimal(p.amount,0,'POINT',0,'COMMA')}">0</span>
+                                <small class="text-muted">(<span th:text="${p.method}">CASH</span>)</small>
+                            </div>
+                            <small class="text-muted" th:text="${#temporals.format(p.paidAt,'dd/MM/yyyy HH:mm')}">--</small>
+                        </li>
+                        <li class="text-muted" th:if="${#lists.isEmpty(payments)}">Chưa có sự kiện thanh toán</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- /Timeline -->
         </div>
+        <!-- /Cột phải -->
     </div>
 </div>
 </body>

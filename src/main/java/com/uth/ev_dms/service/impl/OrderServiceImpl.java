@@ -7,15 +7,14 @@ import com.uth.ev_dms.exception.BusinessException;
 import com.uth.ev_dms.repo.OrderItemRepo;
 import com.uth.ev_dms.repo.OrderRepo;
 import com.uth.ev_dms.repo.PaymentRepo;
+import com.uth.ev_dms.service.InventoryService;
 import com.uth.ev_dms.service.OrderService;
-import com.uth.ev_dms.service.InventoryService; // assume you have this in Part 1
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +23,6 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepo orderRepo;
     private final PaymentRepo paymentRepo;
     private final InventoryService inventoryService;
-
-
     private final OrderItemRepo orderItemRepo;
 
     @Override
@@ -37,12 +34,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderItem> findItems(Long id) {
         return orderItemRepo.findByOrderId(id);
-    }// hook to Part 1
+    }
 
     @Override
     @Transactional
     public OrderHdr createFromQuote(Long quoteId, Long dealerId, Long customerId, Long staffId) {
-        // TODO: load quote and copy items; here a minimal skeleton:
+        // Minimal skeleton, keep old behavior
         OrderHdr o = new OrderHdr();
         o.setQuoteId(quoteId);
         o.setDealerId(dealerId);
@@ -51,7 +48,6 @@ public class OrderServiceImpl implements OrderService {
         o.setOrderNo(generateOrderNo());
         o.setStatus(OrderStatus.NEW);
 
-        // calculate totals from items (assuming items already attached elsewhere)
         if (o.getItems() != null && !o.getItems().isEmpty()) {
             BigDecimal total = o.getItems().stream()
                     .map(OrderItem::getLineAmount)
@@ -69,9 +65,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderHdr submitForAllocation(Long orderId) {
-        OrderHdr o = orderRepo.findById(orderId).orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
+        OrderHdr o = orderRepo.findById(orderId)
+                .orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
         if (o.getStatus() != OrderStatus.NEW) {
             throw new BusinessException("INVALID_STATE", "Only NEW orders can be submitted");
+        }
+        List<OrderItem> items = o.getItems();
+        if (items == null || items.isEmpty()) {
+            throw new BusinessException("NO_ITEMS", "Order has no items");
         }
         o.setStatus(OrderStatus.PENDING_ALLOC);
         return orderRepo.save(o);
@@ -80,34 +81,35 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderHdr allocate(Long orderId) {
-        OrderHdr o = orderRepo.findById(orderId).orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
+        OrderHdr o = orderRepo.findById(orderId)
+                .orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
         if (o.getStatus() != OrderStatus.PENDING_ALLOC) {
             throw new BusinessException("INVALID_STATE", "Order must be PENDING_ALLOC to allocate");
         }
-        AtomicInteger shortage = new AtomicInteger(0);
-        if (o.getItems() == null || o.getItems().isEmpty()) {
+        List<OrderItem> items = o.getItems();
+        if (items == null || items.isEmpty()) {
             throw new BusinessException("NO_ITEMS", "Order has no items");
         }
-        o.getItems().forEach(it -> {
-            boolean ok = inventoryService.allocateForOrder(it); // ✅ gọi đúng chữ ký 1 tham số
-            if (!ok) shortage.incrementAndGet();
-        });
-        if (shortage.get() > 0) {
-            throw new BusinessException("ALLOCATION_SHORTAGE", "Insufficient inventory for one or more items");
-        }
+
+        // Atomic allocation for the whole order
+        inventoryService.allocateForOrder(orderId);
+
         o.setStatus(OrderStatus.ALLOCATED);
         return orderRepo.save(o);
-
     }
 
     @Override
     @Transactional
     public OrderHdr markDelivered(Long orderId) {
-        OrderHdr o = orderRepo.findById(orderId).orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
+        OrderHdr o = orderRepo.findById(orderId)
+                .orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
         if (o.getStatus() != OrderStatus.ALLOCATED) {
             throw new BusinessException("INVALID_STATE", "Only ALLOCATED orders can be delivered");
         }
-        // Optional: check fully paid
+
+        // Ship allocated stock
+        inventoryService.shipForOrder(orderId);
+
         o.setStatus(OrderStatus.DELIVERED);
         return orderRepo.save(o);
     }
@@ -126,19 +128,17 @@ public class OrderServiceImpl implements OrderService {
         return "ODR-" + System.currentTimeMillis();
     }
 
-
     @Transactional
     public OrderHdr cancel(Long orderId) {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
-
         if (order.getStatus() == OrderStatus.ALLOCATED || order.getStatus() == OrderStatus.DELIVERED) {
-            throw new IllegalStateException("Không thể hủy đơn đã được phân bổ hoặc đã giao.");
+            throw new IllegalStateException("Cannot cancel allocated or delivered order");
         }
-
         order.setStatus(OrderStatus.CANCELLED);
         return orderRepo.save(order);
     }
+
     @Transactional
     @Override
     public OrderHdr cancelByDealer(Long orderId, Long dealerId, Long actorId) {
@@ -147,13 +147,16 @@ public class OrderServiceImpl implements OrderService {
         if (!o.getDealerId().equals(dealerId)) {
             throw new SecurityException("FORBIDDEN_DEALER");
         }
-        if (o.getStatus() != OrderStatus.NEW) {
-            throw new IllegalStateException("ORDER_CANNOT_CANCEL_IN_STATUS_" + o.getStatus());
+        if (o.getStatus() == OrderStatus.ALLOCATED) {
+            throw new IllegalStateException("DEALLOCATE_FIRST");
+        }
+        if (o.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("DELIVERED_CANNOT_CANCEL");
         }
         o.setStatus(OrderStatus.CANCELLED);
-        // optional: o.setCancelledBy(actorId); o.setCancelledAt(Instant.now());
         return orderRepo.save(o);
     }
+
     @Transactional
     @Override
     public OrderHdr deallocateByEvm(Long orderId, Long actorId, String reason) {
@@ -162,9 +165,11 @@ public class OrderServiceImpl implements OrderService {
         if (o.getStatus() != OrderStatus.ALLOCATED) {
             throw new IllegalStateException("ONLY_ALLOCATED_CAN_BE_DEALLOCATED");
         }
-        // TODO: trả xe về pool tồn kho, rollback các bản ghi phân bổ… (nếu bạn có bảng Allocation)
+
+        // Release reserved stock before rolling back status
+        inventoryService.releaseForOrder(orderId);
+
         o.setStatus(OrderStatus.PENDING_ALLOC);
-        // optional log: allocationLogRepo.save(new AllocationLog(orderId, "DEALLOCATE", actorId, reason))
         return orderRepo.save(o);
     }
 
@@ -174,18 +179,18 @@ public class OrderServiceImpl implements OrderService {
         var o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
-        if (o.getStatus() == OrderStatus.ALLOCATED) {
-            throw new IllegalStateException("DEALLOCATE_FIRST");
-        }
         if (o.getStatus() == OrderStatus.DELIVERED) {
             throw new IllegalStateException("DELIVERED_CANNOT_CANCEL");
         }
-        if (o.getStatus() == OrderStatus.CANCELLED) return o;
+        if (o.getStatus() == OrderStatus.ALLOCATED) {
+            throw new IllegalStateException("DEALLOCATE_FIRST");
+        }
+        // If you reserve during PENDING_ALLOC (normally not), release here
+        if (o.getStatus() == OrderStatus.PENDING_ALLOC) {
+            inventoryService.releaseForOrder(orderId);
+        }
 
-        // Cho phép: NEW, PENDING_ALLOC
         o.setStatus(OrderStatus.CANCELLED);
-        // optional: o.setCancelledBy(actorId); o.setCancelReason(reason);
         return orderRepo.save(o);
     }
-
 }
