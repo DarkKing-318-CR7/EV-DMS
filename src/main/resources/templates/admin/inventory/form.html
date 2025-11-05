@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='inventory',
+               pageTitle=${isEdit} ? 'Edit Inventory' : 'Create Inventory'"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <link rel="stylesheet" th:href="@{/css/forms.css}"/>
+
+    <section class="page-header">
+        <h1 th:text="${isEdit} ? 'Edit Inventory' : 'Create Inventory'">Create Inventory</h1>
+    </section>
+
+    <section class="card form-card">
+        <form th:object="${inventory}" th:action="@{/admin/inventory}" method="post" class="form-grid" novalidate>
+
+            <!-- hidden id to support update -->
+            <input type="hidden" th:field="*{id}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="field">
+                <label>Trim *</label>
+                <select th:field="*{trim}">
+                    <option value="">— Select Trim —</option>
+                    <option th:each="t : ${allTrims}"
+                            th:value="${t.id}"
+                            th:text="${t.vehicle.modelName + ' · ' + t.trimName}">
+                        EV6 GT-Line · Long Range AWD
+                    </option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Location</label>
+                <input th:field="*{locationType}" placeholder="EVM" />
+                <small style="opacity:0.6;">(Giữ EVM cho kho tổng)</small>
+            </div>
+
+            <div class="field sm">
+                <label>Qty On Hand</label>
+                <input type="number" min="0" step="1" th:field="*{qtyOnHand}" placeholder="0">
+            </div>
+
+            <div class="field lg form-actions">
+                <a class="btn btn-outline" th:href="@{/admin/inventory}">Cancel</a>
+
+                <button class="btn btn-gradient" type="submit">Save</button>
+
+                <form th:if="${isEdit}"
+                      th:action="@{'/admin/inventory/' + ${inventory.id} + '/delete'}"
+                      method="post"
+                      style="display:inline"
+                      onsubmit="return confirm('Delete this inventory record?');">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </form>
+    </section>
+</main>
+</html>

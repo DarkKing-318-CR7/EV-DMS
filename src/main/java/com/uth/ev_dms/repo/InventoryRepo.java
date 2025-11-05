@@ -1,14 +1,10 @@
 package com.uth.ev_dms.repo;
 
-
-
 import com.uth.ev_dms.domain.Inventory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-
+@Repository
 public interface InventoryRepo extends JpaRepository<Inventory, Long> {
-    List<Inventory> findByDealerId(Long dealerId);
-    Optional<Inventory> findByDealerIdAndTrimId(Long dealerId, Long trimId);
+    // sau này có thể thêm findByTrimId(...) hoặc findByLocationType(...) nếu cần
 }

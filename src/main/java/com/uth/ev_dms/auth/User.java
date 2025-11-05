@@ -1,13 +1,14 @@
 package com.uth.ev_dms.auth;
 
-import com.uth.ev_dms.domain.Dealer;   // ✅ thêm
-import com.uth.ev_dms.domain.Region;   // ✅ thêm
+import com.uth.ev_dms.domain.Dealer;
+import com.uth.ev_dms.domain.Region;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.Set;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users") // khớp tên bảng của bạn
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class User {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,17 +30,16 @@ public class User {
     private boolean enabled = true;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "users_roles",
+    @JoinTable(name = "users_roles",               // khớp bảng link của bạn
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
-    // ✅ thêm 2 quan hệ dưới đây
     @ManyToOne
-    @JoinColumn(name = "dealer_id")     // cột khóa ngoại trong bảng users
+    @JoinColumn(name = "dealer_id")  // cột FK trong bảng users
     private Dealer dealer;
 
     @ManyToOne
-    @JoinColumn(name = "region_id")     // cột khóa ngoại trong bảng users
+    @JoinColumn(name = "region_id")  // cột FK trong bảng users
     private Region region;
 }

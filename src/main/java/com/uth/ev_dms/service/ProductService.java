@@ -105,5 +105,13 @@ public class ProductService {
     }
 
 
+    public void deleteVehicle(Long id) {
+        vehicleRepo.deleteById(id);
+    }
+
+    public List<Trim> listAllTrims() {
+        return trimRepo.findAll();
+    }
+
 
 }

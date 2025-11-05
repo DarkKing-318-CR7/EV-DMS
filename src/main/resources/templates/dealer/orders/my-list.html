@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Đơn của tôi • Dealer</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <style>
+        .table td, .table th { vertical-align: middle; }
+    </style>
 </head>
 <body class="bg-light">
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -24,26 +27,54 @@
             <table class="table table-hover align-middle m-0">
                 <thead class="table-light">
                 <tr>
-                    <th>#</th>
-                    <th>khách hàng</th>
-                    <th>trạng thái</th>
-                    <th>tổng tiền</th>
-                    <th>tạo lúc</th>
-                    <th></th>
+                    <th style="width:80px">#</th>
+                    <th>Khách hàng</th>
+                    <th style="width:160px">Trạng thái</th>
+                    <th class="text-end" style="width:180px">Tổng tiền</th>
+                    <th style="width:200px">Tạo lúc</th>
+                    <th class="text-end" style="width:120px"></th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="o : ${myOrders}">
+                <!-- Hàng dữ liệu -->
+                <tr th:each="o : ${orders}">
                     <td th:text="${o.id}">1</td>
-                    <td th:text="${o.customerName}">nguyen van a</td>
-                    <td><span class="badge rounded-pill bg-info" th:text="${o.status}">NEW</span></td>
-                    <td th:text="${#numbers.formatDecimal(o.totalAmount,0,'POINT',0,'COMMA')}">0</td>
-                    <td th:text="${#temporals.format(o.createdAt,'dd/MM/yyyy HH:mm')}">--</td>
+
+                    <!-- Fallback: hiện customerName nếu có, không thì hiện customerId -->
+                    <td th:text="${o.customerName != null && !#strings.isEmpty(o.customerName) ? o.customerName : o.customerId}">Nguyễn Văn A</td>
+
+                    <!-- Badge trạng thái + màu sắc -->
+                    <td>
+                        <th:block th:switch="${o.status.name()}">
+                            <span class="badge rounded-pill bg-info" th:case="'NEW'" th:text="${o.status}">NEW</span>
+                            <span class="badge rounded-pill bg-warning text-dark" th:case="'PENDING_ALLOC'" th:text="${o.status}">PENDING_ALLOC</span>
+                            <span class="badge rounded-pill bg-primary" th:case="'ALLOCATED'" th:text="${o.status}">ALLOCATED</span>
+                            <span class="badge rounded-pill bg-success" th:case="'DELIVERED'" th:text="${o.status}">DELIVERED</span>
+                            <span class="badge rounded-pill bg-secondary" th:case="'CANCELLED'" th:text="${o.status}">CANCELLED</span>
+                            <span class="badge rounded-pill bg-dark" th:case="*" th:text="${o.status}">UNKNOWN</span>
+                        </th:block>
+
+
+
+                    </td>
+
+                    <!-- Định dạng số: 0 chữ số thập phân, ngăn cách hàng nghìn bằng COMMA -->
+                    <td class="text-end"
+                        th:text="${#numbers.formatDecimal(o.totalAmount, 0, 'POINT', 0, 'COMMA')}">0
+                    </td>
+
+                    <td th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}">--</td>
+
                     <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" th:href="@{|/dealer/orders/${o.id}|}">Chi tiết</a>
+                        <a class="btn btn-sm btn-outline-primary"
+                           th:href="@{|/dealer/orders/${o.id}|}">
+                            Chi tiết
+                        </a>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(myOrders)}">
+
+                <!-- Hàng trống khi không có dữ liệu -->
+                <tr th:if="${orders == null or #lists.isEmpty(orders)}">
                     <td colspan="6" class="text-center text-muted py-4">Chưa có đơn nào</td>
                 </tr>
                 </tbody>

@@ -9,6 +9,19 @@
         th,td{border:1px solid #ccc;padding:8px}
         th{background:#f5f5f5;text-align:left}
         form{display:inline}
+
+        /* ===== thêm màu cho badge ===== */
+        .badge{
+            display:inline-block;
+            padding:4px 10px;
+            border-radius:12px;
+            font-weight:600;
+            color:#fff;
+        }
+        .bg-secondary{background:#6c757d;}
+        .bg-warning{background:#ffc107;color:#212529;}
+        .bg-success{background:#28a745;}
+        .bg-danger{background:#dc3545;}
     </style>
 </head>
 <body>
@@ -43,7 +56,21 @@
         <td th:text="${td.customerName}">Nguyen Van A</td>
         <td th:text="${td.vehicleName}">Hyundai Ioniq 5</td>
         <td th:text="${#temporals.format(td.scheduleAt,'dd/MM/yyyy HH:mm')}">02/11/2025 09:00</td>
-        <td th:text="${td.status}">REQUESTED</td>
+
+        <!-- ✅ Trạng thái có màu -->
+        <td>
+            <span class="badge"
+                  th:classappend="
+                      ${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).REQUESTED} ? 'bg-secondary' :
+                      ${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).CONFIRMED} ? 'bg-warning' :
+                      ${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).COMPLETED} ? 'bg-success' :
+                      ${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).CANCELLED} ? 'bg-danger' :
+                      'bg-secondary'"
+                  th:text="${td.status != null ? td.status : 'REQUESTED'}">
+                REQUESTED
+            </span>
+        </td>
+
         <td>
             <form th:action="@{|/manager/testdrives/${td.id}/approve|}" method="post">
                 <button type="submit">Approve</button>

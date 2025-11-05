@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Báo cáo</title></head>
+<body>
+<h2>Báo cáo doanh số</h2>
+<p>Tổng doanh thu: <span th:text="${salesReport.totalRevenue}"></span> VND</p>
+<p>Tổng số đơn hàng: <span th:text="${salesReport.totalOrders}"></span></p>
+<p>Xe bán chạy nhất: <span th:text="${salesReport.topVehicle}"></span></p>
+</body>
+</html>

@@ -279,27 +279,32 @@
                     <div class="card-header">Hành động</div>
                     <div class="card-body d-grid gap-2">
 
-                        <!-- Duyệt & phân bổ (Modal xác nhận) -->
-                        <button type="button" class="btn btn-success w-100"
-                                data-bs-toggle="modal" data-bs-target="#confirmAllocateModal"
-                                th:disabled="${order.status != T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC
-                                  and order.status != T(com.uth.ev_dms.domain.OrderStatus).NEW}">
-                            <i class="bi bi-check2-circle me-1"></i> Duyệt & Phân bổ
-                        </button>
+                        <!-- Duyệt & Phân bổ -->
+                        <form th:if="${order.status == T(com.uth.ev_dms.domain.OrderStatus).NEW
+                  or order.status == T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}"
+                              th:action="@{|/evm/orders/${order.id}/approve-allocate|}" method="post">
+                            <button class="btn btn-success w-100">Duyệt & Phân bổ</button>
+                        </form>
 
-                        <!-- Hủy đơn (nếu còn hủy được) -->
-                        <button type="button" class="btn btn-outline-danger w-100"
-                                data-bs-toggle="modal" data-bs-target="#confirmCancelModal"
-                                th:disabled="${order.status == T(com.uth.ev_dms.domain.OrderStatus).DELIVERED
-                                  or order.status == T(com.uth.ev_dms.domain.OrderStatus).CANCELLED}">
-                            <i class="bi bi-x-octagon me-1"></i> Hủy đơn
-                        </button>
+                        <!-- Thu hồi phân bổ -->
+                        <form th:if="${order.status == T(com.uth.ev_dms.domain.OrderStatus).ALLOCATED}"
+                              th:action="@{|/evm/orders/${order.id}/deallocate|}" method="post">
+                            <button class="btn btn-warning w-100">Thu hồi phân bổ</button>
+                        </form>
 
-                        <a class="btn btn-outline-secondary w-100" th:href="@{/evm/orders}">
-                            <i class="bi bi-arrow-left me-1"></i> Quay lại
-                        </a>
+                        <!-- Hủy đơn -->
+                        <form th:if="${order.status == T(com.uth.ev_dms.domain.OrderStatus).NEW
+                  or order.status == T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}"
+                              th:action="@{|/evm/orders/${order.id}/cancel|}" method="post">
+                            <button class="btn btn-outline-danger w-100">Hủy đơn</button>
+                        </form>
 
-                        <!-- Nhật ký phân bổ -->
+                        <!-- Quay lại -->
+                        <a class="btn btn-outline-secondary w-100" th:href="@{/evm/orders}">Quay lại</a>
+
+
+
+                <!-- Nhật ký phân bổ -->
                         <button class="btn btn-light border w-100" type="button"
                                 data-bs-toggle="offcanvas" data-bs-target="#allocLogOffcanvas">
                             <i class="bi bi-clock-history me-1"></i> Nhật ký phân bổ
