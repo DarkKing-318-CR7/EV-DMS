@@ -52,18 +52,46 @@
 
 
 
-        <div class="form-group">
-            <label id="applyPromotionsLabel">Apply Promotions:</label>
-            <div class="promotion-list">
-                <label class="promo-chip" th:each="p : ${promotions}">
-                    <input type="checkbox"
-                           name="promotionIds"
-                           th:value="${p.id}"
-                           th:attr="data-percent=${p.discountPercent}">
-                    <span th:text="${p.name}"></span>
-                </label>
+        <!-- ========= PROMOTIONS ========= -->
+        <div class="form-group promo-group">
+            <label>Promotions:</label>
+
+            <div class="promo-block">
+                <div class="promo-header">
+                    <button type="button"
+                            id="addPromoBtn"
+                            class="btn btn-primary btn-sm">
+                        + Add Promotion
+                    </button>
+                </div>
+
+                <div id="promo-rows-container"></div>
+
+                <!-- Template ẩn -->
+                <div id="promo-row-template"
+                     class="promo-row"
+                     style="display: none; margin-top: 6px;">
+                    <select name="promotionIds"
+                            class="form-control promo-select"
+                            style="max-width: 260px;">
+                        <option value="">-- Select promotion --</option>
+                        <option th:each="p : ${promotions}"
+                                th:value="${p.id}"
+                                th:data-percent="${p.discountPercent}"
+                                th:text="${p.name + ' (' + p.discountPercent + '%)'}">
+                        </option>
+                    </select>
+
+                    <button type="button"
+                            class="btn btn-sm btn-danger remove-promo-btn">
+                        🗑
+                    </button>
+                </div>
             </div>
         </div>
+
+
+
 
         <div class="form-group">
             <label for="totalAmount">Total Amount:</label>

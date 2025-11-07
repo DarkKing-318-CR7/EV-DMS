@@ -1,46 +1,46 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:replace="layout :: layout (~{::body})">
 <head>
-    <meta charset="UTF-8">
-    <title>Thêm khuyến mãi</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <title th:text="${promotion.id == null} ? 'Create Promotion' : 'Edit Promotion'">
+        Create Promotion
+    </title>
 </head>
-<body class="p-4">
-<h2>Thêm chương trình khuyến mãi</h2>
+<body>
+<h1 th:text="${promotion.id == null ? 'Create New Promotion' : 'Edit Promotion'}"></h1>
 
-<form th:action="@{/admin/promotions}" th:object="${promotion}" method="post" class="mt-3">
+<form th:action="@{/admin/promotions/save}"
+      th:object="${promotion}" method="post" class="form">
+    <input type="hidden" th:field="*{id}"/>
+
     <div class="mb-3">
-        <label class="form-label">Tên chương trình</label>
-        <input type="text" class="form-control" th:field="*{title}" required>
+        <label class="form-label">Name</label>
+        <input type="text" class="form-control" th:field="*{name}" required/>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Mô tả</label>
-        <textarea class="form-control" rows="3" th:field="*{description}"></textarea>
+        <label class="form-label">Discount (%)</label>
+        <input type="number" class="form-control"
+               th:field="*{discountPercent}" min="0" max="100" step="0.1"/>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Tỷ lệ giảm giá (%)</label>
-        <input type="number" class="form-control" th:field="*{discountRate}" step="0.1" required>
+        <label class="form-label">Start Date</label>
+        <input type="date" class="form-control" th:field="*{startDate}" required/>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Ngày bắt đầu</label>
-        <input type="date" class="form-control" th:field="*{startDate}">
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Ngày kết thúc</label>
-        <input type="date" class="form-control" th:field="*{endDate}">
+        <label class="form-label">End Date</label>
+        <input type="date" class="form-control" th:field="*{endDate}"/>
     </div>
 
     <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" th:field="*{active}" id="active">
-        <label class="form-check-label" for="active">Kích hoạt chương trình</label>
+        <input type="checkbox" class="form-check-input" th:field="*{active}" id="activeCheck"/>
+        <label class="form-check-label" for="activeCheck">Active</label>
     </div>
 
-    <button type="submit" class="btn btn-success">Lưu</button>
-    <a th:href="@{/admin/promotions}" class="btn btn-secondary">Quay lại</a>
+    <button type="submit" class="btn btn-success">Save</button>
+    <a th:href="@{/admin/promotions}" class="btn btn-outline-light ms-2">Cancel</a>
 </form>
 </body>
 </html>
