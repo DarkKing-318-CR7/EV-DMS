@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='inventory', pageTitle='Inventory History'"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <link rel="stylesheet" th:href="@{/css/tables.css}"/>
+
+    <section class="page-header">
+        <div class="left">
+            <h1 th:text="${pageTitle}">Inventory History</h1>
+        </div>
+        <div class="right">
+            <a class="btn btn-outline" th:href="@{/admin/inventory}">
+                ← Back to List
+            </a>
+        </div>
+    </section>
+
+    <!-- Inventory info -->
+    <section class="card info-card">
+        <div class="info-row">
+            <p><strong>Dealer:</strong> <span th:text="${inventory.dealer.name}">Dealer Name</span></p>
+            <p><strong>Trim:</strong>
+                <span th:text="${inventory.trim.vehicle.modelName + ' · ' + inventory.trim.trimName}">
+                    Model · Trim
+                </span>
+            </p>
+            <p><strong>Qty On Hand:</strong> <span th:text="${inventory.qtyOnHand}">0</span></p>
+            <p><strong>Last Updated:</strong>
+                <span th:text="${#temporals.format(inventory.updatedAt, 'yyyy-MM-dd HH:mm')}">2025-11-01</span>
+            </p>
+        </div>
+    </section>
+
+    <!-- History table -->
+    <section class="card table-card">
+        <h2>Adjustment History</h2>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Change (Δ Qty)</th>
+                <th>Reason</th>
+                <th>Changed By</th>
+                <th>At</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="adj, iterStat : ${history}">
+                <td th:text="${iterStat.count}">1</td>
+                <td th:text="${adj.deltaQty > 0 ? '+' + adj.deltaQty : adj.deltaQty}"
+                    th:classappend="${adj.deltaQty < 0} ? 'text-danger' : 'text-success'">+5</td>
+                <td th:text="${adj.reason}">Manual correction</td>
+                <td th:text="${adj.createdBy}">admin</td>
+                <td th:text="${#temporals.format(adj.createdAtEvent, 'yyyy-MM-dd HH:mm')}">2025-11-01 22:30</td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(history)}">
+                <td colspan="5" style="text-align:center; opacity:0.7;">No adjustments yet.</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</html>

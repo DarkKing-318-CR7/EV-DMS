@@ -6,17 +6,27 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class SupportController {
+    private final SupportRepository repo;
+    public SupportController(SupportRepository repo) { this.repo = repo; }
 
     @GetMapping("/support")
     public String supportForm(Model model) {
-        model.addAttribute("supportRequest", new SupportRequest());
-        return "support";
+        model.addAttribute("ticket", new SupportTicket());
+        return "support/support";
     }
 
     @PostMapping("/support")
-    public String submitSupport(@ModelAttribute SupportRequest request, Model model) {
-        System.out.println("📩 Support request: " + request.getMessage());
-        model.addAttribute("success", "Yêu cầu của bạn đã được gửi!");
-        return "support";
+    public String submitSupport(@ModelAttribute SupportTicket ticket, Model model) {
+        repo.save(ticket);
+        model.addAttribute("success", "Yêu cầu đã gửi. Chúng tôi sẽ trả lời sớm.");
+        model.addAttribute("ticket", new SupportTicket());
+        return "support/support";
+    }
+
+    // admin view
+    @GetMapping("/admin/support")
+    public String viewTickets(Model model) {
+        model.addAttribute("tickets", repo.findAll());
+        return "support/list";
     }
 }

@@ -40,10 +40,9 @@ public class DealerQuoteController {
 
     // ================= STAFF =================
 
-    // Danh sách quote của staff
     @GetMapping("/my")
     public String myQuotes(Model model) {
-        List<Quote> quotes = salesService.findAll(); // Hoặc findByDealerId(...)
+        List<Quote> quotes = salesService.findAll();
         model.addAttribute("quotes", quotes);
         model.addAttribute("role", "STAFF");
         return "dealer/quotes";
@@ -65,9 +64,6 @@ public class DealerQuoteController {
                             .map(PriceList::getMsrp)
                             .orElse(BigDecimal.ZERO);
 
-                    // 👇 Dòng in log đặt ở ĐÂY mới truy cập được biến price
-                    System.out.println("🚗 " + v.getModelCode() + " -> price = " + price);
-
                     Map<String, Object> m = new HashMap<>();
                     m.put("id", v.getId());
                     m.put("brand", v.getBrand());
@@ -82,15 +78,26 @@ public class DealerQuoteController {
         return "dealer/quote-create";
     }
 
-
     // ================= LƯU QUOTE =================
     @PostMapping("/my/save")
     public String saveQuote(@ModelAttribute CreateQuoteDTO dto,
                             @RequestParam(value = "promotionIds", required = false) List<Long> promotionIds) {
+
+        // 1️⃣ Tạo quote trước
         Quote q = salesService.createQuote(dto);
+        System.out.println("💾 Quote vừa tạo ID = " + q.getId() + ", total = " + q.getTotalAmount());
+
+        // 2️⃣ Áp dụng khuyến mãi nếu có
         if (promotionIds != null && !promotionIds.isEmpty()) {
-            salesService.applyPromotions(q.getId(), promotionIds);
+            Quote updated = salesService.applyPromotions(q.getId(), promotionIds);
+            System.out.println("✅ Áp dụng promotions: " + promotionIds +
+                    " -> discount = " + updated.getAppliedDiscount() +
+                    ", final = " + updated.getFinalAmount());
+        } else {
+            System.out.println("⚠️ Không có promotions được chọn!");
         }
+
+        // 3️⃣ Quay lại trang danh sách
         return "redirect:/dealer/quotes/my";
     }
 
@@ -128,5 +135,27 @@ public class DealerQuoteController {
         return priceListRepo.findActiveByModelCodeAtDate(modelCode, LocalDate.now())
                 .map(PriceList::getMsrp)
                 .orElse(BigDecimal.ZERO);
+    }
+
+    // ================== API: GET VEHICLES (cho JS fetch) ==================
+    @GetMapping("/api/vehicles")
+    @ResponseBody
+    public List<Map<String, Object>> getVehiclesApi() {
+        return vehicleRepo.findAll().stream()
+                .map(v -> {
+                    BigDecimal price = priceListRepo
+                            .findActiveByModelCodeAtDate(v.getModelCode(), LocalDate.now())
+                            .map(PriceList::getMsrp)
+                            .orElse(BigDecimal.ZERO);
+
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", v.getId());
+                    m.put("brand", v.getBrand());
+                    m.put("modelName", v.getModelName());
+                    m.put("modelCode", v.getModelCode());
+                    m.put("price", price);
+                    return m;
+                })
+                .toList();
     }
 }

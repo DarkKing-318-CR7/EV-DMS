@@ -34,6 +34,12 @@
                     <a class="btn btn-outline"
                        th:href="@{'/admin/inventory/' + ${inv.id} + '/edit'}">Edit</a>
 
+                    <a class="btn btn-outline-secondary"
+                       th:href="@{'/admin/inventory/' + ${inv.id} + '/history'}"
+                       title="View adjustment history">
+                        <i class="fas fa-history"></i> History
+                    </a>
+
                     <form th:action="@{'/admin/inventory/' + ${inv.id} + '/delete'}"
                           method="post"
                           style="display:inline"

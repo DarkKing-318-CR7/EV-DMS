@@ -1,74 +1,184 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const container = document.getElementById("items-container");
-    const addBtn = document.getElementById("add-item-btn");
-    const totalInput = document.getElementById("totalAmount");
-    let itemIndex = 0;
+// ========================================
+// QUOTE-CREATE.JS (FINAL FULL VERSION)
+// ========================================
 
-    const vehicles = window._vehicles || [];
-    console.log("Loaded vehicles:", vehicles);
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("✅ Quote Create JS loaded");
 
-    if (!addBtn || !container || !totalInput) return;
+  const addItemBtn = document.getElementById("add-item-btn");
+  const itemsContainer = document.getElementById("items-container");
 
-    // ========== Add Item ==========
-    addBtn.addEventListener("click", function () {
-        const div = document.createElement("div");
-        div.classList.add("item-row");
+  if (!addItemBtn || !itemsContainer) return;
 
-        let options = '<option value="">-- Select Vehicle --</option>';
-        vehicles.forEach(v => {
-            options += `<option value="${v.id}" data-price="${v.price || 0}">
-                ${v.brand} ${v.modelName} (${v.modelCode})
-            </option>`;
-        });
+  addItemBtn.addEventListener("click", addItemRow);
 
-        div.innerHTML = `
-            <select name="items[${itemIndex}].vehicleId" required>
-                ${options}
-            </select>
-            <input type="number" name="items[${itemIndex}].quantity" placeholder="Qty"
-                   min="1" value="1" required>
-            <input type="number" name="items[${itemIndex}].unitPrice" placeholder="Unit Price"
-                   class="unit-price-input" step="0.01" required>
-            <button type="button" class="remove-item-btn">🗑</button>
-        `;
+  // ================================
+  // 🧩 Helper: Lấy danh sách xe
+  // ================================
+  async function getVehicles() {
+    if (window._vehicles && Array.isArray(window._vehicles)) return window._vehicles;
 
-        container.appendChild(div);
-        itemIndex++;
+    const urls = ["/dealer/quotes/api/vehicles"];
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            window._vehicles = data;
+            console.log(`✅ Vehicles loaded from ${url}`, data);
+            return data;
+          }
+        }
+      } catch (err) {
+        console.warn("Fetch error at", url, err);
+      }
+    }
 
-        const select = div.querySelector("select");
-        const qtyInput = div.querySelector('[name$=".quantity"]');
-        const priceInput = div.querySelector(".unit-price-input");
+    console.error("🚨 Không tìm được endpoint trả danh sách vehicles!");
+    return [];
+  }
 
-        // Auto-fill price khi chọn xe
-        select.addEventListener("change", function () {
-            const selectedOption = select.options[select.selectedIndex];
-            const price = selectedOption.getAttribute("data-price");
-            priceInput.value = price && parseFloat(price) > 0 ? price : "";
-            updateTotal();
-        });
+  // 💰 Helper: Lấy giá xe theo modelCode
+  async function getVehiclePrice(modelCode) {
+    if (!modelCode) return null;
 
-        // Update total khi nhập số lượng / giá
-        qtyInput.addEventListener("input", updateTotal);
-        priceInput.addEventListener("input", updateTotal);
+    try {
+      const res = await fetch(`/dealer/quotes/price/${modelCode}`, {
+        headers: { "Accept": "application/json" },
+      });
+      if (res.ok) {
+        const price = await res.json();
+        console.log(`💰 Giá xe ${modelCode}:`, price);
+        return price;
+      }
+    } catch (err) {
+      console.error("❌ Lỗi khi lấy giá xe:", err);
+    }
 
-        // Nút xoá item
-        div.querySelector(".remove-item-btn").addEventListener("click", () => {
-            div.remove();
-            updateTotal();
-        });
+    console.warn("⚠️ Không tìm thấy giá cho xe:", modelCode);
+    return null;
+  }
 
-        updateTotal();
+  // ================================
+  // 🧮 Helper: Cập nhật tổng tiền
+  // ================================
+  function updateTotalAmount() {
+    const rows = document.querySelectorAll(".item-row");
+    let total = 0;
+
+    rows.forEach(row => {
+      const qty = parseFloat(row.querySelector("input[type='number']").value) || 0;
+      const price = parseFloat(row.querySelector("input[placeholder='Unit Price']").value) || 0;
+      if (!isNaN(qty) && !isNaN(price)) {
+        total += qty * price;
+      }
     });
 
-    // ========== Cập nhật tổng ==========
-    function updateTotal() {
-        const items = container.querySelectorAll(".item-row");
-        let total = 0;
-        items.forEach(row => {
-            const qty = parseFloat(row.querySelector('[name$=".quantity"]').value) || 0;
-            const price = parseFloat(row.querySelector('[name$=".unitPrice"]').value) || 0;
-            total += qty * price;
-        });
-        totalInput.value = Number.isFinite(total) ? total.toFixed(2) : "0.00";
-    }
+    // ✅ Cập nhật input hidden và hiển thị đẹp
+    const totalInputHidden = document.getElementById("totalAmountInput");
+    const totalInputForm = document.getElementById("totalAmount");
+    const display = document.getElementById("totalAmountDisplay");
+
+    if (totalInputHidden) totalInputHidden.value = total;
+    if (totalInputForm) totalInputForm.value = total;
+    if (display) display.textContent = new Intl.NumberFormat("vi-VN").format(total) + " ₫";
+
+    console.log("💰 Tổng tiền:", total);
+    updateFinalAmount();
+  }
+
+
+  // ================================
+  // ➕ Tạo 1 dòng Item
+  // ================================
+  async function addItemRow() {
+    const itemRow = document.createElement("div");
+    itemRow.className = "item-row";
+
+    const vehicleSelect = document.createElement("select");
+    vehicleSelect.innerHTML = `<option value="">-- Select Vehicle --</option>`;
+
+    const qtyInput = document.createElement("input");
+    qtyInput.type = "number";
+    qtyInput.min = "1";
+    qtyInput.value = "1";
+
+    const priceInput = document.createElement("input");
+    priceInput.type = "text";
+    priceInput.placeholder = "Unit Price";
+    priceInput.readOnly = true;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "remove-item-btn";
+    removeBtn.textContent = "🗑️";
+
+    // 👉 Khi bấm xóa dòng
+    removeBtn.addEventListener("click", () => {
+      itemRow.remove();
+      updateTotalAmount(); // ✅ tính lại tổng
+    });
+
+    // 👉 Khi thay đổi số lượng
+    qtyInput.addEventListener("input", updateTotalAmount);
+
+    itemRow.append(vehicleSelect, qtyInput, priceInput, removeBtn);
+    itemsContainer.appendChild(itemRow);
+
+    // === Load danh sách xe từ API ===
+    const vehicles = await getVehicles();
+    vehicles.forEach((v) => {
+      const opt = document.createElement("option");
+      opt.value = v.modelCode; // ✅ dùng modelCode làm value
+      opt.textContent = v.modelName || v.modelCode;
+      vehicleSelect.appendChild(opt);
+    });
+
+    // === Khi chọn xe => lấy giá từ API ===
+    vehicleSelect.addEventListener("change", async () => {
+      const modelCode = vehicleSelect.value;
+      if (!modelCode) {
+        priceInput.value = "";
+        updateTotalAmount(); // ✅ cập nhật tổng khi bỏ chọn
+        return;
+      }
+
+      priceInput.value = "Loading...";
+      const price = await getVehiclePrice(modelCode);
+
+      if (price !== null && !isNaN(price)) {
+        priceInput.value = parseFloat(price);
+      } else {
+        priceInput.value = 0;
+      }
+
+
+
+      updateTotalAmount(); // ✅ tính lại tổng sau khi load giá
+    });
+  }
 });
+
+
+// ==================== PROMOTION CHECKBOX HANDLER ====================
+document.querySelectorAll("input[name='promotionIds']").forEach(cb => {
+  cb.addEventListener("change", updateFinalAmount);
+});
+
+function updateFinalAmount() {
+  const baseAmount = parseFloat(document.getElementById("totalAmountInput").value || 0);
+  const checkboxes = document.querySelectorAll("input[name='promotionIds']:checked");
+  let totalDiscountPercent = 0;
+
+  checkboxes.forEach(cb => {
+    const percent = parseFloat(cb.dataset.percent || 0);
+    totalDiscountPercent += percent;
+  });
+
+  let final = baseAmount * (1 - totalDiscountPercent / 100);
+  if (final < 0) final = 0;
+
+  const formatted = new Intl.NumberFormat("vi-VN").format(final);
+  document.getElementById("totalAmountDisplay").textContent = formatted + " ₫";
+}

@@ -1,51 +1,51 @@
 package com.uth.ev_dms.service.impl;
 
-import com.uth.ev_dms.auth.User;
 import com.uth.ev_dms.domain.Customer;
 import com.uth.ev_dms.repo.CustomerRepo;
-import com.uth.ev_dms.repo.UserRepo;
 import com.uth.ev_dms.service.CustomerService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CustomerServiceImpl implements CustomerService {
 
-    private final CustomerRepo customerRepo;
-    private final UserRepo userRepo;
+    private final CustomerRepo repo;
 
     @Override
-    public Page<Customer> myList(String username, int page, int size) {
-        User u = userRepo.findByUsername(username).orElseThrow();
-        return customerRepo.findByOwnerId(u.getId(), PageRequest.of(page, size));
-    }
-
-    @Override
-    public Customer createForOwner(String username, String name, String email, String phone, String address) {
-        User u = userRepo.findByUsername(username).orElseThrow();
-        Customer c = new Customer();
-        c.setTen(name);
-        c.setEmail(email);
-        c.setSdt(phone);
-        c.setDiachi(address);
-        c.setOwnerId(u.getId());
-        return customerRepo.save(c);
-    }
-
-    @Override
-    public Customer updateForOwner(String username, Long id, String name, String email, String phone, String address) {
-        User u = userRepo.findByUsername(username).orElseThrow();
-        Customer c = customerRepo.findById(id).orElseThrow();
-        if (!u.getId().equals(c.getOwnerId())) {
-            throw new IllegalArgumentException("Not owner of this customer");
+    @Transactional
+    public Customer create(Customer c) {
+        if (c.getSdt() != null && !c.getSdt().isBlank() && repo.existsBySdt(c.getSdt())) {
+            throw new IllegalStateException("So dien thoai da ton tai");
         }
-        c.setTen(name);
-        c.setEmail(email);
-        c.setSdt(phone);
-        c.setDiachi(address);
-        return customerRepo.save(c);
+
+        // ✅ Nếu chưa có ownerId (Manager tạo) → để null
+        // ✅ Nếu Staff tạo → ownerId sẽ được set từ API
+        return repo.save(c);
     }
+
+
+    @Override
+    public Customer update(Customer c) {
+        if (c.getId() != null && c.getSdt() != null && !c.getSdt().isBlank()
+                && repo.existsBySdtAndIdNot(c.getSdt(), c.getId())) {
+            throw new IllegalStateException("So dien thoai da ton tai");
+        }
+        return repo.save(c);
+    }
+
+    @Override
+    public Customer findById(Long id) {
+        return repo.findById(id).orElse(null);
+    }
+
+    @Override public List<Customer> findAll() { return repo.findAll(); }
+    @Override public List<Customer> findMine(Long ownerId) { return repo.findByOwnerId(ownerId); }
+    @Override public List<Customer> searchAll(String kw) { return repo.searchAll(kw == null ? "" : kw); }
+    @Override public List<Customer> searchMine(Long ownerId, String kw) { return repo.searchMine(ownerId, kw == null ? "" : kw); }
+    @Override public void delete(Long id) { repo.deleteById(id); }
 }

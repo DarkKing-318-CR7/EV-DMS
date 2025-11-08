@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.time.ZoneId;
@@ -144,5 +145,25 @@ public class TestDriveController {
         model.addAttribute("title", "Lich cua toi");
         model.addAttribute("isManager", false);
         return "dealer/list";
+    }
+    @PostMapping("/manager/testdrives/{id}/approve")
+    public String approve(@PathVariable Long id, RedirectAttributes ra) {
+        testDriveService.approve(id);
+        ra.addFlashAttribute("msg", "Đã duyệt lịch #" + id);
+        return "redirect:/manager/testdrives";
+    }
+
+    @PostMapping("/manager/testdrives/{id}/complete")
+    public String complete(@PathVariable Long id, RedirectAttributes ra) {
+        testDriveService.complete(id);
+        ra.addFlashAttribute("msg", "Đã hoàn tất lịch #" + id);
+        return "redirect:/manager/testdrives";
+    }
+
+    @PostMapping("/manager/testdrives/{id}/cancel")
+    public String cancel(@PathVariable Long id, RedirectAttributes ra) {
+        testDriveService.cancel(id);
+        ra.addFlashAttribute("msg", "Đã hủy lịch #" + id);
+        return "redirect:/manager/testdrives";
     }
 }

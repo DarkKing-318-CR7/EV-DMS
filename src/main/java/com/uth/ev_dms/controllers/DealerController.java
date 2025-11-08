@@ -23,7 +23,7 @@ public class DealerController {
         return "dealer/dashboard";
     }
 
-    @GetMapping("/vehicles") public String vehicles() { return "dealer/vehicles"; }
+//    @GetMapping("/vehicles") public String vehicles() { return "dealer/vehicles"; }
     @GetMapping("/customers") public String customers() { return "dealer/customers"; }
     @GetMapping("/test-drive") public String testDrive() { return "dealer/test-drive"; }
     @GetMapping("/quotes") public String quotes() { return "dealer/quotes"; }

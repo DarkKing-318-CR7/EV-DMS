@@ -3,6 +3,10 @@ package com.uth.ev_dms.service;
 
 import com.uth.ev_dms.domain.*;
 import com.uth.ev_dms.repo.*;
+import com.uth.ev_dms.service.dto.TrimCommercialForm;
+import com.uth.ev_dms.service.dto.TrimPricingForm;
+import com.uth.ev_dms.service.dto.VehicleCommercialForm;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,5 +117,185 @@ public class ProductService {
         return trimRepo.findAll();
     }
 
+    public List<Trim> getAllTrims() {
+        return trimRepo.findAll();
+    }
+
+    public List<Vehicle> getVehiclesWithTrims() {
+        return vehicleRepo.findAll();
+        // hoặc vehicleRepository.findAll(); (miễn sao lazy không bể view)
+    }
+
+    @Transactional(readOnly = true)
+    public VehicleCommercialForm getVehicleCommercialForm(Long vehicleId) {
+        Vehicle v = vehicleRepo.findById(vehicleId)
+                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found: " + vehicleId));
+
+        VehicleCommercialForm form = new VehicleCommercialForm();
+        form.setId(v.getId());
+
+        // readonly info
+        form.setModelCode(v.getModelCode());
+        form.setModelName(v.getModelName());
+        form.setBodyType(v.getBodyType());
+        form.setWarrantyMonths(v.getWarrantyMonths());
+
+        // editable info (nếu bạn đã thêm cột vào entity Vehicle)
+        form.setRegionalStatus(
+                // nếu chưa có field trong entity -> mock default:
+                (v.getRegionalStatus() != null ? v.getRegionalStatus() : "AVAILABLE")
+        );
+        form.setSalesNote(
+                (v.getSalesNote() != null ? v.getSalesNote() : "")
+        );
+        form.setMarketingDesc(
+                (v.getMarketingDesc() != null ? v.getMarketingDesc() : "")
+        );
+
+        return form;
+    }
+
+    // Lưu dữ liệu sau khi submit form
+    @Transactional
+    public void updateVehicleCommercialInfo(Long vehicleId, VehicleCommercialForm form) {
+        Vehicle v = vehicleRepo.findById(vehicleId)
+                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found: " + vehicleId));
+
+        // Copy từ form vào entity
+        // (nếu DB và entity Vehicle đã có các field này)
+        v.setRegionalStatus(form.getRegionalStatus());
+        v.setSalesNote(form.getSalesNote());
+        v.setMarketingDesc(form.getMarketingDesc());
+
+        // update audit: updated_at / updated_by nếu bạn có
+        v.setUpdatedAt(java.time.Instant.now());
+        // v.setUpdatedBy(currentUserName); // nếu track user
+
+        vehicleRepo.save(v);
+    }
+
+    @Transactional(readOnly = true)
+    public TrimCommercialForm getTrimCommercialForm(Long trimId) {
+        Trim t = trimRepo.findById(trimId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(
+                        "Trim not found: " + trimId
+                ));
+
+        TrimCommercialForm form = new TrimCommercialForm();
+        form.setId(t.getId());
+
+        // spec gốc (readonly)
+        form.setTrimName(t.getTrimName());
+        form.setDrive(String.valueOf(t.getDrive())); // nếu entity Trim của bạn có field "drive" kiểu String/enum
+        form.setBatterykwh(t.getBatteryKWh()); // batterykwh trong Trim entity
+        form.setPowerHp(t.getPowerHp());       // power_hp
+        form.setRangeKm(t.getRangeKm());       // range_km
+
+        // phần EVM được sửa
+        // nếu DB chưa có các field này thì mock default
+        form.setRegionalName(
+                t.getRegionalName() != null ? t.getRegionalName() : t.getTrimName()
+        );
+        form.setAvailabilityNote(
+                t.getAvailabilityNote() != null ? t.getAvailabilityNote() : ""
+        );
+        form.setAvailable(
+                t.getAvailable() != null ? t.getAvailable() : Boolean.TRUE
+        );
+
+        return form;
+    }
+
+    @Transactional
+    public void updateTrimCommercialInfo(Long trimId, TrimCommercialForm form) {
+        Trim t = trimRepo.findById(trimId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(
+                        "Trim not found: " + trimId
+                ));
+
+        // copy field được EVM chỉnh
+        t.setRegionalName(form.getRegionalName());
+        t.setAvailabilityNote(form.getAvailabilityNote());
+        t.setAvailable(form.getAvailable());
+
+        // audit
+        t.setUpdatedAt(java.time.Instant.now());
+//        t.setUpdatedBy("EVM Staff"); // TODO: lấy user thật nếu có
+
+        trimRepo.save(t);
+    }
+
+    @Transactional(readOnly = true)
+    public TrimPricingForm getTrimPricingForm(Long trimId) {
+        Trim t = trimRepo.findById(trimId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(
+                        "Trim not found: " + trimId
+                ));
+
+        // lấy tất cả price rows cho trim này
+        List<PriceList> prices = priceListRepo.findByTrimId(trimId);
+
+        // chọn 1 record để hiển thị (ví dụ: record cuối cùng trong list)
+        PriceList pl = null;
+        if (!prices.isEmpty()) {
+            // lấy cuối list (coi như latest)
+            pl = prices.get(prices.size() - 1);
+        }
+
+        TrimPricingForm form = new TrimPricingForm();
+        form.setTrimId(t.getId());
+        form.setTrimName(
+                t.getRegionalName() != null && !t.getRegionalName().isBlank()
+                        ? t.getRegionalName()
+                        : t.getTrimName()
+        );
+
+        if (pl != null) {
+            form.setBasePriceVnd(pl.getBasePriceVnd());
+            form.setCurrency(pl.getCurrency());
+        } else {
+            form.setBasePriceVnd(0);
+            form.setCurrency("VND");
+        }
+
+        return form;
+    }
+
+
+    @Transactional
+    public void updateTrimPricing(Long trimId, TrimPricingForm form) {
+        Trim t = trimRepo.findById(trimId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(
+                        "Trim not found: " + trimId
+                ));
+
+        // Lấy danh sách giá hiện có
+        List<PriceList> prices = priceListRepo.findByTrimId(trimId);
+
+        PriceList pl;
+        if (prices.isEmpty()) {
+            // chưa có record → tạo mới
+            pl = new PriceList();
+            pl.setTrim(t);
+        } else {
+            // đã có record → cập nhật record cuối cùng
+            pl = prices.get(prices.size() - 1);
+        }
+
+        pl.setBasePriceVnd(form.getBasePriceVnd());
+        pl.setCurrency(
+                form.getCurrency() != null ? form.getCurrency() : "VND"
+        );
+
+        pl.setUpdatedAt(java.time.Instant.now());
+//        pl.setUpdatedBy("EVM Staff");
+
+        priceListRepo.save(pl);
+    }
+
+    public Vehicle getVehicleById(Long id) {
+        return vehicleRepo.findById(id)
+                .orElse(null);
+    }
 
 }

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Support Tickets</title></head>
+<body>
+<h1>Support Tickets</h1>
+<table border="1">
+  <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Message</th><th>Handled</th></tr></thead>
+  <tbody>
+  <tr th:each="t : ${tickets}">
+    <td th:text="${t.id}"></td>
+    <td th:text="${t.name}"></td>
+    <td th:text="${t.email}"></td>
+    <td th:text="${t.message}"></td>
+    <td th:text="${t.handled}"></td>
+  </tr>
+  </tbody>
+</table>
+<p><a th:href="@{/}">Quay lại</a></p>
+</body>
+</html>
