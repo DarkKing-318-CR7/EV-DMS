@@ -43,6 +43,12 @@ public class TestDriveServiceImpl implements TestDriveService {
     }
 
     @Override
+    public TestDrive findById(Long id) {
+        return repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Khong tim thay TestDrive ID=" + id));
+    }
+
+    @Override
     public List<TestDrive> findMineCreated(Long ownerId) {
         return repo.findByCreatedBy_IdOrderByScheduleAt(ownerId);
     }
@@ -71,6 +77,11 @@ public class TestDriveServiceImpl implements TestDriveService {
     @Override
     @Transactional
     public TestDrive save(TestDrive td) {
+        // ✅ THÊM: Kiểm tra trùng xe cùng khung giờ
+        if (repo.existsByVehicleNameAndScheduleAt(td.getVehicleName(), td.getScheduleAt())) {
+            throw new RuntimeException("Xe này đã được đặt lịch vào thời gian đó!");
+        }
+
         return repo.save(td);
     }
 

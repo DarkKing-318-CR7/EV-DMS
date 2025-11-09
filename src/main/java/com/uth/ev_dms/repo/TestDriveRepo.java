@@ -21,4 +21,6 @@ public interface TestDriveRepo extends JpaRepository<TestDrive, Long> {
 
     List<TestDrive> findByAssignedStaff_IdOrderByScheduleAt(Long staffId);
     List<TestDrive> findByCreatedBy_IdOrderByScheduleAt(Long ownerId);
+    boolean existsByVehicleNameAndScheduleAt(String vehicleName, LocalDateTime scheduleAt);
+    List<TestDrive> findByCreatedByIdOrderByScheduleAtDesc(Long createdById);
 }

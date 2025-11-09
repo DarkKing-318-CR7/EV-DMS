@@ -1,29 +1,24 @@
 package com.uth.ev_dms.controllers;
 
-import com.uth.ev_dms.service.TestDriveService;
-import com.uth.ev_dms.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.security.Principal;
-
 @Controller
-@RequiredArgsConstructor
-@RequestMapping("/dealer/test-drive")
+@RequestMapping("/dealer")
 public class DealerTestDriveController {
 
-    private final TestDriveService testDriveService;
-    private final UserService userService;
-
-    // Staff filter: "My Schedule"
-    @GetMapping("/my")
-    public String mySchedule(Model model, Principal principal) {
-        Long staffId = userService.findIdByUsername(principal.getName());
-        model.addAttribute("list", testDriveService.findMineAssigned(staffId));
-        // dùng chung template list của dealer/staff
-        return "dealer/test-drive/list";
+    // Trang dashboard dealer (ví dụ)
+    @GetMapping
+    public String dashboard() {
+        return "dealer/dashboard"; // nếu chưa có view này, có thể tạm trả "redirect:/dealer/test-drive"
+        // return "redirect:/dealer/test-drive";
     }
+
+    // TUYỆT ĐỐI KHÔNG có @GetMapping("/test-drive") ở đây nữa!
+    // Nếu cần đường dẫn cũ để không 404, đổi nó thành 1 path khác và redirect:
+    // @GetMapping("/test-drive-page")
+    // public String legacy() {
+    //     return "redirect:/dealer/test-drive";
+    // }
 }
