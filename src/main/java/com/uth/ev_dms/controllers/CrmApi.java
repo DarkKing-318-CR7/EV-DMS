@@ -11,14 +11,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@RestController
+@RestController("crmUiApi") // bean name duy nhất, tránh trùng với com.uth.ev_dms.crm.CrmApi
 @RequiredArgsConstructor
 @RequestMapping("/api/crm")
 public class CrmApi {
 
     private final TestDriveService testDriveService;
 
-    /* ==== LIST (Manager / generic) ==== */
     @GetMapping("/test-drives")
     public List<TestDrive> list(
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate from,
@@ -28,7 +27,6 @@ public class CrmApi {
         return testDriveService.list(from, to, status);
     }
 
-    /* ==== CREATE ==== */
     @PostMapping("/test-drives")
     public TestDrive create(@RequestBody TestDriveCreateDto dto) {
         TestDrive td = new TestDrive();
@@ -36,14 +34,12 @@ public class CrmApi {
         td.setCustomerPhone(dto.getCustomerPhone());
         td.setVehicleName(dto.getVehicleName());
         td.setLocation(dto.getLocation());
-        td.setScheduleAt(dto.getScheduleAt()); // LocalDateTime
+        td.setScheduleAt(dto.getScheduleAt());
         td.setNotes(dto.getNotes());
         td.setStatus(TestDriveStatus.REQUESTED);
-        // Nếu cần gán createdBy/assignedStaff, xử lý ở Service trước khi save
         return testDriveService.save(td);
     }
 
-    /* ==== STATE CHANGES ==== */
     @PostMapping("/test-drives/{id}/approve")
     public void approve(@PathVariable Long id) { testDriveService.approve(id); }
 
@@ -53,7 +49,6 @@ public class CrmApi {
     @PostMapping("/test-drives/{id}/cancel")
     public void cancel(@PathVariable Long id) { testDriveService.cancel(id); }
 
-    /* ==== DTO tối thiểu cho create ==== */
     public static class TestDriveCreateDto {
         private String customerName;
         private String customerPhone;
