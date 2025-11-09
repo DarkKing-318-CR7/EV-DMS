@@ -6,15 +6,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class AuditController {
-    private final AuditService auditService;
+    private final AuditService service;
+    public AuditController(AuditService service) { this.service = service; }
 
-    public AuditController(AuditService auditService) {
-        this.auditService = auditService;
-    }
-
-    @GetMapping("/audit")
-    public String viewAuditLogs(Model model) {
-        model.addAttribute("logs", auditService.getAll());
-        return "audit";
+    @GetMapping("/admin/audit")
+    public String audit(Model model) {
+        model.addAttribute("logs", service.findAll());
+        return "audit/audit";
     }
 }

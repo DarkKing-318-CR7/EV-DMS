@@ -1,7 +1,9 @@
-package com.uth.ev_dms.service;
+package com.uth.ev_dms.service.impl;
 
 import com.uth.ev_dms.domain.*;
 import com.uth.ev_dms.repo.*;
+import com.uth.ev_dms.service.PromotionService;
+import com.uth.ev_dms.service.SalesService;
 import com.uth.ev_dms.service.dto.CreateQuoteDTO;
 import com.uth.ev_dms.service.dto.CreateQuoteItemDTO;
 import org.springframework.stereotype.Service;
@@ -18,7 +20,6 @@ public class SalesServiceImpl implements SalesService {
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
     private final PaymentRepo paymentRepo;
-    private final PromotionRepo promotionRepo;
     private final PromotionService promotionService; // ✅ thêm đúng chỗ
 
     // ✅ Constructor đầy đủ dependencies
@@ -34,7 +35,6 @@ public class SalesServiceImpl implements SalesService {
         this.orderRepo = orderRepo;
         this.orderItemRepo = orderItemRepo;
         this.paymentRepo = paymentRepo;
-        this.promotionRepo = promotionRepo;
         this.promotionService = promotionService; // ✅ gán vào
     }
 

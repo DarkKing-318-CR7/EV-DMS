@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active=${active}, pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <!-- Header trang -->
+    <section class="page-header">
+        <div class="left">
+            <h1 th:text="${pageTitle}">Products - EVM Staff View</h1>
+            <p class="subtitle">Danh sách Vehicle & Trims (EVM scope)</p>
+        </div>
+    </section>
+
+    <!-- Danh sách xe -->
+    <section class="card table-card">
+        <div class="card-header">
+            <h2>Vehicles</h2>
+        </div>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="min-width:80px;">Code</th>
+                <th>Model Name</th>
+                <th style="min-width:70px;">Brand</th>
+                <th style="min-width:90px;">Body Type</th>
+                <th style="min-width:80px;">Warranty (mo)</th>
+                <th th:if="${canMaintainPricing}" style="min-width:110px;">Actions</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            <!-- HÀNG 1: THÔNG TIN VEHICLE -->
+            <tr th:each="v : ${vehicles}">
+                <td th:text="${v.modelCode}">EV6</td>
+                <td th:text="${v.modelName}">EV6 GT-Line</td>
+                <td th:text="${v.brand}">EVM</td>
+                <td th:text="${v.bodyType}">SUV</td>
+                <td th:text="${v.warrantyMonths}">36</td>
+
+                <td th:if="${canMaintainPricing}">
+                    <a class="btn btn-sm btn-outline"
+                       th:href="@{'/evm/products/vehicle/' + ${v.id} + '/edit'}">
+                        Edit Vehicle
+                    </a>
+                </td>
+            </tr>
+
+            <!-- HÀNG 2: BẢNG TRIM CỦA VEHICLE -->
+            <tr th:each="v, vStat : ${vehicles}">
+                <td th:colspan="${canMaintainPricing} ? 6 : 5"
+                    style="background: rgba(255,255,255,0.03); padding:1rem 1.25rem 1.5rem 1.25rem;">
+
+                    <!-- Tiêu đề trims -->
+                    <div style="font-weight:600; margin-bottom:0.5rem; font-size:0.95rem;">
+                        <span th:text="${v.modelCode}">EV6</span>
+                        <span> • Trims</span>
+                    </div>
+
+                    <!-- Bảng con cho trims -->
+                    <table class="table sub-table"
+                           style="background:rgba(0,0,0,0.15); border-radius:0.5rem; overflow:hidden;">
+                        <thead>
+                        <tr>
+                            <th style="min-width:150px;">Trim Name</th>
+                            <th style="min-width:70px;">Drive</th>
+                            <th style="min-width:90px;">Battery (kWh)</th>
+                            <th style="min-width:90px;">Power (HP)</th>
+                            <th style="min-width:90px;">Range (km)</th>
+                            <th th:if="${canMaintainPricing}" style="min-width:160px;">Trim Actions</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <!-- Lặp trim -->
+                        <tr th:each="t : ${v.trims}">
+                            <td th:text="${t.trimName}">GT-Line AWD</td>
+                            <td th:text="${t.drive}">AWD</td>
+                            <td th:text="${t.batteryKWh}">77</td>
+                            <td th:text="${t.powerHp}">430</td>
+                            <td th:text="${t.rangeKm}">480</td>
+
+                            <td th:if="${canMaintainPricing}">
+                                <a class="btn btn-xs btn-outline"
+                                   th:href="@{'/evm/products/trim/' + ${t.id} + '/edit'}">
+                                    Edit Trim
+                                </a>
+
+                                <a class="btn btn-xs btn-outline-secondary"
+                                   th:href="@{'/evm/products/trim/' + ${t.id} + '/price'}">
+                                    Update Price
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- Nếu không có trim -->
+                        <tr th:if="${#lists.isEmpty(v.trims)}">
+                            <td th:colspan="${canMaintainPricing} ? 6 : 5"
+                                style="text-align:center; opacity:0.6;">
+                                No trims for this vehicle.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                </td>
+            </tr>
+
+            <!-- TRƯỜNG HỢP KHÔNG CÓ VEHICLE NÀO -->
+            <tr th:if="${#lists.isEmpty(vehicles)}">
+                <td th:colspan="${canMaintainPricing} ? 6 : 5"
+                    style="text-align:center; opacity:0.7;">
+                    No vehicles found.
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+    </section>
+</main>
+</html>

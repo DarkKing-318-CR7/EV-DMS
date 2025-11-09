@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Audit Log</title></head>
+<head><meta charset="UTF-8"><title>Audit</title></head>
 <body>
-<h2>Lịch sử hoạt động</h2>
+<h1>Audit Log</h1>
 <table border="1">
-  <tr><th>Người dùng</th><th>Hành động</th><th>Thời gian</th></tr>
+  <thead><tr><th>ID</th><th>User</th><th>Action</th><th>Time</th></tr></thead>
+  <tbody>
   <tr th:each="log : ${logs}">
+    <td th:text="${log.id}"></td>
     <td th:text="${log.username}"></td>
     <td th:text="${log.action}"></td>
     <td th:text="${log.timestamp}"></td>
   </tr>
+  </tbody>
 </table>
+<p><a th:href="@{/}">Quay lại</a></p>
 </body>
 </html>

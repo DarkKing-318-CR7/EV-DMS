@@ -12,33 +12,51 @@
     </section>
 
     <section class="card form-card">
-        <form th:object="${inventory}" th:action="@{/admin/inventory}" method="post" class="form-grid" novalidate>
+        <form th:object="${inventory}"
+              th:action="@{/admin/inventory}"
+              method="post"
+              class="form-grid">
 
-            <!-- hidden id to support update -->
-            <input type="hidden" th:field="*{id}">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" th:field="*{id}"/>
 
+            <!-- Trim chọn -->
             <div class="field">
                 <label>Trim *</label>
-                <select th:field="*{trim}">
+                <select th:field="*{trim}" required>
                     <option value="">— Select Trim —</option>
                     <option th:each="t : ${allTrims}"
                             th:value="${t.id}"
                             th:text="${t.vehicle.modelName + ' · ' + t.trimName}">
-                        EV6 GT-Line · Long Range AWD
                     </option>
                 </select>
             </div>
 
+            <!-- Dealer chọn -->
             <div class="field">
-                <label>Location</label>
-                <input th:field="*{locationType}" placeholder="EVM" />
-                <small style="opacity:0.6;">(Giữ EVM cho kho tổng)</small>
+                <label>Dealer *</label>
+                <select th:field="*{dealer}" required>
+                    <option value="" disabled
+                            th:selected="${inventory.dealer == null}">
+                        — Select Dealer —
+                    </option>
+                    <option th:each="d : ${allDealers}"
+                            th:value="${d.id}"
+                            th:text="${d.name}">
+                    </option>
+                </select>
+
             </div>
 
-            <div class="field sm">
-                <label>Qty On Hand</label>
-                <input type="number" min="0" step="1" th:field="*{qtyOnHand}" placeholder="0">
+            <!-- Location Type -->
+            <div class="field">
+                <label>Location Type</label>
+                <input th:field="*{locationType}" placeholder="EVM / DEALER">
+            </div>
+
+            <!-- Qty -->
+            <div class="field">
+                <label>Quantity On Hand</label>
+                <input th:field="*{qtyOnHand}" type="number" min="0" required />
             </div>
 
             <div class="field lg form-actions">
@@ -56,6 +74,7 @@
                 </form>
             </div>
         </form>
+
     </section>
 </main>
 </html>

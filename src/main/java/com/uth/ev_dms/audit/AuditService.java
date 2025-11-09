@@ -1,21 +1,24 @@
 package com.uth.ev_dms.audit;
 
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.ArrayList;
 
 @Service
 public class AuditService {
-    private final List<AuditLog> logs = new ArrayList<>();
+    private final AuditRepository repo;
+    public AuditService(AuditRepository repo) { this.repo = repo; }
 
-    public void record(String username, String action) {
-        AuditLog log = new AuditLog();
-        log.setUsername(username);
-        log.setAction(action);
-        logs.add(log);
+    public AuditLog record(String username, String action) {
+        AuditLog l = new AuditLog();
+        l.setUsername(username);
+        l.setAction(action);
+        l.setTimestamp(LocalDateTime.now());
+        return repo.save(l);
     }
 
-    public List<AuditLog> getAll() {
-        return logs;
+    public List<AuditLog> findAll() {
+        return repo.findAll();
     }
 }
