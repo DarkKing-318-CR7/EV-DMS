@@ -1,1 +1,48 @@
+.page-header {
+    margin-top: 20px;
+    text-align: center;
+    color: #fff;
+}
+
+.table-wrapper {
+    margin: 30px auto;
+    width: 80%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #fff;
+}
+
+th, td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: rgba(255, 255, 255, 0.15);
+    font-weight: bold;
+}
+
+.back-link {
+    text-align: center;
+    margin: 30px;
+}
+
+a.btn {
+    text-decoration: none;
+    border: 1px solid #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    color: white;
+}
+a.btn:hover {
+    background: white;
+    color: black;
+}
 /* Promotions styles - scaffold */

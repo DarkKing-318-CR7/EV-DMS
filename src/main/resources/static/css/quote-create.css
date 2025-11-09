@@ -67,3 +67,75 @@
 .btn{padding:10px 18px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
 .btn-primary{background:linear-gradient(90deg,#4a6cf7,#6ea8fe);color:#fff}
 .btn-secondary{background:#6c757d;color:#fff}
+
+
+/* cùng style với các dòng khác */
+.form-group {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.form-group > label {
+    width: 180px;      /* để giống các label khác */
+    text-align: right;
+    padding-right: 16px;
+    margin-top: 8px;
+}
+
+.promo-block {
+    flex: 1;           /* phần bên phải chiếm hết phần còn lại */
+}
+
+/* mỗi dòng promotion: select + nút xóa trên cùng một hàng */
+.promo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+
+/* Giữ label và nút cùng hàng */
+.promo-group {
+  display: flex;
+  align-items: center;
+}
+
+.promo-group > label {
+  width: 180px;
+  text-align: right;
+  padding-right: 16px;
+  margin-top: 6px;
+}
+
+.promo-block {
+  flex: 1;
+}
+
+/* Đặt nút add cùng hàng với label */
+.promo-header {
+  display: flex;
+  align-items: center;
+}
+
+/* Dòng promotion: dropdown + nút xóa */
+.promo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+/* Thống nhất màu nút Add Promotion với Add Item */
+.btn.btn-primary.btn-sm {
+  background-color: #5a5bf3;
+  border-color: #5a5bf3;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn.btn-primary.btn-sm:hover {
+  background-color: #4849d6;
+  border-color: #4849d6;
+}

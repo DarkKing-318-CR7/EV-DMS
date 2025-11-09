@@ -1,6 +1,7 @@
 package com.uth.ev_dms.controllers;
 
 import com.uth.ev_dms.domain.Promotion;
+import com.uth.ev_dms.repo.PromotionRepo;
 import com.uth.ev_dms.service.PromotionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -32,12 +33,13 @@ public class PromotionController {
         return "admin/promotions/form";
     }
 
-    // 💾 Lưu khuyến mãi mới
-    @PostMapping
+    // 💾 Lưu khuyến mãi mới hoặc cập nhật
+    @PostMapping("/save")
     public String savePromotion(@ModelAttribute Promotion promotion) {
         promotionService.savePromotion(promotion);
         return "redirect:/admin/promotions";
     }
+
 
     // 🖊️ Sửa khuyến mãi
     @GetMapping("/edit/{id}")
@@ -54,4 +56,5 @@ public class PromotionController {
         promotionService.deletePromotion(id);
         return "redirect:/admin/promotions";
     }
+
 }

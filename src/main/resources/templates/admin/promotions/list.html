@@ -1,55 +1,56 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:replace="layout :: layout (~{::body})">
 <head>
-    <meta charset="UTF-8">
-    <title>Danh sách khuyến mãi</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <title>Admin Promotions - EV-DMS</title>
 </head>
-<body class="p-4">
-
-<div class="container">
-    <h2 class="mb-4">Danh sách chương trình khuyến mãi</h2>
-
-    <!-- Nút thêm mới -->
-    <div class="mb-3">
-        <a href="/admin/promotions/new" class="btn btn-success">➕ Thêm khuyến mãi mới</a>
-    </div>
-
-    <!-- Bảng danh sách -->
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-        <tr>
-            <th>Tên chương trình</th>
-            <th>Mô tả</th>
-            <th>Tỷ lệ giảm giá (%)</th>
-            <th>Ngày bắt đầu</th>
-            <th>Ngày kết thúc</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="promotion : ${promotions}">
-            <td th:text="${promotion.title}">Tên</td>
-            <td th:text="${promotion.description}">Mô tả</td>
-            <td th:text="${promotion.discountRate}">0</td>
-            <td th:text="${promotion.startDate}">2025-10-01</td>
-            <td th:text="${promotion.endDate}">2025-10-31</td>
-            <td th:text="${promotion.active} ? 'Đang chạy' : 'Ngừng'">Đang chạy</td>
-            <td>
-                <a th:href="@{'/admin/promotions/edit/' + ${promotion.id}}" class="btn btn-sm btn-primary">Sửa</a>
-                <a th:href="@{'/admin/promotions/delete/' + ${promotion.id}}" class="btn btn-sm btn-danger"
-                   onclick="return confirm('Bạn có chắc chắn muốn xóa khuyến mãi này không?');">
-                    Xóa
-                </a>
-            </td>
-        </tr>
-        <tr th:if="${#lists.isEmpty(promotions)}">
-            <td colspan="7" class="text-center text-muted">Chưa có chương trình khuyến mãi nào</td>
-        </tr>
-        </tbody>
-    </table>
+<body>
+<div class="page-header">
+    <h1 class="page-title">Promotion Templates</h1>
+    <p class="text-muted">
+        Admin quản lý các chương trình khuyến mãi áp dụng cho toàn hệ thống.
+    </p>
 </div>
 
+<div class="text-end mb-3">
+    <a th:href="@{/admin/promotions/new}" class="btn btn-primary">
+        + Thêm khuyến mãi mới
+    </a>
+</div>
+
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên chương trình</th>
+        <th>Giảm (%)</th>
+        <th>Active</th>
+        <th>Ngày bắt đầu</th>
+        <th>Ngày kết thúc</th>
+        <th>Hành động</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${promotions}">
+        <td th:text="${p.id}"></td>
+        <td th:text="${p.name}"></td>
+        <td th:text="${p.discountPercent}"></td>
+        <td th:text="${p.active ? '✔' : '✖'}"></td>
+        <td th:text="${p.startDate}"></td>
+        <td th:text="${p.endDate}"></td>
+        <td>
+            <a th:href="@{'/admin/promotions/edit/' + ${p.id}}"
+               class="btn btn-sm btn-outline-light">Edit</a>
+            <a th:href="@{'/admin/promotions/delete/' + ${p.id}}"
+               class="btn btn-sm btn-danger"
+               onclick="return confirm('Xóa khuyến mãi này?')">Delete</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<a th:href="@{/admin/dashboard}" class="btn btn-outline-light">
+    ← Back to Dashboard
+</a>
 </body>
 </html>

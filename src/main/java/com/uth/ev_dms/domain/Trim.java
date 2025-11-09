@@ -2,7 +2,12 @@ package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 @Entity
 @Table(name = "trims")
@@ -42,6 +47,21 @@ public class Trim {
     @PreUpdate
     void preUpdate() { updatedAt = Instant.now(); }
 
+
+    @OneToMany(mappedBy = "trim", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<PriceList> priceLists = new ArrayList<>();
+
+    // ✅ Hàm tiện ích lấy giá đang hiệu lực
+    public BigDecimal getCurrentPrice() {
+        if (priceLists == null || priceLists.isEmpty()) return BigDecimal.ZERO;
+        return priceLists.stream()
+                .filter(PriceList::isActive)
+                .sorted(Comparator.comparing(PriceList::getEffectiveFrom).reversed())
+                .map(PriceList::getMsrp)
+                .findFirst()
+                .orElse(BigDecimal.ZERO);
+    }
     @Column(name = "regional_name")
     private String regionalName;  // tên thương mại khu vực
 
