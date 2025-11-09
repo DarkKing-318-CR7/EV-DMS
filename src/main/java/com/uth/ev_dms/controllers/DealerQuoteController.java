@@ -11,6 +11,11 @@ import com.uth.ev_dms.service.dto.CreateQuoteDTO;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import com.uth.ev_dms.repo.TrimRepo;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,16 +31,20 @@ public class DealerQuoteController {
     private final PromotionService promotionService;
     private final VehicleRepo vehicleRepo;
     private final PriceListRepo priceListRepo;
+    private final TrimRepo trimRepo;
+
 
     // ✅ Constructor đầy đủ dependencies
     public DealerQuoteController(SalesService salesService,
                                  PromotionService promotionService,
                                  VehicleRepo vehicleRepo,
-                                 PriceListRepo priceListRepo) {
+                                 PriceListRepo priceListRepo,
+                                 TrimRepo trimRepo) {
         this.salesService = salesService;
         this.promotionService = promotionService;
         this.vehicleRepo = vehicleRepo;
         this.priceListRepo = priceListRepo;
+        this.trimRepo = trimRepo;
     }
 
     // ================= STAFF =================
@@ -56,25 +65,19 @@ public class DealerQuoteController {
         List<Promotion> promos = promotionService.getValidPromotions(null, null, null, LocalDate.now());
         model.addAttribute("promotions", promos);
 
-        // ✅ Build danh sách Vehicle + giá hiện hành từ PriceListRepo
-        List<Map<String, Object>> vehiclesWithPrice = vehicleRepo.findAll().stream()
-                .map(v -> {
-                    BigDecimal price = priceListRepo
-                            .findActiveByModelCodeAtDate(v.getModelCode(), LocalDate.now())
-                            .map(PriceList::getMsrp)
-                            .orElse(BigDecimal.ZERO);
-
+        List<Map<String, Object>> trimsWithPrice = trimRepo.findAllActiveWithPrice().stream()
+                .map(t -> {
                     Map<String, Object> m = new HashMap<>();
-                    m.put("id", v.getId());
-                    m.put("brand", v.getBrand());
-                    m.put("modelName", v.getModelName());
-                    m.put("modelCode", v.getModelCode());
-                    m.put("price", price);
+                    m.put("trimId", t.getId());
+                    m.put("trimName", t.getTrimName());
+                    m.put("vehicleName", t.getVehicle().getModelName());
+                    m.put("price", t.getCurrentPrice());
                     return m;
                 })
                 .toList();
 
-        model.addAttribute("vehicles", vehiclesWithPrice);
+        model.addAttribute("vehicles", trimsWithPrice); // giữ nguyên key 'vehicles' để frontend không phải sửa HTML
+
         return "dealer/quote-create";
     }
 
@@ -129,13 +132,13 @@ public class DealerQuoteController {
     }
 
     // ================== AJAX: GET PRICE BY MODEL CODE ==================
-    @GetMapping("/price/{modelCode}")
-    @ResponseBody
-    public BigDecimal getPriceByModelCode(@PathVariable String modelCode) {
-        return priceListRepo.findActiveByModelCodeAtDate(modelCode, LocalDate.now())
-                .map(PriceList::getMsrp)
-                .orElse(BigDecimal.ZERO);
-    }
+//    @GetMapping("/price/{modelCode}")
+//    @ResponseBody
+//    public BigDecimal getPriceByModelCode(@PathVariable String modelCode) {
+//        return priceListRepo.findActiveByModelCodeAtDate(modelCode, LocalDate.now())
+//                .map(PriceList::getMsrp)
+//                .orElse(BigDecimal.ZERO);
+//    }
 
     // ================== API: GET VEHICLES (cho JS fetch) ==================
     @GetMapping("/api/vehicles")
@@ -158,4 +161,17 @@ public class DealerQuoteController {
                 })
                 .toList();
     }
+
+
+    // ⚙️ Lấy giá xe theo TrimId (đúng cho form Quote)
+    @GetMapping("/price/{trimId}")
+    @ResponseBody
+    public BigDecimal getTrimPrice(@PathVariable Long trimId) {
+        return trimRepo.findById(trimId)
+                .map(t -> t.getCurrentPrice())
+                .orElse(BigDecimal.ZERO);
+    }
+
+
+
 }
