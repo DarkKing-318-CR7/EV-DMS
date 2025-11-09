@@ -21,8 +21,9 @@
             <a th:href="@{/admin/dealers}">Dealers (CRUD, Contracts, Targets)</a>
         </li>
 
-        <li th:classappend="${active=='users' ? 'active' : ''}">
-            <a th:href="@{/admin/users}">Users &amp; Roles</a>
+        <!-- ✅ ĐÃ SỬA: đổi /admin/users → /admin/user-mgmt -->
+        <li th:classappend="${active=='user-mgmt' ? 'active' : ''}">
+            <a th:href="@{/admin/user-mgmt}">Users &amp; Roles</a>
         </li>
 
         <li th:classappend="${active=='promotions' ? 'active' : ''}">

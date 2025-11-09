@@ -47,11 +47,32 @@ public class OrderHdr {
     @Column(name = "created_by")
     private Long createdBy;
 
-
-
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    // ===== Guard: đảm bảo tiền & trạng thái không-null trước khi lưu =====
+    @PrePersist
+    @PreUpdate
+    private void ensureAmountsNotNull() {
+        BigDecimal ZERO = BigDecimal.ZERO;
 
+        if (totalAmount == null)   totalAmount   = ZERO;
+        if (depositAmount == null) depositAmount = ZERO;
+        if (paidAmount == null)    paidAmount    = ZERO;
+
+        // nếu balance null thì tự tính = total - deposit - paid
+        if (balanceAmount == null) {
+            balanceAmount = totalAmount.subtract(depositAmount).subtract(paidAmount);
+        }
+
+        // không để số dư âm
+        if (balanceAmount.compareTo(ZERO) < 0) {
+            balanceAmount = ZERO;
+        }
+
+        // trạng thái & thời gian tạo an toàn
+        if (status == null)    status = OrderStatus.NEW;
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
 
     // helper
     public void addItem(OrderItem it) { it.setOrder(this); items.add(it); }
@@ -94,20 +115,18 @@ public class OrderHdr {
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
 
-
-
     public Long getSalesStaffId() { return salesStaffId; }
     public void setSalesStaffId(Long salesStaffId) { this.salesStaffId = salesStaffId; }
+
     public String getOrderNo() { return orderNo; }
     public void setOrderNo(String orderNo) { this.orderNo = orderNo; }
 
     public BigDecimal getDepositAmount() { return depositAmount; }
     public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
+
     public BigDecimal getPaidAmount() { return paidAmount; }
     public void setPaidAmount(BigDecimal paidAmount) { this.paidAmount = paidAmount; }
+
     public BigDecimal getBalanceAmount() { return balanceAmount; }
     public void setBalanceAmount(BigDecimal balanceAmount) { this.balanceAmount = balanceAmount; }
-
-
-
 }
