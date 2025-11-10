@@ -1,0 +1,14 @@
+<table class="table text-white">
+  <thead>
+  <tr>
+    <th>Trim</th>
+    <th>Số lượng đã bán</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="t : ${topTrims}">
+    <td th:text="${t.trim_name}"></td>
+    <td th:text="${t.sold_qty}"></td>
+  </tr>
+  </tbody>
+</table>
