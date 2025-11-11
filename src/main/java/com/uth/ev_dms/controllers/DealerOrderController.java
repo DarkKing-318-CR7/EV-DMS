@@ -29,12 +29,20 @@ public class DealerOrderController {
     @GetMapping("/my")
     public String myOrders(Model model, Principal principal) {
         String username = principal.getName();
-        Long staffId = userService.findIdByUsername(username);
+        Long staffId  = userService.findIdByUsername(username);
         Long dealerId = userService.findDealerIdByUsername(username);
-        var orders = orderRepo.findBySalesStaffIdAndDealerIdOrderByIdDesc(staffId, dealerId);
+
+        System.out.println(">>> DEBUG /dealer/orders/my: username=" + username +
+                ", staffId=" + staffId + ", dealerId=" + dealerId);
+
+        var orders = (dealerId == null)
+                ? orderRepo.findBySalesStaffIdOrderByIdDesc(staffId)
+                : orderRepo.findBySalesStaffIdAndDealerIdOrderByIdDesc(staffId, dealerId);
+
         model.addAttribute("orders", orders);
         return "dealer/orders/my-list";
     }
+
 
     @GetMapping
     public String listAll(Model model, Principal principal) {
@@ -144,4 +152,5 @@ public class DealerOrderController {
         }
         return "redirect:/dealer/orders/" + orderId;
     }
+
 }

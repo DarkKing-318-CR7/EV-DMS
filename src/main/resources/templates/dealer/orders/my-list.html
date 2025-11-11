@@ -16,11 +16,18 @@
             <a class="nav-link" th:href="@{/dealer/orders}">Tất cả đơn</a>
             <a class="nav-link active" th:href="@{/dealer/orders/my}">Đơn của tôi</a>
         </div>
+        <!-- Gợi ý: hiện số lượng ngay trên topbar để tự test -->
+        <span class="navbar-text ms-auto text-white-50 small"
+              th:text="'(' + (${orders} != null ? ${#lists.size(orders)} : 0) + ' đơn)'"> </span>
     </div>
 </nav>
 
 <div class="container py-4">
-    <h3 class="mb-3">Đơn của tôi</h3>
+    <div class="d-flex align-items-center mb-3">
+        <h3 class="m-0">Đơn của tôi</h3>
+        <span class="ms-3 badge bg-secondary"
+              th:text="'Số lượng: ' + (${orders} != null ? ${#lists.size(orders)} : 0)">Số lượng: 0</span>
+    </div>
 
     <div class="card">
         <div class="table-responsive">
@@ -41,29 +48,31 @@
                     <td th:text="${o.id}">1</td>
 
                     <!-- Fallback: hiện customerName nếu có, không thì hiện customerId -->
-                    <td th:text="${o.customerName != null && !#strings.isEmpty(o.customerName) ? o.customerName : o.customerId}">Nguyễn Văn A</td>
+                    <td th:text="${(o.customerName != null and !#strings.isEmpty(o.customerName)) ? o.customerName : o.customerId}">
+                        Nguyễn Văn A
+                    </td>
 
-                    <!-- Badge trạng thái + màu sắc -->
+                    <!-- Badge trạng thái + màu sắc (không dùng .name() để tránh null/mismatch) -->
                     <td>
-                        <th:block th:switch="${o.status.name()}">
-                            <span class="badge rounded-pill bg-info" th:case="'NEW'" th:text="${o.status}">NEW</span>
-                            <span class="badge rounded-pill bg-warning text-dark" th:case="'PENDING_ALLOC'" th:text="${o.status}">PENDING_ALLOC</span>
-                            <span class="badge rounded-pill bg-primary" th:case="'ALLOCATED'" th:text="${o.status}">ALLOCATED</span>
-                            <span class="badge rounded-pill bg-success" th:case="'DELIVERED'" th:text="${o.status}">DELIVERED</span>
-                            <span class="badge rounded-pill bg-secondary" th:case="'CANCELLED'" th:text="${o.status}">CANCELLED</span>
-                            <span class="badge rounded-pill bg-dark" th:case="*" th:text="${o.status}">UNKNOWN</span>
+                        <th:block th:switch="${o.status}">
+                            <span class="badge rounded-pill bg-info"              th:case="${T(com.uth.ev_dms.domain.OrderStatus).NEW}"            th:text="${o.status}">NEW</span>
+                            <span class="badge rounded-pill bg-warning text-dark" th:case="${T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}" th:text="${o.status}">PENDING_ALLOC</span>
+                            <span class="badge rounded-pill bg-primary"           th:case="${T(com.uth.ev_dms.domain.OrderStatus).ALLOCATED}"     th:text="${o.status}">ALLOCATED</span>
+                            <span class="badge rounded-pill bg-success"           th:case="${T(com.uth.ev_dms.domain.OrderStatus).DELIVERED}"     th:text="${o.status}">DELIVERED</span>
+                            <span class="badge rounded-pill bg-secondary"         th:case="${T(com.uth.ev_dms.domain.OrderStatus).CANCELLED}"     th:text="${o.status}">CANCELLED</span>
+                            <span class="badge rounded-pill bg-dark"              th:case="*"
+                                  th:text="${o.status != null ? o.status : 'UNKNOWN'}">UNKNOWN</span>
                         </th:block>
-
-
-
                     </td>
 
-                    <!-- Định dạng số: 0 chữ số thập phân, ngăn cách hàng nghìn bằng COMMA -->
+                    <!-- Định dạng số: null-safe -->
                     <td class="text-end"
-                        th:text="${#numbers.formatDecimal(o.totalAmount, 0, 'POINT', 0, 'COMMA')}">0
+                        th:text="${#numbers.formatDecimal((o.totalAmount != null ? o.totalAmount : 0), 0, 'POINT', 0, 'COMMA')}">
+                        0
                     </td>
 
-                    <td th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}">--</td>
+                    <!-- Ngày giờ: null-safe -->
+                    <td th:text="${o.createdAt != null ? #temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm') : '--'}">--</td>
 
                     <td class="text-end">
                         <a class="btn btn-sm btn-outline-primary"
