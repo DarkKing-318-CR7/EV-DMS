@@ -1,8 +1,13 @@
 package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -18,7 +23,26 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Inventory extends BaseAudit {
+public class Inventory {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // ==== Audit fields ====
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "created_by")
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    private String updatedBy;
 
     // ==== Quan hệ bắt buộc ====
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -38,16 +62,16 @@ public class Inventory extends BaseAudit {
     @Column(name = "qty_on_hand")
     private Integer qtyOnHand;
 
-    // Số lượng khả dụng (cho bán) - không âm
+    // Số lượng khả dụng (cho bán)
     @NotNull
     @Min(0)
     @Column(name = "quantity", nullable = false)
     private Integer quantity = 0;
 
-    // Số lượng đã giữ chỗ cho đơn - không âm
+    // Số lượng đã giữ chỗ cho đơn - map đúng cột DB: quantity_reserved
     @NotNull
     @Min(0)
-    @Column(nullable = false)
+    @Column(name = "quantity_reserved", nullable = false)
     private Integer reserved = 0;
 
     // ==== Lifecycle hooks: đảm bảo giá trị mặc định hợp lệ ====
@@ -60,7 +84,6 @@ public class Inventory extends BaseAudit {
             qtyOnHand = 0;
         }
         if (quantity == null) {
-            // rule: quantity = qtyOnHand lúc tạo lần đầu
             quantity = qtyOnHand;
         }
         if (reserved == null) {
@@ -83,15 +106,4 @@ public class Inventory extends BaseAudit {
             reserved = 0;
         }
     }
-    // --- Backward-compat for legacy code calling setUpdatedAt(LocalDateTime) ---
-    public void setUpdatedAt(java.time.LocalDateTime t) {
-        if (t == null) {
-            // tuỳ bạn muốn xử lý null thế nào; ở đây mình bỏ qua
-            return;
-        }
-        java.time.Instant instant = t.atZone(java.time.ZoneId.systemDefault()).toInstant();
-        // gọi phương thức của BaseAudit (kiểu Instant)
-        super.setUpdatedAt(instant);
-    }
-
 }

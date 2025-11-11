@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='vehicles', pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
 <head>
     <meta charset="UTF-8">
     <title>Users</title>
@@ -7,7 +10,7 @@
         body { font-family: Arial, sans-serif; padding: 20px; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
-        th { background: #f8f8f8; }
+       /* th { background: #f8f8f8; }*/
         a.button { background:#007bff; color:#fff; padding:6px 12px; border-radius:4px; text-decoration:none; }
         a.button:hover { background:#0056b3; }
     </style>
@@ -49,4 +52,5 @@
 <p><a th:href="@{/admin/dashboard}">Quay lại</a></p>
 
 </body>
+</main>
 </html>

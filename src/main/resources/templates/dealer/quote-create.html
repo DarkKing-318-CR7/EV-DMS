@@ -5,110 +5,232 @@
 <head>
     <meta charset="UTF-8">
     <title>Create Quote</title>
+    <!-- giữ CSS cũ để màu sắc & theme y như ban đầu -->
+    <link rel="stylesheet" th:href="@{/css/quote-create.css}"/>
+    <style>
+        /* ---- Chỉ là vài override nhẹ để giao diện giống bản đầu ---- */
+        .quote-shell{max-width:760px;margin:36px auto}
+        .quote-panel{
+            background:rgba(0,0,0,.35);
+            border-radius:18px;
+            padding:24px 28px;
+            box-shadow:0 10px 30px rgba(0,0,0,.25);
+            backdrop-filter: blur(8px);
+        }
+        .quote-title{font-size:36px;font-weight:800;margin:0 0 18px}
+        .form-row{display:flex;align-items:center;gap:12px;margin:10px 0}
+        .form-row>label{width:160px;text-align:left;font-weight:700}
+        .form-row .inline{display:flex;align-items:center;gap:8px}
+        .quote-items-head{display:flex;align-items:center;gap:12px;margin:4px 0 6px}
+        .quote-items-head>label{width:160px;font-weight:700}
+        .quote-item-row{display:flex;align-items:center;gap:8px;margin:6px 0 0 160px}
+        .quote-item-row select{min-width:360px}
+        .quote-item-row input[type=number]{height:34px}
+        .quote-item-row .js-qty{width:90px}
+        .quote-item-row .js-price{width:200px}
+        .promo-head{display:flex;align-items:center;gap:12px;margin:10px 0 4px}
+        .promo-head>label{width:160px;font-weight:700}
+        .promo-row{display:flex;align-items:center;gap:8px;margin:6px 0 0 160px}
+        .money-display{font-weight:800}
+        .actions{display:flex;gap:10px;margin-left:160px;margin-top:10px}
+        .btn{border-radius:9px;padding:.45rem .8rem}
+        .btn.btn-sm{padding:.25rem .55rem;border-radius:8px}
+    </style>
 </head>
 
 <body>
-<div th:fragment="content" class="container">
+<div th:fragment="content" class="container quote-shell">
+    <div class="quote-panel">
 
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-          window._vehicles = /*[[${vehicles}]]*/ [];
-        /*]]>*/
-    </script>
-    <link rel="stylesheet" th:href="@{/css/quote-create.css}" />
+        <!-- server đổ danh sách TRIM + giá -->
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            window._trims = /*[[${vehicles}]]*/ []; // [{trimId, trimName, vehicleName, price}]
+            /*]]>*/
+        </script>
 
+        <h1 class="quote-title">Create New Quote</h1>
 
-    <!-- 🔥 CHÈN LINK CSS NGAY DÒNG ĐẦU TIÊN TRONG CONTENT -->
-    <link rel="stylesheet" th:href="@{/css/quote-create.css}" />
+        <form th:action="@{/dealer/quotes/my/save}" method="post" th:object="${quote}" id="quoteForm">
+            <!-- <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/> -->
 
-    <h1>Create New Quote</h1>
-
-    <form th:action="@{/dealer/quotes/my/save}" method="post" th:object="${quote}">
-        <div class="form-group">
-            <label for="customerId">Customer ID:</label>
-            <input type="number" id="customerId" th:field="*{customerId}" required autocomplete="off" onfocus="this.removeAttribute('readonly')" />
-
-        </div>
-
-        <div class="form-group">
-            <label for="status">Status:</label>
-            <select id="status" th:field="*{status}">
-                <option value="DRAFT">DRAFT</option>
-                <option value="PENDING">PENDING</option>
-            </select>
-        </div>
-
-        <!-- Row: tiêu đề + nút Add -->
-        <div class="form-group quote-items">
-            <label>Quote Items:</label>
-            <button type="button" id="add-item-btn" class="btn btn-secondary">+ Add Item</button>
-        </div>
-
-        <!-- Row: vùng chứa item (có label rỗng để thụt chuẩn 180px) -->
-        <div class="form-group items-block">
-            <label aria-hidden="true"></label>
-            <div id="items-container"></div>
-        </div>
-
-
-
-        <!-- ========= PROMOTIONS ========= -->
-        <div class="form-group promo-group">
-            <label>Promotions:</label>
-
-            <div class="promo-block">
-                <div class="promo-header">
-                    <button type="button"
-                            id="addPromoBtn"
-                            class="btn btn-primary btn-sm">
-                        + Add Promotion
-                    </button>
-                </div>
-
-                <div id="promo-rows-container"></div>
-
-                <!-- Template ẩn -->
-                <div id="promo-row-template"
-                     class="promo-row"
-                     style="display: none; margin-top: 6px;">
-                    <select name="promotionIds"
-                            class="form-control promo-select"
-                            style="max-width: 260px;">
-                        <option value="">-- Select promotion --</option>
-                        <option th:each="p : ${promotions}"
-                                th:value="${p.id}"
-                                th:data-percent="${p.discountPercent}"
-                                th:text="${p.name + ' (' + p.discountPercent + '%)'}">
-                        </option>
-                    </select>
-
-                    <button type="button"
-                            class="btn btn-sm btn-danger remove-promo-btn">
-                        🗑
-                    </button>
+            <div class="form-row">
+                <label for="customerId">Customer ID:</label>
+                <div class="inline">
+                    <input type="number" id="customerId" th:field="*{customerId}"
+                           required autocomplete="off" onfocus="this.removeAttribute('readonly')"/>
                 </div>
             </div>
-        </div>
 
+            <div class="form-row">
+                <label for="status">Status:</label>
+                <div class="inline">
+                    <select id="status" th:field="*{status}">
+                        <option value="DRAFT">DRAFT</option>
+                        <option value="PENDING">PENDING</option>
+                    </select>
+                </div>
+            </div>
 
+            <!-- Items header -->
+            <div class="quote-items-head">
+                <label>Quote Items:</label>
+                <button type="button" id="add-item-btn" class="btn btn-secondary btn-sm">+ Add Item</button>
+            </div>
 
+            <!-- Items container (giống giao diện cũ) -->
+            <div id="items-container"></div>
 
-        <div class="form-group">
-            <label for="totalAmount">Total Amount:</label>
-            <input id="totalAmountInput" type="hidden" th:value="*{totalAmount}">
-            <input id="totalAmount" th:field="*{totalAmount}" readonly hidden>
-            <span id="totalAmountDisplay" class="money-display">0 ₫</span>
-        </div>
+            <!-- Promotions -->
+            <div class="promo-head">
+                <label>Promotions:</label>
+                <button type="button" id="addPromoBtn" class="btn btn-primary btn-sm">+ Add Promotion</button>
+            </div>
+            <div id="promo-rows-container"></div>
 
+            <!-- template ẩn cho một dòng promotion -->
+            <div id="promo-row-template" class="promo-row" style="display:none;">
+                <select name="promotionIds" class="form-control promo-select" style="max-width:320px;">
+                    <option value="">-- Select promotion --</option>
+                    <option th:each="p : ${promotions}"
+                            th:value="${p.id}"
+                            th:data-percent="${p.discountPercent}"
+                            th:text="${p.name + ' (' + p.discountPercent + '%)'}">
+                    </option>
+                </select>
+                <button type="button" class="btn btn-danger btn-sm remove-promo-btn">🗑</button>
+            </div>
 
+            <!-- Total -->
+            <div class="form-row" style="margin-top:12px">
+                <label>Total Amount:</label>
+                <div class="inline">
+                    <input id="totalAmount" th:field="*{totalAmount}" type="hidden"/>
+                    <span id="totalAmountDisplay" class="money-display">0 ₫</span>
+                </div>
+            </div>
 
-        <div class="actions">
-            <button type="submit" class="btn btn-primary">Save Quote</button>
-            <a href="/dealer/quotes/my" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Save Quote</button>
+                <a th:href="@{/dealer/quotes/my}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
 
-    <script th:src="@{/js/quote-create.js}"></script>
+        <!-- Template cho 1 dòng item -->
+        <template id="item-row-template">
+            <div class="quote-item-row js-item">
+                <select class="form-control js-trim"></select>
+                <input type="number" class="form-control js-qty" min="1" value="1">
+                <input type="number" class="form-control js-price" step="1" placeholder="Unit Price">
+                <button type="button" class="btn btn-danger btn-sm js-del" title="Remove">🗑</button>
+
+                <!-- Hidden inputs để Spring bind -->
+                <input type="hidden" class="js-name-vehicle">
+                <input type="hidden" class="js-name-qty">
+                <input type="hidden" class="js-name-price">
+            </div>
+        </template>
+
+        <script>
+            const itemsWrap      = document.getElementById('items-container');
+            const itemTpl        = document.getElementById('item-row-template');
+            const promoWrap      = document.getElementById('promo-rows-container');
+            const promoTplDiv    = document.getElementById('promo-row-template');
+            const totalInput     = document.getElementById('totalAmount');
+            const totalDisplayEl = document.getElementById('totalAmountDisplay');
+
+            function renderTrimOptions(selectEl){
+                const opts = ['<option value="">-- Select Vehicle / Trim --</option>'];
+                (window._trims||[]).forEach(t=>{
+                    const price = Number(t.price||0);
+                    opts.push(`<option value="${t.trimId}" data-price="${price}">
+            ${t.vehicleName} - ${t.trimName} (${price.toLocaleString()} ₫)
+          </option>`);
+                });
+                selectEl.innerHTML = opts.join('');
+            }
+
+            function addItem(initial={}){
+                const node  = itemTpl.content.firstElementChild.cloneNode(true);
+                const index = [...itemsWrap.children].length;
+
+                const sel   = node.querySelector('.js-trim');
+                const qty   = node.querySelector('.js-qty');
+                const price = node.querySelector('.js-price');
+                const del   = node.querySelector('.js-del');
+
+                const nVeh  = node.querySelector('.js-name-vehicle');
+                const nQty  = node.querySelector('.js-name-qty');
+                const nPri  = node.querySelector('.js-name-price');
+
+                nVeh.name = `items[${index}].vehicleId`;
+                nQty.name = `items[${index}].quantity`;
+                nPri.name = `items[${index}].unitPrice`;
+
+                renderTrimOptions(sel);
+                if(initial.vehicleId) sel.value = String(initial.vehicleId);
+                qty.value = initial.quantity ?? 1;
+
+                const defaultPrice = Number(sel.selectedOptions[0]?.dataset.price || 0);
+                price.value = (initial.unitPrice ?? defaultPrice);
+
+                const syncHidden = ()=>{
+                    nVeh.value = sel.value || '';
+                    nQty.value = qty.value || 0;
+                    nPri.value = price.value || 0;
+                    recalcTotal();
+                };
+
+                sel.addEventListener('change', ()=>{
+                    const p = Number(sel.selectedOptions[0]?.dataset.price || 0);
+                    if(initial.unitPrice == null) price.value = Math.round(p);
+                    syncHidden();
+                });
+                qty.addEventListener('input', syncHidden);
+                price.addEventListener('input', syncHidden);
+                del.addEventListener('click', ()=>{ node.remove(); reindexItems(); recalcTotal(); });
+
+                itemsWrap.appendChild(node);
+                syncHidden();
+            }
+
+            function reindexItems(){
+                [...itemsWrap.children].forEach((row,i)=>{
+                    row.querySelector('.js-name-vehicle').name = `items[${i}].vehicleId`;
+                    row.querySelector('.js-name-qty').name     = `items[${i}].quantity`;
+                    row.querySelector('.js-name-price').name   = `items[${i}].unitPrice`;
+                });
+            }
+
+            function recalcTotal(){
+                let sum=0;
+                [...itemsWrap.children].forEach(row=>{
+                    const q = Number(row.querySelector('.js-qty').value||0);
+                    const p = Number(row.querySelector('.js-price').value||0);
+                    sum += q*p;
+                });
+                totalInput.value = Math.round(sum);
+                totalDisplayEl.textContent = sum.toLocaleString() + ' ₫';
+            }
+
+            document.getElementById('addPromoBtn').addEventListener('click', ()=>{
+                const node = promoTplDiv.cloneNode(true);
+                node.style.display = '';
+                node.id = '';
+                node.querySelector('.remove-promo-btn')
+                    .addEventListener('click', ()=> node.remove());
+                promoWrap.appendChild(node);
+            });
+
+            document.getElementById('add-item-btn')
+                .addEventListener('click', ()=> addItem());
+
+            addItem(); // tạo sẵn 1 dòng
+
+            document.getElementById('quoteForm')
+                .addEventListener('submit', ()=> recalcTotal());
+        </script>
+    </div>
 </div>
 </body>
 </html>

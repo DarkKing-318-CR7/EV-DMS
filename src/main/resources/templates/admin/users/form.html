@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='vehicles', pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
 <head>
     <meta charset="UTF-8">
     <title th:text="${#strings.isEmpty(userForm.id) ? 'Create User' : 'Edit User'}">User</title>
@@ -65,4 +68,5 @@
     </div>
 </form>
 </body>
+</main>
 </html>
