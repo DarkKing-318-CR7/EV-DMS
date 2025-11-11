@@ -78,4 +78,10 @@ public class PromotionService {
         }
         return total.max(BigDecimal.ZERO);
     }
+
+    // ✅ Trả về toàn bộ danh sách khuyến mãi (cho Manager xem)
+    public List<Promotion> findAll() {
+        return promotionRepo.findAll();
+    }
+
 }

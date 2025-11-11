@@ -1,53 +1,334 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>Tạo lịch lái thử</title>
-  <style>label{display:block;margin-top:8px}input,textarea{width:360px}</style>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: url('/image/dark-sunset.jpg') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      color: #fff;
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 60px;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(6px);
+      max-width: 600px;
+    }
+    label { color: #fff; }
+    #alertBox {
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      margin-bottom: 15px;
+    }
+    #alertBox.show { opacity: 1; }
+  </style>
 </head>
 <body>
-<h2>Tạo lịch lái thử</h2>
-<p><a th:href="@{/dealer/test-drive/my}">← Quay lại danh sách</a></p>
+<div class="container py-4">
+  <h3 class="mb-3 text-center">Tạo lịch lái thử</h3>
+  <div id="alertBox" class="alert alert-success text-center">✅ Lưu thành công!</div>
 
-<form id="tdForm" onsubmit="return submitForm()">
-  <label>Customer name <input name="customerName" required></label>
-  <label>Customer phone <input name="customerPhone"></label>
-  <label>Vehicle name <input name="vehicleName" required></label>
-  <label>Location <input name="location"></label>
-  <label>Schedule at (yyyy-MM-ddTHH:mm)
-    <input name="scheduleAt" type="datetime-local" required>
-  </label>
-  <label>Notes <textarea name="notes" rows="3"></textarea></label>
-  <label>Assigned staff ID (optional) <input name="assignedStaffId" type="number"></label>
+  <form id="testDriveForm" method="post" th:action="@{/dealer/test-drive/create}">
+    <div class="mb-3">
+      <label class="form-label">Tên khách hàng</label>
+      <input class="form-control" name="customerName" required>
+    </div>
 
-  <button type="submit">Create</button>
-</form>
+    <div class="mb-3">
+      <label class="form-label">SĐT</label>
+      <input class="form-control" name="customerPhone">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Xe</label>
+      <input class="form-control" name="vehicleName"
+             id="vehicle_name" list="vehicleOptions"
+             placeholder="Nhập hoặc chọn xe"
+             th:value="${param.modelName}">
+      <datalist id="vehicleOptions">
+        <option th:each="v : ${vehicles}"
+                th:value="${v.modelName} + ' (' + ${v.code} + ')'"
+                th:data-id="${v.id}"
+                th:data-code="${v.code}"></option>
+      </datalist>
+    </div>
+
+    <!-- ===== (MỚI) Trim theo Model đã chọn ===== -->
+    <div class="mb-3">
+      <label class="form-label">Phiên bản (Trim)</label>
+      <input class="form-control" name="trimName"
+             id="trim_name" list="trimOptions"
+             placeholder="Chọn phiên bản sau khi chọn xe" disabled>
+      <datalist id="trimOptions"></datalist>
+    </div>
+    <!-- Hidden giữ id Trim -->
+    <input type="hidden" id="trim_id" name="trim_id">
+    <!-- ======================================= -->
+
+    <!-- Hidden giữ id & code xe -->
+    <input type="hidden" id="model_id" name="model_id" th:value="${param.modelId}">
+    <input type="hidden" id="vehicle_code" name="vehicle_code" th:value="${param.modelCode}">
+
+    <div class="mb-3">
+      <label class="form-label">Địa điểm</label>
+      <input class="form-control" name="location">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Thời gian hẹn</label>
+      <input class="form-control" type="datetime-local" name="scheduleAt">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Ghi chú</label>
+      <textarea class="form-control" name="notes"></textarea>
+    </div>
+    <button class="btn btn-primary w-100" type="submit">Lưu</button>
+  </form>
+</div>
 
 <script>
-  async function submitForm() {
-    const f = document.getElementById('tdForm');
-    const dto = {
-      customerName: f.customerName.value,
-      customerPhone: f.customerPhone.value,
-      vehicleName: f.vehicleName.value,
-      location: f.location.value,
-      scheduleAt: f.scheduleAt.value ? new Date(f.scheduleAt.value).toISOString() : null,
-      notes: f.notes.value,
-      assignedStaffId: f.assignedStaffId.value ? Number(f.assignedStaffId.value) : null
-    };
-    const res = await fetch('/api/crm/test-drives', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(dto)
+  /** submit JSON (giữ nguyên) **/
+  document.getElementById("testDriveForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const res = await fetch(form.action, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     });
+    const alertBox = document.getElementById("alertBox");
     if (res.ok) {
-      window.location = '/dealer/test-drive/my';
+      alertBox.classList.add("show");
+      form.reset();
+      setTimeout(() => alertBox.classList.remove("show"), 3000);
     } else {
-      const txt = await res.text();
-      alert('Lỗi tạo lịch: ' + txt);
+      alertBox.classList.remove("alert-success");
+      alertBox.classList.add("alert-danger");
+      alertBox.textContent = "❌ Có lỗi khi lưu!";
+      alertBox.classList.add("show");
+      setTimeout(() => alertBox.classList.remove("show"), 3000);
     }
-    return false;
+  });
+
+  /** gán hidden model_id & vehicle_code (giữ nguyên) **/
+  (function () {
+    const input = document.getElementById('vehicle_name');
+    const datalist = document.getElementById('vehicleOptions');
+    const hiddenId = document.getElementById('model_id');
+    const hiddenCode = document.getElementById('vehicle_code');
+
+    function updateHidden(val) {
+      const opts = datalist.getElementsByTagName('option');
+      for (let i = 0; i < opts.length; i++) {
+        if (opts[i].value === val) {
+          hiddenId.value = opts[i].dataset.id || '';
+          hiddenCode.value = opts[i].dataset.code || '';
+          return;
+        }
+      }
+      hiddenId.value = '';
+      hiddenCode.value = '';
+    }
+
+    input.addEventListener('change', function () {
+      updateHidden(this.value);
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (input.value) updateHidden(input.value);
+    });
+  })();
+
+  /** luôn xóa option cũ & nạp danh sách model thật từ /dealer/vehicles (giữ nguyên đã thêm) **/
+  (async function loadVehiclesFromPage() {
+    const dl = document.getElementById('vehicleOptions');
+    if (!dl) return;
+    dl.innerHTML = '';
+    try {
+      const res = await fetch('/dealer/vehicles', { headers: { 'Accept': 'text/html' }});
+      if (!res.ok) return;
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('table tbody tr');
+      rows.forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length < 2) return;
+        const code = (tds[0]?.textContent || '').trim();
+        const name = (tds[1]?.textContent || '').trim();
+        const a = tr.querySelector('a[href*="/dealer/vehicles/"]');
+        let id = '';
+        if (a) {
+          const href = a.getAttribute('href') || '';
+          const m = href.match(/\/dealer\/vehicles\/(\d+)/);
+          if (m) id = m[1];
+        }
+        if (!code && !name) return;
+        const opt = document.createElement('option');
+        opt.value = `${name} (${code})`;
+        opt.dataset.id = id;
+        opt.dataset.code = code;
+        dl.appendChild(opt);
+      });
+      if (dl.children.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = 'Không có dữ liệu xe';
+        dl.appendChild(opt);
+      }
+    } catch (e) { console.error('Lỗi tải danh sách xe:', e); }
+  })();
+
+  /* ===================== (MỚI) TRIM THEO MODEL ===================== */
+
+  // Load danh sách Trim theo modelId/modelCode (ưu tiên API; fallback parse HTML)
+  async function loadTrimsByModel({ modelId, modelCode }) {
+    const trimInput = document.getElementById('trim_name');
+    const trimList  = document.getElementById('trimOptions');
+    const trimIdH   = document.getElementById('trim_id');
+
+    // reset
+    trimInput.value = '';
+    trimIdH.value   = '';
+    trimInput.disabled = true;
+    trimList.innerHTML = '';
+
+    // thử các endpoint JSON phổ biến
+    const tryUrls = [];
+    if (modelId) {
+      tryUrls.push(`/api/vehicles/${modelId}/trims`);
+      tryUrls.push(`/dealer/api/vehicles/${modelId}/trims`);
+      tryUrls.push(`/api/catalog/vehicles/${modelId}/trims`);
+    }
+    if (modelCode) {
+      tryUrls.push(`/api/vehicles/code/${encodeURIComponent(modelCode)}/trims`);
+      tryUrls.push(`/dealer/api/vehicles/code/${encodeURIComponent(modelCode)}/trims`);
+    }
+
+    let trims = [];
+    for (const url of tryUrls) {
+      try {
+        const r = await fetch(url, { headers: { 'Accept': 'application/json' }});
+        if (r.ok) {
+          const data = await r.json();
+          if (Array.isArray(data) && data.length) { trims = data; break; }
+        }
+      } catch(_) {}
+    }
+
+    // Fallback: parse từ trang chi tiết model (HTML)
+    if (!trims.length && modelId) {
+      try {
+        const r = await fetch(`/dealer/vehicles/${modelId}`, { headers: { 'Accept': 'text/html' }});
+        if (r.ok) {
+          const html = await r.text();
+          const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+          // 1) phần tử có data-trim-id
+          doc.querySelectorAll('[data-trim-id]').forEach(el => {
+            trims.push({
+              id:    el.getAttribute('data-trim-id'),
+              name: (el.textContent || '').trim()
+            });
+          });
+
+          // 2) bảng có link /dealer/trims/{id}
+          if (!trims.length) {
+            const rows = doc.querySelectorAll('table tbody tr');
+            rows.forEach(tr => {
+              const tds = tr.querySelectorAll('td');
+              if (tds.length) {
+                const name = (tds[0].textContent || '').trim();
+                const href = tr.querySelector('a[href*="/dealer/trims/"]')?.getAttribute('href') || '';
+                const idm  = href.match(/\/dealer\/trims\/(\d+)/);
+                if (name) trims.push({ id: idm ? idm[1] : '', name });
+              }
+            });
+          }
+        }
+      } catch(_) {}
+    }
+
+    // render datalist
+    if (trims.length) {
+      trims.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name || t.trimName || '';
+        if (t.id) opt.dataset.id = t.id;
+        trimList.appendChild(opt);
+      });
+      trimInput.disabled = false;
+    } else {
+      const opt = document.createElement('option');
+      opt.value = 'Không có phiên bản';
+      trimList.appendChild(opt);
+      trimInput.disabled = false; // vẫn cho gõ tay nếu cần
+    }
   }
+
+  // Gắn với ô chọn xe hiện có
+  (function hookVehicleChangeForTrim(){
+    const vehicleInput = document.getElementById('vehicle_name');
+    const vehicleList  = document.getElementById('vehicleOptions');
+    const modelIdH     = document.getElementById('model_id');
+    const modelCodeH   = document.getElementById('vehicle_code');
+
+    async function onVehiclePicked() {
+      let chosenId = '';
+      let chosenCode = '';
+
+      const opts = vehicleList.getElementsByTagName('option');
+      for (let i = 0; i < opts.length; i++) {
+        if (opts[i].value === vehicleInput.value) {
+          chosenId   = opts[i].dataset.id || '';
+          chosenCode = opts[i].dataset.code || '';
+          break;
+        }
+      }
+      if (!chosenId)   chosenId   = modelIdH.value   || '';
+      if (!chosenCode) chosenCode = modelCodeH.value || '';
+
+      if (chosenId || chosenCode) {
+        await loadTrimsByModel({ modelId: chosenId, modelCode: chosenCode });
+      } else {
+        // chưa chọn đúng model -> reset trims
+        document.getElementById('trim_name').value = '';
+        document.getElementById('trim_id').value = '';
+        document.getElementById('trimOptions').innerHTML = '';
+        document.getElementById('trim_name').disabled = true;
+      }
+    }
+
+    vehicleInput.addEventListener('change', onVehiclePicked);
+    document.addEventListener('DOMContentLoaded', onVehiclePicked);
+  })();
+
+  // Khi chọn 1 Trim trong datalist -> gán hidden trim_id
+  (function bindTrimHidden(){
+    const trimInput = document.getElementById('trim_name');
+    const trimList  = document.getElementById('trimOptions');
+    const trimIdH   = document.getElementById('trim_id');
+
+    function updateTrimId(val){
+      const opts = trimList.getElementsByTagName('option');
+      for (let i = 0; i < opts.length; i++) {
+        if (opts[i].value === val) {
+          trimIdH.value = opts[i].dataset.id || '';
+          return;
+        }
+      }
+      trimIdH.value = '';
+    }
+
+    trimInput.addEventListener('change', function(){ updateTrimId(this.value); });
+  })();
+  /* =================== HẾT PHẦN TRIM =================== */
 </script>
 </body>
 </html>

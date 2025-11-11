@@ -25,27 +25,27 @@ public interface OrderRepo extends JpaRepository<OrderHdr, Long> {
 
     // EVM – tất cả đơn theo region
     @Query("""
-        select o from OrderHdr o
-        where o.dealerId in (
-            select d.id from Dealer d
-            where d.regionId = :regionId
-        )
-        order by o.id desc
-    """)
-    List<OrderHdr> findAllByDealerRegion(@Param("regionId") Long regionId);
+      select o from OrderHdr o
+      where o.dealerId in (
+          select d.id from Dealer d
+          where d.region = :region
+      )
+      order by o.id desc
+  """)
+    List<OrderHdr> findAllByDealerRegion(@Param("region") String region);
 
     // EVM – lọc theo trạng thái + region
     @Query("""
-        select o from OrderHdr o
-        where o.status = :status
-          and o.dealerId in (
-              select d.id from Dealer d
-              where d.regionId = :regionId
-          )
-        order by o.id desc
-    """)
+      select o from OrderHdr o
+      where o.status = :status
+        and o.dealerId in (
+            select d.id from Dealer d
+            where d.region = :region
+        )
+      order by o.id desc
+  """)
     List<OrderHdr> findByStatusAndDealerRegion(@Param("status") OrderStatus status,
-                                               @Param("regionId") Long regionId);
+                                               @Param("region") String region);
     // Dealer Staff – “Đơn của tôi”
     List<OrderHdr> findBySalesStaffIdOrderByIdDesc(Long salesStaffId);
 

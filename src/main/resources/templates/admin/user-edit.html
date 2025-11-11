@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='vehicles', pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
 <head>
     <meta charset="UTF-8"/>
     <title th:text="${userForm.id} != null ? 'Edit User' : 'New User'">User</title>
@@ -10,7 +13,7 @@
         input, select { width: 100%; padding: 8px; box-sizing: border-box; }
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .actions { margin-top: 20px; display:flex; gap:10px }
-        .btn { padding: 8px 14px; border: 1px solid #ccc; background:#f7f7f7; cursor:pointer }
+        .btn { padding: 8px 14px; border: 1px solid #ccc; cursor:pointer }
         .btn.primary { background:#007bff; color:#fff; border-color:#007bff }
         .hint { color:#666; font-size: 12px }
     </style>
@@ -151,4 +154,5 @@
 </form>
 
 </body>
+</main>
 </html>

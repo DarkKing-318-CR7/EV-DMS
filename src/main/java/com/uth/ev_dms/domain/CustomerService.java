@@ -1,30 +1,20 @@
 package com.uth.ev_dms.domain;
 
-import com.uth.ev_dms.service.dto.CustomerCreateDto;
-import com.uth.ev_dms.repo.CustomerRepo;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.uth.ev_dms.domain.Customer;
 
 import java.util.List;
 
-@Service
-public class CustomerService {
-    private final CustomerRepo repo;
+public interface CustomerService {
 
-    public CustomerService(CustomerRepo repo) { this.repo = repo; }
+    Customer create(Customer c);
+    Customer update(Customer c);
+    Customer findById(Long id);
 
-    public List<Customer> all() { return repo.findAll(); }
+    List<Customer> findAll();
+    List<Customer> findMine(Long ownerId);
 
-    @Transactional
-    public Customer create(CustomerCreateDto dto) {
-        if (repo.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("email da ton tai");
-        }
-        Customer c = new Customer();
-        c.setTen(dto.getTen());
-        c.setEmail(dto.getEmail());
-        c.setSdt(dto.getSdt());
-        c.setDiachi(dto.getDiachi());
-        return repo.save(c);
-    }
+    List<Customer> searchAll(String kw);
+    List<Customer> searchMine(Long ownerId, String kw);
+
+    void delete(Long id);
 }

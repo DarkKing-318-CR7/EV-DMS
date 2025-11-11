@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:replace="layout :: layout (~{::body})">
+<head>
+    <title>EVM Promotions - EV-DMS</title>
+</head>
+<body>
+<h1 class="page-title">EVM Promotions</h1>
+<p class="text-muted">Manage all promotions created by EV Manufacturer</p>
+
+<div class="text-end mb-3">
+    <a th:href="@{/evm/promotions/new}" class="btn btn-primary">+ Create New Promotion</a>
+</div>
+
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Discount (%)</th>
+        <th>Active</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${promotions}">
+        <td th:text="${p.id}"></td>
+        <td th:text="${p.name}"></td>
+        <td th:text="${p.discountPercent}"></td>
+        <td th:text="${p.active ? '✔' : '✖'}"></td>
+        <td th:text="${p.startDate}"></td>
+        <td th:text="${p.endDate}"></td>
+        <td>
+            <a th:href="@{'/evm/promotions/edit/' + ${p.id}}" class="btn btn-sm btn-outline-light">Edit</a>
+            <a th:href="@{'/evm/promotions/delete/' + ${p.id}}" class="btn btn-sm btn-danger"
+               onclick="return confirm('Are you sure?')">Delete</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<a th:href="@{/dealer/home}" class="btn btn-outline-light">← Back to Dashboard</a>
+</body>
+</html>

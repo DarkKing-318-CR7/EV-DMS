@@ -11,7 +11,7 @@ public interface TestDriveService {
     // ===== Manager list =====
     List<TestDrive> findAll();
     List<TestDrive> list(LocalDate from, LocalDate to, TestDriveStatus status);
-
+    TestDrive findById(Long id);
     // ===== Staff list =====
     List<TestDrive> findMineAssigned(Long staffId);
     List<TestDrive> findMineCreated(Long ownerId);

@@ -1,10 +1,19 @@
 package com.uth.ev_dms.service;
 
 import com.uth.ev_dms.domain.Customer;
-import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 public interface CustomerService {
-    Page<Customer> myList(String username, int page, int size);
-    Customer createForOwner(String username, String name, String email, String phone, String address);
-    Customer updateForOwner(String username, Long id, String name, String email, String phone, String address);
+    Customer create(Customer c);
+    Customer update(Customer c);
+    Customer findById(Long id);
+
+    List<Customer> findAll();
+    List<Customer> findMine(Long ownerId);
+
+    List<Customer> searchAll(String kw);
+    List<Customer> searchMine(Long ownerId, String kw);
+
+    void delete(Long id);
 }

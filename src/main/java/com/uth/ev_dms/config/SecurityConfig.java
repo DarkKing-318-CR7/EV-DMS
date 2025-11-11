@@ -69,7 +69,7 @@ public class SecurityConfig {
 
                         // Hành động chỉ Manager (ví dụ duyệt/allocate…)
                         .requestMatchers(HttpMethod.POST, "/dealer/orders/*/allocate")
-                        .hasAnyRole("DEALER_MANAGER","ADMIN")
+                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
 
                         // Hủy: cho staff cũng được (nếu nghiệp vụ cho phép)
                         .requestMatchers(HttpMethod.POST, "/dealer/orders/*/cancel")

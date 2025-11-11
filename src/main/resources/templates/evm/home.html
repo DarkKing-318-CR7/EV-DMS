@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout :: layout (~{::body})">
+<head>
+    <title>EVM Dashboard - EV-DMS</title>
+</head>
+
+<body>
+<div class="dashboard-container">
+    <h1 class="page-title">EVM Dashboard</h1>
+    <p class="text-muted">Key performance indicators and system overview for EV Manufacturer.</p>
+
+    <div class="stats">
+        <p><strong>Total Promotions:</strong> <span th:text="${totalPromotions}">0</span></p>
+        <p><strong>Active Promotions:</strong> <span th:text="${activePromotions}">0</span></p>
+    </div>
+</div>
+</body>
+</html>
