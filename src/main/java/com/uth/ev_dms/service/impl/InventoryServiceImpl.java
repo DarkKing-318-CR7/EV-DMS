@@ -353,4 +353,16 @@ public class InventoryServiceImpl implements InventoryService {
         if (item.getVehicleId() != null) return item.getVehicleId(); // fallback legacy
         throw new IllegalStateException("No trim or vehicle id on order item " + item.getId());
     }
+
+    @Override
+    public Map<Long,Integer> getStockByTrimForBranch(Long branchId) {
+        var rows = inventoryRepo.sumQtyByTrimAtBranch(branchId); // hoặc sumAvailable...
+        Map<Long,Integer> map = new HashMap<>();
+        for (Object[] r : rows) {
+            Long trimId = ((Number) r[0]).longValue();
+            Integer qty = ((Number) r[1]).intValue();
+            map.put(trimId, qty);
+        }
+        return map;
+    }
 }

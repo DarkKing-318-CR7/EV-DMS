@@ -1,15 +1,21 @@
 package com.uth.ev_dms.controllers;
 
 import com.uth.ev_dms.domain.Vehicle;
+import com.uth.ev_dms.repo.DealerBranchRepo;
+import com.uth.ev_dms.repo.UserRepo;
+import com.uth.ev_dms.repo.VehicleRepo;
 import com.uth.ev_dms.service.ProductService;
 import com.uth.ev_dms.service.InventoryService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -18,28 +24,32 @@ public class DealerVehicleController {
 
     private final ProductService productService;
     private final InventoryService inventoryService;
+    private final DealerBranchRepo dealerBranchRepo;
+    private final UserRepo userRepo;
+    private final VehicleRepo vehicleRepo;
 
     @GetMapping
     public String list(Model model) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        var user = userRepo.findByUsername(auth.getName()).orElseThrow();
 
-        var vehicles = productService.getVehiclesWithTrims();
+        Long dealerId = Optional.ofNullable(user.getDealer())
+                .map(d -> d.getId())
+                .orElseThrow(() -> new IllegalStateException("User has no dealer"));
+        Long branchId = dealerBranchRepo.findByDealerId(dealerId)
+                .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
+                .getId();
 
-        // TODO: sau này lấy dealerId từ user login
-        // Long dealerId = dealerContext.getCurrentDealerId();
-        // Map<Long,Integer> stockByTrim = inventoryService.getStockByTrimForDealer(dealerId);
+        var vehicles = vehicleRepo.findVehiclesAvailableAtBranch(branchId);
 
         model.addAttribute("vehicles", vehicles);
-        model.addAttribute("stockByTrim", null); // tạm thời null nếu chưa có tồn kho map
-
-        model.addAttribute("active", "vehicles");
+        model.addAttribute("activePage", "vehicles");
         model.addAttribute("pageTitle", "Vehicles - Dealer View");
 
-        // giả lập phân quyền:
-        boolean canViewPrice = true;       // Dealer Manager -> true, Dealer Staff -> false
-        boolean canViewInventory = true;   // Dealer Manager -> true, Dealer Staff -> false
-
-        model.addAttribute("canViewPrice", canViewPrice);
-        model.addAttribute("canViewInventory", canViewInventory);
+        boolean isManager = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEALER_MANAGER"));
+        model.addAttribute("canViewPrice", isManager);
+        // Không hiện màn kho ở Dealer ⇒ false
+        model.addAttribute("canViewInventory", false);
 
         return "dealer/vehicles/list";
     }

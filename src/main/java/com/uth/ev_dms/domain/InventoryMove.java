@@ -38,4 +38,11 @@ public class InventoryMove {
 
     @PrePersist
     void prePersist() { this.createdAt = LocalDateTime.now(); }
+
+    // ví dụ có Instant createdAt / eventAt ...
+    public java.time.LocalDateTime getCreatedAtLdt() {
+        return createdAt == null ? null
+                : createdAt.atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+    }
+
 }

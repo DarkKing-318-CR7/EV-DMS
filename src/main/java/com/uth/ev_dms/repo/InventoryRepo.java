@@ -68,4 +68,19 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
                                             @Param("trimId") Long trimId);
 
     /* ===== Tìm/upsert theo branch + trim ===== */
+    @Query("""
+   select i.trim.id, sum(coalesce(i.qtyOnHand,0) - coalesce(i.reserved,0))
+   from Inventory i
+   where i.branch.id = :branchId
+   group by i.trim.id
+""")
+    List<Object[]> sumAvailableByTrimAtBranch(@Param("branchId") Long branchId);
+
+    @Query("""
+        select i.trim.id, sum(coalesce(i.qtyOnHand,0))
+        from Inventory i
+        where i.branch.id = :branchId
+        group by i.trim.id
+    """)
+    List<Object[]> sumQtyByTrimAtBranch(@Param("branchId") Long branchId);
 }

@@ -66,4 +66,5 @@ public interface InventoryService {
      * Hủy đơn hàng → giải phóng tồn kho đã reserve
      */
     void releaseForOrder(Long orderId);
+    public Map<Long,Integer> getStockByTrimForBranch(Long branchId);
 }
