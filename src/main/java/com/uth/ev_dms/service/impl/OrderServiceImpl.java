@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -39,7 +40,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderHdr createFromQuote(Long quoteId, Long dealerId, Long customerId, Long staffId) {
-        // Minimal skeleton, keep old behavior
         OrderHdr o = new OrderHdr();
         o.setQuoteId(quoteId);
         o.setDealerId(dealerId);
@@ -56,6 +56,7 @@ public class OrderServiceImpl implements OrderService {
         } else {
             o.setTotalAmount(BigDecimal.ZERO);
         }
+
         o.setDepositAmount(o.getDepositAmount() == null ? BigDecimal.ZERO : o.getDepositAmount());
         o.setPaidAmount(BigDecimal.ZERO);
         o.setBalanceAmount(o.getTotalAmount().subtract(o.getDepositAmount()));
@@ -91,10 +92,13 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("NO_ITEMS", "Order has no items");
         }
 
-        // Atomic allocation for the whole order
         inventoryService.allocateForOrder(orderId);
 
         o.setStatus(OrderStatus.ALLOCATED);
+        // ✅ Ghi mốc thời gian allocate
+        if (o.getAllocatedAt() == null) {
+            o.setAllocatedAt(LocalDateTime.now());
+        }
         return orderRepo.save(o);
     }
 
@@ -107,10 +111,24 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("INVALID_STATE", "Only ALLOCATED orders can be delivered");
         }
 
-        // Ship allocated stock
+        // ✅ CHẶN GIAO HÀNG KHI CHƯA THANH TOÁN ĐỦ
+        BigDecimal total = o.getTotalAmount() == null ? BigDecimal.ZERO : o.getTotalAmount();
+        BigDecimal paid  = o.getPaidAmount()  == null ? BigDecimal.ZERO : o.getPaidAmount();
+        if (paid.compareTo(total) < 0) {
+            // dùng BusinessException để controller hiển thị message đẹp
+            throw new BusinessException(
+                    "UNPAID",
+                    "Không thể giao hàng: đơn chưa thanh toán đủ (" + paid + " / " + total + ")"
+            );
+        }
+
         inventoryService.shipForOrder(orderId);
 
         o.setStatus(OrderStatus.DELIVERED);
+        // ✅ Ghi mốc thời gian delivered
+        if (o.getDeliveredAt() == null) {
+            o.setDeliveredAt(LocalDateTime.now());
+        }
         return orderRepo.save(o);
     }
 
@@ -166,9 +184,7 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("ONLY_ALLOCATED_CAN_BE_DEALLOCATED");
         }
 
-        // Release reserved stock before rolling back status
         inventoryService.releaseForOrder(orderId);
-
         o.setStatus(OrderStatus.PENDING_ALLOC);
         return orderRepo.save(o);
     }
@@ -185,7 +201,6 @@ public class OrderServiceImpl implements OrderService {
         if (o.getStatus() == OrderStatus.ALLOCATED) {
             throw new IllegalStateException("DEALLOCATE_FIRST");
         }
-        // If you reserve during PENDING_ALLOC (normally not), release here
         if (o.getStatus() == OrderStatus.PENDING_ALLOC) {
             inventoryService.releaseForOrder(orderId);
         }

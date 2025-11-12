@@ -24,12 +24,4 @@ public class DealerController {
     }
 
 //    @GetMapping("/vehicles") public String vehicles() { return "dealer/vehicles"; }
-    @GetMapping("/customers") public String customers() { return "dealer/customers"; }
-    @GetMapping("/test-drive") public String testDrive() { return "dealer/test-drive"; }
-    @GetMapping("/quotes") public String quotes() { return "dealer/quotes"; }
-
-
-    @GetMapping("/promotions") public String promotions() { return "dealer/promotions"; }
-    @GetMapping("/reports") public String reports() { return "dealer/reports"; }
-    @GetMapping("/profile") public String profile() { return "common/profile"; }
 }

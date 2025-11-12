@@ -27,7 +27,6 @@ public class OrderHdr {
     private OrderStatus status;
 
     private BigDecimal totalAmount = BigDecimal.ZERO;
-
     private BigDecimal depositAmount = BigDecimal.ZERO;
     private BigDecimal paidAmount = BigDecimal.ZERO;
 
@@ -48,6 +47,16 @@ public class OrderHdr {
     private Long createdBy;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    // ====== Mốc thời gian timeline ======
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
+
+    @Column(name = "allocated_at")
+    private LocalDateTime allocatedAt;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
 
     // ===== Guard: đảm bảo tiền & trạng thái không-null trước khi lưu =====
     @PrePersist
@@ -78,10 +87,10 @@ public class OrderHdr {
     public void addItem(OrderItem it) { it.setOrder(this); items.add(it); }
     public void addPayment(Payment p) { p.setOrder(this); payments.add(p); }
 
-    // getters/setters
+    // ===== Getter/Setter =====
     public Long getId() { return id; }
-    private String customerName;
 
+    private String customerName;
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
 
@@ -129,4 +138,14 @@ public class OrderHdr {
 
     public BigDecimal getBalanceAmount() { return balanceAmount; }
     public void setBalanceAmount(BigDecimal balanceAmount) { this.balanceAmount = balanceAmount; }
+
+    // ===== Getter/Setter cho timeline =====
+    public LocalDateTime getSubmittedAt() { return submittedAt; }
+    public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+
+    public LocalDateTime getAllocatedAt() { return allocatedAt; }
+    public void setAllocatedAt(LocalDateTime allocatedAt) { this.allocatedAt = allocatedAt; }
+
+    public LocalDateTime getDeliveredAt() { return deliveredAt; }
+    public void setDeliveredAt(LocalDateTime deliveredAt) { this.deliveredAt = deliveredAt; }
 }

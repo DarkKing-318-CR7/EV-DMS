@@ -1,7 +1,19 @@
 package com.uth.ev_dms.service.impl;
 
-import com.uth.ev_dms.domain.*;
-import com.uth.ev_dms.repo.*;
+import com.uth.ev_dms.domain.Dealer;
+import com.uth.ev_dms.domain.DealerBranch;
+import com.uth.ev_dms.domain.Inventory;
+import com.uth.ev_dms.domain.InventoryAdjustment;
+import com.uth.ev_dms.domain.InventoryMove;
+import com.uth.ev_dms.domain.OrderHdr;
+import com.uth.ev_dms.domain.OrderItem;
+import com.uth.ev_dms.domain.Trim;
+import com.uth.ev_dms.repo.DealerBranchRepo;
+import com.uth.ev_dms.repo.InventoryAdjustmentRepo;
+import com.uth.ev_dms.repo.InventoryMoveRepo;
+import com.uth.ev_dms.repo.InventoryRepo;
+import com.uth.ev_dms.repo.OrderItemRepo;
+import com.uth.ev_dms.repo.OrderRepo;
 import com.uth.ev_dms.service.InventoryService;
 import com.uth.ev_dms.service.dto.InventoryUpdateRequest;
 import jakarta.persistence.EntityManager;
@@ -13,7 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Primary
 @Service
@@ -25,6 +40,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryMoveRepo moveRepo;
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
+    private final DealerBranchRepo dealerBranchRepo;
 
     // ===== Repos dùng cho ADMIN INVENTORY =====
     private final InventoryAdjustmentRepo inventoryAdjustmentRepo;
@@ -45,16 +61,22 @@ public class InventoryServiceImpl implements InventoryService {
             throw new IllegalStateException("Order or dealerId not found for item " + item.getId());
         }
 
-        Long dealerId = order.getDealerId();
-        Long trimId = resolveTrimId(item);
-        int qty = item.getQty() != null ? item.getQty() : 0;
+        final Long dealerId = order.getDealerId();
+        final Long trimId   = resolveTrimId(item);
+        final int qty       = item.getQty() != null ? item.getQty() : 0;
         if (qty <= 0) return true;
 
-        // Khóa hàng tồn kho theo dealer + trim
-        Inventory inv = inventoryRepo.lockByDealerAndTrim(dealerId, trimId)
+        // Lấy MAIN branch theo dealer
+        final Long branchId = dealerBranchRepo.findByDealerId(dealerId)
+                .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
+                .getId();
+
+        // Khóa hàng tồn kho theo branch + trim (chuẩn mới)
+        Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
                 .orElseGet(() -> inventoryRepo.save(
                         Inventory.builder()
                                 .dealer(em.getReference(Dealer.class, dealerId))
+                                .branch(em.getReference(DealerBranch.class, branchId))
                                 .trim(em.getReference(Trim.class, trimId))
                                 .quantity(0)
                                 .reserved(0)
@@ -93,17 +115,21 @@ public class InventoryServiceImpl implements InventoryService {
             throw new IllegalStateException("Order has no items");
         }
 
-        Long dealerId = order.getDealerId();
+        final Long dealerId = order.getDealerId();
+        final Long branchId = dealerBranchRepo.findByDealerId(dealerId)
+                .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
+                .getId();
 
         // 1) Pre-check: đảm bảo đủ hàng cho tất cả item
         for (OrderItem it : items) {
             Long trimId = resolveTrimId(it);
             int need = it.getQty() != null ? it.getQty() : 0;
 
-            Inventory inv = inventoryRepo.lockByDealerAndTrim(dealerId, trimId)
+            Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
                     .orElseGet(() -> inventoryRepo.save(
                             Inventory.builder()
                                     .dealer(em.getReference(Dealer.class, dealerId))
+                                    .branch(em.getReference(DealerBranch.class, branchId))
                                     .trim(em.getReference(Trim.class, trimId))
                                     .quantity(0)
                                     .reserved(0)
@@ -132,16 +158,20 @@ public class InventoryServiceImpl implements InventoryService {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
         List<OrderItem> items = orderItemRepo.findByOrderId(orderId);
-        Long dealerId = order.getDealerId();
+
+        final Long dealerId = order.getDealerId();
+        final Long branchId = dealerBranchRepo.findByDealerId(dealerId)
+                .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
+                .getId();
 
         for (OrderItem it : items) {
             Long trimId = resolveTrimId(it);
             int qty = it.getQty() != null ? it.getQty() : 0;
             if (qty <= 0) continue;
 
-            Inventory inv = inventoryRepo.lockByDealerAndTrim(dealerId, trimId)
-                    .orElseThrow(() -> new IllegalStateException("Inventory not found (dealer="
-                            + dealerId + ", trim=" + trimId + ")"));
+            Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
+                    .orElseThrow(() -> new IllegalStateException("Inventory not found (branch="
+                            + branchId + ", trim=" + trimId + ")"));
 
             int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
             int onHand  = inv.getQuantity() == null ? 0 : inv.getQuantity();
@@ -173,17 +203,22 @@ public class InventoryServiceImpl implements InventoryService {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
         List<OrderItem> items = orderItemRepo.findByOrderId(orderId);
-        Long dealerId = order.getDealerId();
+
+        final Long dealerId = order.getDealerId();
+        final Long branchId = dealerBranchRepo.findByDealerId(dealerId)
+                .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
+                .getId();
 
         for (OrderItem it : items) {
             Long trimId = resolveTrimId(it);
             int qty = it.getQty() != null ? it.getQty() : 0;
             if (qty <= 0) continue;
 
-            Inventory inv = inventoryRepo.lockByDealerAndTrim(dealerId, trimId)
+            Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
                     .orElseGet(() -> inventoryRepo.save(
                             Inventory.builder()
                                     .dealer(em.getReference(Dealer.class, dealerId))
+                                    .branch(em.getReference(DealerBranch.class, branchId))
                                     .trim(em.getReference(Trim.class, trimId))
                                     .quantity(0)
                                     .reserved(0)
@@ -233,7 +268,17 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public Inventory createInventory(Inventory inv, String createdBy) {
-        // @PrePersist của entity sẽ set mặc định (locationType, qty, ...)
+        if (inv.getDealer() == null || inv.getDealer().getId() == null) {
+            throw new IllegalStateException("Dealer is required");
+        }
+        // Tự gán MAIN branch nếu UI không truyền
+        if (inv.getBranch() == null || inv.getBranch().getId() == null) {
+            Long dealerId = inv.getDealer().getId();
+            DealerBranch main = dealerBranchRepo.findByDealerId(dealerId)
+                    .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"));
+            inv.setBranch(main);
+        }
+
         Inventory saved = inventoryRepo.save(inv);
 
         Integer onHand = saved.getQtyOnHand() == null ? 0 : saved.getQtyOnHand();
@@ -262,10 +307,8 @@ public class InventoryServiceImpl implements InventoryService {
         Integer oldQty = current.getQtyOnHand() == null ? 0 : current.getQtyOnHand();
         Integer newQty = req.getQtyOnHand() == null ? 0 : req.getQtyOnHand();
 
-        // cập nhật số lượng
         current.setQtyOnHand(newQty);
-        // đồng bộ cột quantity (on-hand khả dụng)
-        current.setQuantity(newQty);
+        current.setQuantity(newQty); // đồng bộ cột quantity
 
         Inventory saved = inventoryRepo.save(current);
 
@@ -307,7 +350,7 @@ public class InventoryServiceImpl implements InventoryService {
     // ===== Helper =====
     private Long resolveTrimId(OrderItem item) {
         if (item.getTrimId() != null) return item.getTrimId();
-        if (item.getVehicleId() != null) return item.getVehicleId(); // fallback nếu model cũ dùng vehicleId
+        if (item.getVehicleId() != null) return item.getVehicleId(); // fallback legacy
         throw new IllegalStateException("No trim or vehicle id on order item " + item.getId());
     }
 }
