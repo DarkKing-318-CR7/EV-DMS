@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -54,24 +55,73 @@ public class DealerVehicleController {
         return "dealer/vehicles/list";
     }
 
+//    @GetMapping("/{id}")
+//    public String detail(@PathVariable Long id, Model model) {
+//        var vehicle = productService.getVehicleById(id);
+//        if (vehicle == null) {
+//            throw new EntityNotFoundException("Vehicle not found: " + id);
+//        }
+//
+//        Long dealerId = 1L; // tạm
+//        var stockByTrim = inventoryService.getStockByTrimForDealer(dealerId);
+//
+//        System.out.println("=== CONTROLLER stockByTrim ===");
+//        stockByTrim.forEach((tid, q) ->
+//                System.out.println("trimId=" + tid + " qty=" + q)
+//        );
+//
+//        model.addAttribute("vehicle", vehicle);
+//        model.addAttribute("stockByTrim", stockByTrim);
+//        model.addAttribute("canViewInventory", true);
+//        model.addAttribute("active", "vehicles");
+//        model.addAttribute("pageTitle", vehicle.getModelName());
+//
+//        return "dealer/vehicles/detail";
+//    }
+
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
-        var vehicle = productService.getVehicleById(id);
-        if (vehicle == null) {
-            throw new EntityNotFoundException("Vehicle not found: " + id);
+        // 1. Lấy xe
+        Vehicle vehicle = vehicleRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found"));
+
+        // 2. Lấy user hiện tại
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        var user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        // 3. Lấy branch từ dealer của user (ở đây đang giả sử mỗi dealer có 1 branch)
+        Long branchId = dealerBranchRepo.findByDealerId(user.getDealer().getId())
+                .map(b -> b.getId())
+                .orElse(null);
+
+        // 4. Lấy tồn kho theo branch
+        Map<Long, Integer> stockByTrim = new java.util.HashMap<>();
+        boolean canViewInventory = false;
+
+        if (branchId != null) {
+            // Lấy map: trimId -> qty
+            Map<Long, Integer> raw = inventoryService.getStockByTrimForBranch(branchId);
+
+            // Chỉ giữ các trim thuộc vehicle đang xem
+            vehicle.getTrims().forEach(trim ->
+                    stockByTrim.put(trim.getId(), raw.getOrDefault(trim.getId(), 0))
+            );
+
+            canViewInventory = true;
         }
 
-        Long dealerId = 1L; // tạm
-        var stockByTrim = inventoryService.getStockByTrimForDealer(dealerId);
-
-        System.out.println("=== CONTROLLER stockByTrim ===");
+        // Debug nếu muốn
         stockByTrim.forEach((tid, q) ->
                 System.out.println("trimId=" + tid + " qty=" + q)
         );
 
+        // 5. Đẩy ra view
         model.addAttribute("vehicle", vehicle);
         model.addAttribute("stockByTrim", stockByTrim);
-        model.addAttribute("canViewInventory", true);
+        model.addAttribute("canViewInventory", canViewInventory);
         model.addAttribute("active", "vehicles");
         model.addAttribute("pageTitle", vehicle.getModelName());
 

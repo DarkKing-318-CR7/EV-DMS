@@ -12,17 +12,18 @@ import java.util.Optional;
 @Repository
 public interface InventoryRepo extends JpaRepository<Inventory, Long> {
 
-    // Theo Dealer (giữ nguyên)
+    // ===== THEO DEALER (đang có, giữ nguyên nếu cần) =====
     List<Inventory> findByDealer_Id(Long dealerId);
     List<Inventory> findByDealer_IdOrderByIdDesc(Long dealerId);
 
-    // ✅ Theo Branch
+    // ===== THEO CHI NHÁNH (BRANCH) =====
+    // Lấy toàn bộ kho của 1 chi nhánh
     List<Inventory> findByBranch_Id(Long branchId);
 
-    // ✅ Tìm 1 dòng kho theo Trim + Branch (phục vụ upsert)
+    // Tìm 1 dòng kho theo Trim + Branch (phục vụ upsert)
     Optional<Inventory> findByTrim_IdAndBranch_Id(Long trimId, Long branchId);
 
-    // ✅ Liệt kê chung có filter tuỳ chọn
+    // List có filter tuỳ chọn dealer / branch
     @Query("""
         select i from Inventory i
         where (:dealerId is null or i.dealer.id = :dealerId)
@@ -32,7 +33,7 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
     List<Inventory> findList(@Param("dealerId") Long dealerId,
                              @Param("branchId") Long branchId);
 
-    // Tổng tồn cho Product (giữ nguyên)
+    // ===== TỔNG TỒN THEO TRIM =====
     @Query("select coalesce(sum(i.qtyOnHand),0) from Inventory i where i.trim.id = :trimId")
     Integer sumQtyByTrim(@Param("trimId") Long trimId);
 
@@ -41,15 +42,23 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
         from Inventory i
         where i.trim.id = :trimId and i.dealer.id = :dealerId
     """)
-    Integer sumQtyByTrimAndDealer(@Param("trimId") Long trimId, @Param("dealerId") Long dealerId);
+    Integer sumQtyByTrimAndDealer(@Param("trimId") Long trimId,
+                                  @Param("dealerId") Long dealerId);
 
-    // Legacy (giữ cho code cũ)
+    // ===== LEGACY (locationType) =====
     List<Inventory> findByLocationTypeOrderByUpdatedAtDesc(String locationType);
-    Optional<Inventory> findByTrim_IdAndLocationTypeAndDealer_Id(Long trimId, String locationType, Long dealerId);
-    default Optional<Inventory> findByTrimIdAndLocationTypeAndDealerId(Long trimId, String locationType, Long dealerId) {
+
+    Optional<Inventory> findByTrim_IdAndLocationTypeAndDealer_Id(Long trimId,
+                                                                 String locationType,
+                                                                 Long dealerId);
+
+    default Optional<Inventory> findByTrimIdAndLocationTypeAndDealerId(Long trimId,
+                                                                       String locationType,
+                                                                       Long dealerId) {
         return findByTrim_IdAndLocationTypeAndDealer_Id(trimId, locationType, dealerId);
     }
 
+    // ===== LOCK KHO KHI GIAO DỊCH =====
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select i from Inventory i
@@ -58,7 +67,7 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
     Optional<Inventory> lockByDealerAndTrim(@Param("dealerId") Long dealerId,
                                             @Param("trimId") Long trimId);
 
-    // (Khuyến nghị dùng) — lock theo branch + trim
+    // Lock theo Branch + Trim (nên dùng cho dealer branch)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select i from Inventory i
@@ -67,13 +76,13 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
     Optional<Inventory> lockByBranchAndTrim(@Param("branchId") Long branchId,
                                             @Param("trimId") Long trimId);
 
-    /* ===== Tìm/upsert theo branch + trim ===== */
+    // ===== TỔNG TỒN THEO TRIM Ở 1 CHI NHÁNH =====
     @Query("""
-   select i.trim.id, sum(coalesce(i.qtyOnHand,0) - coalesce(i.reserved,0))
-   from Inventory i
-   where i.branch.id = :branchId
-   group by i.trim.id
-""")
+        select i.trim.id, sum(coalesce(i.qtyOnHand,0) - coalesce(i.reserved,0))
+        from Inventory i
+        where i.branch.id = :branchId
+        group by i.trim.id
+    """)
     List<Object[]> sumAvailableByTrimAtBranch(@Param("branchId") Long branchId);
 
     @Query("""
@@ -83,4 +92,17 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
         group by i.trim.id
     """)
     List<Object[]> sumQtyByTrimAtBranch(@Param("branchId") Long branchId);
+
+    // ===== TỔNG TỒN CẢ CHI NHÁNH (tính tất cả trim, dùng nếu cần) =====
+    @Query("""
+        select coalesce(sum(i.qtyOnHand - i.reserved), 0)
+        from Inventory i
+        where i.branch.id = :branchId
+    """)
+    int sumAvailableByBranch(@Param("branchId") Long branchId);
+
+    List<Inventory> findByBranchIsNull();   // HQ
+    List<Inventory> findByBranchIsNotNull(); // Chi nhánh
+
+
 }

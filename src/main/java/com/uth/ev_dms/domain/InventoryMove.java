@@ -16,6 +16,7 @@ public class InventoryMove {
     @Column(name = "dealer_id", nullable = false)
     private Long dealerId;
 
+
     @Column(name = "trim_id", nullable = false)
     private Long trimId;
 

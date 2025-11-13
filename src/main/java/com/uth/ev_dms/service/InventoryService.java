@@ -67,4 +67,5 @@ public interface InventoryService {
      */
     void releaseForOrder(Long orderId);
     public Map<Long,Integer> getStockByTrimForBranch(Long branchId);
+
 }
