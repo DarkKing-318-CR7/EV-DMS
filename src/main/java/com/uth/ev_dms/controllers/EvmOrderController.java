@@ -8,14 +8,18 @@ import com.uth.ev_dms.repo.OrderRepo;
 import com.uth.ev_dms.service.OrderService;
 import com.uth.ev_dms.service.PaymentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Stream;
 
 @Controller
 @RequiredArgsConstructor
@@ -26,20 +30,68 @@ public class EvmOrderController {
     private final OrderService orderService;
     private final PaymentService paymentService;
 
+    // ========================= LIST + FILTER =========================
     @GetMapping
-    public String listAll(Model model) {
-        List<OrderHdr> list = orderRepo.findAll(); // có thể sort/limit theo nhu cầu
-        model.addAttribute("orders", list);
+    public String listAll(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Model model
+    ) {
+        List<OrderHdr> all = orderRepo.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        Stream<OrderHdr> stream = all.stream();
+
+        if (q != null && !q.isBlank()) {
+            String kw = q.trim().toLowerCase();
+            stream = stream.filter(o ->
+                    String.valueOf(o.getId()).toLowerCase().contains(kw) ||
+                            (o.getDealerId() != null && String.valueOf(o.getDealerId()).toLowerCase().contains(kw)) ||
+                            (o.getCustomerId() != null && String.valueOf(o.getCustomerId()).toLowerCase().contains(kw)) ||
+                            (o.getCustomerName() != null && o.getCustomerName().toLowerCase().contains(kw))
+            );
+        }
+
+        if (status != null && !status.isBlank()) {
+            try {
+                OrderStatus st = OrderStatus.valueOf(status.trim());
+                stream = stream.filter(o -> o.getStatus() == st);
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        if (from != null) {
+            stream = stream.filter(o -> o.getCreatedAt() != null &&
+                    !o.getCreatedAt().toLocalDate().isBefore(from));
+        }
+        if (to != null) {
+            stream = stream.filter(o -> o.getCreatedAt() != null &&
+                    !o.getCreatedAt().toLocalDate().isAfter(to));
+        }
+
+        List<OrderHdr> filtered = stream.toList();
+
+        Map<String, Long> stat = new HashMap<>();
+        stat.put("tongDon", (long) filtered.size());
+        stat.put("choPhanBo", all.stream().filter(o -> o.getStatus() == OrderStatus.PENDING_ALLOC).count());
+        stat.put("daPhanBo", all.stream().filter(o -> o.getStatus() == OrderStatus.ALLOCATED).count());
+
+        model.addAttribute("orders", filtered);
+        model.addAttribute("stat", stat);
+        model.addAttribute("q", q);
+        model.addAttribute("status", status);
+        model.addAttribute("from", from);
+        model.addAttribute("to", to);
+
         return "evm/orders/list";
     }
 
     @GetMapping("/pending")
-    public String listPending(Model model) {
-        List<OrderHdr> list = orderRepo.findByStatusOrderByIdDesc(OrderStatus.PENDING_ALLOC);
-        model.addAttribute("orders", list);
-        return "evm/orders/pending";
+    public String listPending(RedirectAttributes ra) {
+        ra.addAttribute("status", OrderStatus.PENDING_ALLOC.name());
+        return "redirect:/evm/orders";
     }
 
+    // ========================= DETAIL =========================
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         OrderHdr order = orderService.findById(id);
@@ -59,15 +111,19 @@ public class EvmOrderController {
         model.addAttribute("payments", payments);
         model.addAttribute("amountPaid", paid);
         model.addAttribute("balance", balance);
-        // model.addAttribute("allocLogs", allocLogsService.findByOrderId(id)); // nếu có
-
         return "evm/orders/detail";
     }
 
+    // ========================= ACTIONS =========================
     @PostMapping("/{id}/approve-allocate")
     public String approveAllocate(@PathVariable Long id, RedirectAttributes ra) {
         try {
-            orderService.allocate(id);
+            OrderHdr o = orderService.allocate(id);
+            // ✅ Ghi thời gian allocate nếu chưa có
+            if (o.getAllocatedAt() == null) {
+                o.setAllocatedAt(LocalDateTime.now());
+                orderRepo.save(o);
+            }
             ra.addFlashAttribute("ok", "Đã duyệt & phân bổ thành công đơn #" + id);
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Lỗi khi duyệt: " + e.getMessage());
@@ -97,11 +153,15 @@ public class EvmOrderController {
         return "redirect:/evm/orders/" + id;
     }
 
-    // ✅ Sửa mapping: KHÔNG lặp /evm/orders
     @PostMapping("/{id}/deliver")
     public String deliver(@PathVariable Long id, RedirectAttributes ra) {
         try {
-            orderService.markDelivered(id);
+            OrderHdr o = orderService.markDelivered(id);
+            // ✅ Ghi thời gian giao xe nếu chưa có
+            if (o.getDeliveredAt() == null) {
+                o.setDeliveredAt(LocalDateTime.now());
+                orderRepo.save(o);
+            }
             ra.addFlashAttribute("ok", "Đơn #" + id + " đã giao.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Không giao được: " + e.getMessage());
@@ -109,7 +169,6 @@ public class EvmOrderController {
         return "redirect:/evm/orders/" + id;
     }
 
-    // Optional: ai gõ GET thẳng trên address bar thì redirect về detail
     @GetMapping("/{id}/deliver")
     public String deliverGet(@PathVariable Long id, RedirectAttributes ra) {
         ra.addFlashAttribute("error", "Vui lòng bấm nút 'Đã giao hàng' (POST).");

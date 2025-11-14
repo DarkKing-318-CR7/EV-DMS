@@ -6,6 +6,8 @@ import com.uth.ev_dms.service.PromotionService;
 import com.uth.ev_dms.service.SalesService;
 import com.uth.ev_dms.service.dto.CreateQuoteDTO;
 import com.uth.ev_dms.service.dto.CreateQuoteItemDTO;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,25 +19,34 @@ import java.util.List;
 public class SalesServiceImpl implements SalesService {
 
     private final QuoteRepo quoteRepo;
+    private final QuoteItemRepo quoteItemRepo;        // ✅ thêm
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
     private final PaymentRepo paymentRepo;
-    private final PromotionService promotionService; // ✅ thêm đúng chỗ
+    private final PromotionService promotionService;
 
-    // ✅ Constructor đầy đủ dependencies
+    private final CustomerRepo customerRepo;
+    private final UserRepo userRepo;
+
     public SalesServiceImpl(
             QuoteRepo quoteRepo,
+            QuoteItemRepo quoteItemRepo,             // ✅ thêm
             OrderRepo orderRepo,
             OrderItemRepo orderItemRepo,
             PaymentRepo paymentRepo,
-            PromotionRepo promotionRepo,
-            PromotionService promotionService // ✅ thêm vào constructor
+            PromotionRepo promotionRepo,            // giữ nguyên để không phá DI khác
+            PromotionService promotionService,
+            CustomerRepo customerRepo,
+            UserRepo userRepo
     ) {
         this.quoteRepo = quoteRepo;
+        this.quoteItemRepo = quoteItemRepo;         // ✅ thêm
         this.orderRepo = orderRepo;
         this.orderItemRepo = orderItemRepo;
         this.paymentRepo = paymentRepo;
-        this.promotionService = promotionService; // ✅ gán vào
+        this.promotionService = promotionService;
+        this.customerRepo = customerRepo;
+        this.userRepo = userRepo;
     }
 
     // ======================= CREATE QUOTE =======================
@@ -44,26 +55,74 @@ public class SalesServiceImpl implements SalesService {
     public Quote createQuote(CreateQuoteDTO dto) {
         Quote q = new Quote();
         q.setCustomerId(dto.getCustomerId());
+        q.setDealerId(dto.getDealerId());
         q.setStatus("DRAFT");
-        q.setTotalAmount(dto.getTotalAmount());
-        q.setAppliedDiscount(BigDecimal.ZERO);
-        q.setFinalAmount(dto.getTotalAmount());
 
-        // Tạo danh sách item
+        // Lấy user hiện tại để backfill dealer/owner nếu thiếu
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                userRepo.findByUsername(auth.getName()).ifPresent(u -> {
+                    if (q.getDealerId() == null && u.getDealer() != null) {
+                        q.setDealerId(u.getDealer().getId());
+                    }
+                    if (dto.getCustomerId() != null) {
+                        customerRepo.findById(dto.getCustomerId()).ifPresent(c -> {
+                            if (c.getOwnerId() == null) {
+                                c.setOwnerId(u.getId());
+                                customerRepo.save(c);
+                            }
+                        });
+                    }
+                });
+            }
+        } catch (Exception ignore) {}
+
+        // Build items từ DTO
         List<QuoteItem> items = new ArrayList<>();
         if (dto.getItems() != null) {
             for (CreateQuoteItemDTO it : dto.getItems()) {
+                if (it == null) continue;
+                Integer qty = it.getQuantity();
+                BigDecimal unit = it.getUnitPrice();
+                Long trimId = it.getVehicleId(); // ⚠️ field name là vehicleId nhưng thực chất là trim_id
+
+                if (trimId == null || qty == null || qty <= 0) continue;
+
+                // nếu front không gửi giá, để 0 tạm thời (hoặc lấy từ price list)
+                if (unit == null) unit = BigDecimal.ZERO;
+
                 QuoteItem qi = new QuoteItem();
-                qi.setVehicleId(it.getVehicleId());
-                qi.setQuantity(it.getQuantity());
-                qi.setUnitPrice(it.getUnitPrice());
-                qi.setQuote(q);
+                qi.setVehicleId(trimId);
+                qi.setQuantity(qty);
+                qi.setUnitPrice(unit);
+                qi.setQuote(q); // thiết lập quan hệ ngược
+
                 items.add(qi);
             }
         }
         q.setItems(items);
 
-        return quoteRepo.save(q);
+        // Tính tổng nếu DTO không set hoặc set sai
+        BigDecimal total = dto.getTotalAmount();
+        if (total == null || total.compareTo(BigDecimal.ZERO) <= 0) {
+            total = items.stream()
+                    .map(x -> x.getUnitPrice().multiply(BigDecimal.valueOf(x.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        q.setTotalAmount(total);
+        q.setAppliedDiscount(BigDecimal.ZERO);
+        q.setFinalAmount(total);
+
+        // Lưu quote trước để có ID
+        Quote saved = quoteRepo.save(q);
+
+        // ✅ Đảm bảo items được lưu ngay cả khi entity chưa cấu hình cascade
+        if (!items.isEmpty()) {
+            quoteItemRepo.saveAll(items);
+        }
+
+        return saved;
     }
 
     // ======================= APPLY PROMOTIONS =======================
@@ -79,21 +138,12 @@ public class SalesServiceImpl implements SalesService {
             return quoteRepo.save(quote);
         }
 
-        // ✅ Gọi PromotionService để tính tổng giảm
         BigDecimal discount = promotionService.computeDiscount(quote.getTotalAmount(), promotionIds);
-
-        // ✅ Tính lại giá cuối
         BigDecimal finalAmount = quote.getTotalAmount().subtract(discount);
-        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-            finalAmount = BigDecimal.ZERO;
-        }
+        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) finalAmount = BigDecimal.ZERO;
 
         quote.setAppliedDiscount(discount);
         quote.setFinalAmount(finalAmount);
-
-        System.out.println("✅ Quote " + quoteId + " applied promotions " + promotionIds
-                + " → discount = " + discount + ", final = " + finalAmount);
-
         return quoteRepo.save(quote);
     }
 
@@ -104,6 +154,11 @@ public class SalesServiceImpl implements SalesService {
         Quote quote = quoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
 
+        // Bảo vệ: quote phải có item
+        if (quote.getItems() == null || quote.getItems().isEmpty()) {
+            throw new IllegalStateException("Order has no items"); // sẽ hiển thị đúng cảnh báo bạn thấy
+        }
+
         quote.setStatus("APPROVED");
         quoteRepo.save(quote);
 
@@ -111,23 +166,65 @@ public class SalesServiceImpl implements SalesService {
         order.setQuoteId(quote.getId());
         order.setOrderNo("ORD-" + java.time.LocalDate.now() + "-" + quote.getId());
         order.setStatus(OrderStatus.NEW);
-        order.setTotalAmount(quote.getFinalAmount()); // ✅ dùng finalAmount sau giảm
         order.setCreatedAt(java.time.LocalDateTime.now());
-        order.setDepositAmount(BigDecimal.ZERO);
-        order.setPaidAmount(BigDecimal.ZERO);
-        order.setBalanceAmount(order.getTotalAmount());
+
+        order.setCustomerId(quote.getCustomerId());
+        order.setDealerId(quote.getDealerId());
+
+        // Ưu tiên owner của customer làm sales
+        customerRepo.findById(quote.getCustomerId()).ifPresent(c -> {
+            order.setCustomerName(c.getTen());
+            if (order.getSalesStaffId() == null) order.setSalesStaffId(c.getOwnerId());
+            if (order.getDealerId() == null && c.getOwnerId() != null) {
+                userRepo.findById(c.getOwnerId()).ifPresent(u -> {
+                    if (u.getDealer() != null) order.setDealerId(u.getDealer().getId());
+                });
+            }
+        });
+
+        // Fallback lấy từ user hiện tại
+        if (order.getSalesStaffId() == null || order.getDealerId() == null) {
+            try {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getName() != null) {
+                    userRepo.findByUsername(auth.getName()).ifPresent(u -> {
+                        if (order.getSalesStaffId() == null) order.setSalesStaffId(u.getId());
+                        if (order.getDealerId() == null && u.getDealer() != null) {
+                            order.setDealerId(u.getDealer().getId());
+                        }
+                    });
+                }
+            } catch (Exception ignore) {}
+        }
+
+        // Tiền
+        BigDecimal ZERO = BigDecimal.ZERO;
+        BigDecimal total = quote.getFinalAmount();
+        if (total == null || total.compareTo(ZERO) < 0) {
+            total = (quote.getTotalAmount() != null) ? quote.getTotalAmount() : ZERO;
+        }
+        order.setTotalAmount(total);
+        order.setDepositAmount(ZERO);
+        order.setPaidAmount(ZERO);
+        order.setBalanceAmount(total);
 
         OrderHdr savedOrder = orderRepo.save(order);
 
-        if (quote.getItems() != null) {
-            for (QuoteItem qi : quote.getItems()) {
-                OrderItem oi = new OrderItem();
-                oi.setOrder(savedOrder);
-                oi.setTrimId(qi.getVehicleId());
-                oi.setQty(qi.getQuantity());
-                oi.setUnitPrice(qi.getUnitPrice());
-                orderItemRepo.save(oi);
-            }
+        // ✅ Copy items: set đủ unit_price, qty, line_amount (NOT NULL)
+        for (QuoteItem qi : quote.getItems()) {
+            if (qi.getVehicleId() == null || qi.getQuantity() == null || qi.getQuantity() <= 0) continue;
+
+            BigDecimal unit = qi.getUnitPrice() != null ? qi.getUnitPrice() : ZERO;
+            int qty = qi.getQuantity();
+            BigDecimal line = unit.multiply(BigDecimal.valueOf(qty));
+
+            OrderItem oi = new OrderItem();
+            oi.setOrder(savedOrder);
+            oi.setTrimId(qi.getVehicleId());   // vehicleId = trim_id
+            oi.setQty(qty);
+            oi.setUnitPrice(unit);
+            oi.setLineAmount(line);            // ❗ bắt buộc
+            orderItemRepo.save(oi);
         }
 
         return savedOrder;
@@ -155,14 +252,10 @@ public class SalesServiceImpl implements SalesService {
 
     // ======================= FIND =======================
     @Override
-    public List<Quote> findPending() {
-        return quoteRepo.findByStatus("PENDING");
-    }
+    public List<Quote> findPending() { return quoteRepo.findByStatus("PENDING"); }
 
     @Override
-    public List<Quote> findAll() {
-        return quoteRepo.findAll();
-    }
+    public List<Quote> findAll() { return quoteRepo.findAll(); }
 
     // ======================= PAYMENT =======================
     @Override
@@ -170,7 +263,6 @@ public class SalesServiceImpl implements SalesService {
     public Payment makeCashPayment(Long orderId, BigDecimal amount) {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
-
         Payment p = new Payment();
         p.setOrder(order);
         p.setType(PaymentType.CASH);
@@ -183,7 +275,6 @@ public class SalesServiceImpl implements SalesService {
     public Payment makeInstallmentPayment(Long orderId, BigDecimal amount) {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
-
         Payment p = new Payment();
         p.setOrder(order);
         p.setType(PaymentType.INSTALLMENT);

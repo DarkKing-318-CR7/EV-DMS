@@ -45,51 +45,48 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1) CSRF: bỏ cho các API bạn đang test (để POST không bị 403 do csrf)
+                // CSRF: nới lỏng cho các tuyến đang test
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/evm/**", "/dealer/**"))
 
-                // 2) Phân quyền chi tiết theo vai trò
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/css/**","/js/**","/image/**","/images/**","/fonts/**","/webjars/**",
                                 "/favicon.ico","/login","/error","/error/**"
                         ).permitAll()
 
-                        // Admin
+                        // ===== Admin
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // Dealer Staff xem "Đơn của tôi"
+                        // ===== Dealer: CHỈ "Đơn của tôi" cho Staff/Manager
                         .requestMatchers("/dealer/orders/my/**")
                         .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
 
-                        // ===== Dealer Orders =====
-                        // Cho xem chi tiết / list cho cả staff & manager
-                        .requestMatchers(HttpMethod.GET, "/dealer/orders/**")
-                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
-
-                        // Hành động chỉ Manager (ví dụ duyệt/allocate…)
-                        .requestMatchers(HttpMethod.POST, "/dealer/orders/*/allocate")
+                        // Trang LIST "Tất cả đơn" CHỈ Manager (dstaff bị chặn)
+                        .requestMatchers(HttpMethod.GET, "/dealer/orders", "/dealer/orders/")
                         .hasAnyRole("DEALER_MANAGER","ADMIN")
 
-                        // Hủy: cho staff cũng được (nếu nghiệp vụ cho phép)
-                        .requestMatchers(HttpMethod.POST, "/dealer/orders/*/cancel")
+                        // Trang chi tiết đơn: cho cả Staff/Manager (controller sẽ tự kiểm tra đúng quyền trên từng đơn)
+                        .requestMatchers(HttpMethod.GET, "/dealer/orders/*")
                         .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
 
-                        // ===== EVM =====
-                        .requestMatchers(HttpMethod.GET,  "/evm/orders/pending")
-                        .hasAnyRole("EVM_STAFF","ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate")
-                        .hasAnyRole("EVM_STAFF","ADMIN")
-                        .requestMatchers("/evm/orders/**")
-                        .hasAnyRole("EVM_STAFF","ADMIN")
+                        // Các hành động POST của dealer (tùy nghiệp vụ, có thể siết thêm)
+                        .requestMatchers(HttpMethod.POST, "/dealer/orders/*/allocate",
+                                "/dealer/orders/*/cancel",
+                                "/dealer/orders/*/pay-cash",
+                                "/dealer/orders/*/installment",
+                                "/dealer/orders/*/request-allocate")
+                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
+
+                        // ===== EVM
+                        .requestMatchers(HttpMethod.GET,  "/evm/orders/pending").hasAnyRole("EVM_STAFF","ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate").hasAnyRole("EVM_STAFF","ADMIN")
+                        .requestMatchers("/evm/orders/**").hasAnyRole("EVM_STAFF","ADMIN")
 
                         .anyRequest().authenticated()
                 )
 
-                // 3) Trang lỗi quyền
                 .exceptionHandling(ex -> ex.accessDeniedPage("/error/403"))
 
-                // 4) Login form như cũ
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -100,7 +97,6 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // 5) Logout như cũ
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
@@ -109,9 +105,7 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // 6) Thêm httpBasic để test API nhanh bằng cURL/Postman
                 .httpBasic(Customizer.withDefaults())
-
                 .authenticationProvider(authenticationProvider());
 
         http.sessionManagement(session -> session.sessionFixation().migrateSession());

@@ -41,4 +41,13 @@ public abstract class BaseAudit {
 
     @LastModifiedBy
     private String updatedBy;
+
+    public java.time.LocalDateTime getCreatedAtLdt() {
+        return createdAt == null ? null
+                : createdAt.atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+    }
+    public java.time.LocalDateTime getUpdatedAtLdt() {
+        return updatedAt == null ? null
+                : updatedAt.atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+    }
 }

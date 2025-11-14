@@ -1,97 +1,90 @@
 package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(
         name = "inventories",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"dealer_id", "trim_id"}),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"branch_id", "trim_id"}),
         indexes = {
                 @Index(columnList = "dealer_id"),
+                @Index(columnList = "branch_id"),
                 @Index(columnList = "trim_id")
         }
 )
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Inventory extends BaseAudit {
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class Inventory {
 
-    // ==== Quan hệ bắt buộc ====
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "dealer_id", nullable = false)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // ===== Audit =====
+    @CreationTimestamp
+    @Column(name="created_at", nullable=false, updatable=false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name="updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name="created_by")
+    private String createdBy;
+
+    @Column(name="updated_by")
+    private String updatedBy;
+
+    // ===== Quan hệ bắt buộc =====
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="dealer_id", nullable = false)
     private Dealer dealer;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "trim_id", nullable = false)
+    // ⭐ Cho phép NULL = kho tổng (HQ)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="branch_id")
+    private DealerBranch branch;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="trim_id", nullable = false)
     private Trim trim;
 
-    // ==== Thuộc tính kho ====
-    // Loại vị trí: "EVM" (kho tổng), sau này có thể "DEALER"
-    @Column(name = "location_type")
-    private String locationType;
+    // ===== Số lượng kho =====
+    @Column(name="location_type")
+    private String locationType;     // HQ hoặc BRANCH
 
-    // Số lượng thực tế đang có (on-hand)
-    @Column(name = "qty_on_hand")
-    private Integer qtyOnHand;
+    @Column(name="qty_on_hand")
+    private Integer qtyOnHand = 0;   // tồn vật lý
 
-    // Số lượng khả dụng (cho bán) - không âm
-    @NotNull
-    @Min(0)
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity = 0;
+    @Column(name="reserved")
+    private Integer reserved = 0;    // số đã giữ
 
-    // Số lượng đã giữ chỗ cho đơn - không âm
-    @NotNull
-    @Min(0)
-    @Column(nullable = false)
-    private Integer reserved = 0;
-
-    // ==== Lifecycle hooks: đảm bảo giá trị mặc định hợp lệ ====
+    // ==== Defaults ====
     @PrePersist
-    public void preInsertDefaults() {
+    public void prePersist() {
         if (locationType == null || locationType.isBlank()) {
-            locationType = "EVM";
+            locationType = (branch == null) ? "HQ" : "BRANCH";
         }
-        if (qtyOnHand == null) {
-            qtyOnHand = 0;
-        }
-        if (quantity == null) {
-            // rule: quantity = qtyOnHand lúc tạo lần đầu
-            quantity = qtyOnHand;
-        }
-        if (reserved == null) {
-            reserved = 0;
-        }
+        if (qtyOnHand == null) qtyOnHand = 0;
+        if (reserved == null) reserved = 0;
     }
 
     @PreUpdate
-    public void preUpdateDefaults() {
+    public void preUpdate() {
         if (locationType == null || locationType.isBlank()) {
-            locationType = "EVM";
+            locationType = (branch == null) ? "HQ" : "BRANCH";
         }
-        if (qtyOnHand == null) {
-            qtyOnHand = 0;
-        }
-        if (quantity == null) {
-            quantity = qtyOnHand;
-        }
-        if (reserved == null) {
-            reserved = 0;
-        }
+        if (qtyOnHand == null) qtyOnHand = 0;
+        if (reserved == null) reserved = 0;
     }
-    // --- Backward-compat for legacy code calling setUpdatedAt(LocalDateTime) ---
-    public void setUpdatedAt(java.time.LocalDateTime t) {
-        if (t == null) {
-            // tuỳ bạn muốn xử lý null thế nào; ở đây mình bỏ qua
-            return;
-        }
-        java.time.Instant instant = t.atZone(java.time.ZoneId.systemDefault()).toInstant();
-        // gọi phương thức của BaseAudit (kiểu Instant)
-        super.setUpdatedAt(instant);
+
+    List<Inventory> findByBranchIsNull() {
+        return null;
     }
 
 }
