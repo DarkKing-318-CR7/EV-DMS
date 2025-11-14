@@ -12,7 +12,6 @@ public class UserForm {
     private String fullName;
     private String roleName;
     private Long dealerId;
-    private Long regionId;
     private Boolean enabled;   // ✅ có field này
 
     // ✅ Thêm method này để controller dùng được f.isEnabled()
@@ -33,7 +32,7 @@ public class UserForm {
         f.setFullName(u.getFullName());
         f.setEnabled(u.isEnabled());
         if (u.getDealer() != null) f.setDealerId(u.getDealer().getId());
-        if (u.getRegion() != null) f.setRegionId(u.getRegion().getId());
+
         if (u.getRoles() != null && !u.getRoles().isEmpty()) {
             f.setRoleName(u.getRoles().iterator().next().getName());
         }

@@ -10,7 +10,7 @@ public interface UserService {
     // tien dung khi co Principal
     Long getUserId(Principal principal);
     Long getDealerId(Principal principal);
-    Long findRegionIdByUsername(String username);
+
     
 
 
