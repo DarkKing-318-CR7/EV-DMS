@@ -89,13 +89,16 @@
 
                     <!-- Badge trạng thái -->
                     <td>
-            <span class="badge"
-                  th:classappend="${
-                    td.status?.name() == 'REQUESTED'  ? ' bg-secondary' :
-                    (td.status?.name() == 'CONFIRMED' ? ' bg-info'     :
-                    (td.status?.name() == 'COMPLETED' ? ' bg-success'  : ' bg-danger'))
-                  }"
-                  th:text="${td.status}">REQUESTED</span>
+    <span class="badge px-3 py-2 fw-semibold"
+          th:classappend="
+            ${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).REQUESTED}  ? 'bg-secondary' :
+            ${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).CONFIRMED} ? 'bg-warning text-dark' :
+            ${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).COMPLETED} ? 'bg-success' :
+            ${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).CANCELLED} ? 'bg-danger' :
+            'bg-secondary'
+          "
+          th:text="${td.status}">
+    </span>
                     </td>
 
                     <!-- Hành động -->

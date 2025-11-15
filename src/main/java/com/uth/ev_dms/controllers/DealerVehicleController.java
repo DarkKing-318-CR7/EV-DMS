@@ -1,6 +1,7 @@
 package com.uth.ev_dms.controllers;
 
 import com.uth.ev_dms.domain.Vehicle;
+import com.uth.ev_dms.repo.VehicleRepo;
 import com.uth.ev_dms.service.ProductService;
 import com.uth.ev_dms.service.InventoryService;
 import jakarta.persistence.EntityNotFoundException;
@@ -10,6 +11,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -18,6 +26,7 @@ public class DealerVehicleController {
 
     private final ProductService productService;
     private final InventoryService inventoryService;
+    private final VehicleRepo vehicleRepo;
 
     @GetMapping
     public String list(Model model) {
@@ -67,5 +76,22 @@ public class DealerVehicleController {
 
         return "dealer/vehicles/detail";
     }
+    @GetMapping("/public/full")
+    @ResponseBody
+    public List<Vehicle> publicFullVehicles() {
+        return vehicleRepo.findAll();
+    }
+    @GetMapping("/api/vehicles/{id}/trims")
+    @ResponseBody
+    public List<Map<String, Object>> getTrims(@PathVariable Long id) {
 
+        return vehicleRepo.findById(id)
+                .map(v -> v.getTrims().stream().map(t -> {
+                    Map<String, Object> m = new java.util.HashMap<>();
+                    m.put("id", t.getId());
+                    m.put("name", t.getTrimName());
+                    return m;
+                }).toList())
+                .orElse(List.of());
+    }
 }

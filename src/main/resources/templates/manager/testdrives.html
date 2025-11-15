@@ -169,19 +169,52 @@
             </td>
 
             <td class="text-end">
+
               <!-- Nút Chi tiết -->
               <a th:href="@{/dealer/test-drive/detail/{id}(id=${td.id})}"
                  class="btn btn-ghost btn-slim">
                 <i class="bi bi-info-circle me-1"></i> Chi tiết
               </a>
 
-              <!-- ✅ Nút Xóa (mới thêm, không đổi gì khác) -->
+              <!-- 🔵 Duyệt (REQUESTED) -->
+              <form th:if="${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).REQUESTED}"
+                    th:action="@{|/manager/testdrives/${td.id}/approve|}"
+                    method="post"
+                    style="display:inline;">
+                <button class="btn btn-success btn-slim ms-1">
+                  <i class="bi bi-check2-circle"></i> Duyệt
+                </button>
+              </form>
+
+              <!-- 🟣 Hoàn tất (CONFIRMED) -->
+              <form th:if="${td.status == T(com.uth.ev_dms.domain.TestDriveStatus).CONFIRMED}"
+                    th:action="@{|/manager/testdrives/${td.id}/complete|}"
+                    method="post"
+                    style="display:inline;">
+                <button class="btn btn-primary btn-slim ms-1">
+                  <i class="bi bi-flag"></i> Hoàn tất
+                </button>
+              </form>
+
+              <!-- 🟡 Hủy (mọi trạng thái trừ COMPLETED) -->
+              <form th:if="${td.status != T(com.uth.ev_dms.domain.TestDriveStatus).COMPLETED}"
+                    th:action="@{|/manager/testdrives/${td.id}/cancel|}"
+                    method="post"
+                    style="display:inline;">
+                <button class="btn btn-warning btn-slim ms-1">
+                  <i class="bi bi-x-circle"></i> Hủy
+                </button>
+              </form>
+
+              <!-- ❌ Nút Xóa (giữ nguyên) -->
               <a th:href="@{'/dealer/test-drive/delete/' + ${td.id}}"
                  class="btn btn-outline-danger btn-slim ms-1"
                  onclick="return confirm('Bạn có chắc chắn muốn xóa lịch #' + [[${td.id}]] + ' không?');">
                 <i class="bi bi-trash"></i> Xóa
               </a>
+
             </td>
+
 
           </tr>
 
