@@ -77,7 +77,13 @@ public class TestDriveServiceImpl implements TestDriveService {
     @Override
     @Transactional
     public TestDrive save(TestDrive td) {
-        // ✅ THÊM: Kiểm tra trùng xe cùng khung giờ
+
+        // ⭐ THÊM DÒNG NÀY — KHÔNG SỬA GÌ CODE CŨ
+        if (td.getStatus() == null) {
+            td.setStatus(TestDriveStatus.REQUESTED);
+        }
+
+        // Kiểm tra trùng xe cùng khung giờ
         if (repo.existsByVehicleNameAndScheduleAt(td.getVehicleName(), td.getScheduleAt())) {
             throw new RuntimeException("Xe này đã được đặt lịch vào thời gian đó!");
         }
