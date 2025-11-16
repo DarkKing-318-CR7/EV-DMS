@@ -22,7 +22,7 @@ public interface InventoryService {
     void delete(Long id);
 
     /**
-     * Cập nhật tồn kho và ghi log điều chỉnh
+     * Cập nhật tồn kho và ghi log điều chỉnha
      * @param req dữ liệu người dùng nhập trên form
      * @param updatedBy username người thao tác
      */

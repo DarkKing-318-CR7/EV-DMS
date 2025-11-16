@@ -328,7 +328,40 @@
 
     trimInput.addEventListener('change', function(){ updateTrimId(this.value); });
   })();
-  /* =================== HẾT PHẦN TRIM =================== */
+    (async function loadFullVehiclesForTestDrive() {
+    const dl = document.getElementById("vehicleOptions");
+    if (!dl) return;
+
+    try {
+    const res = await fetch("/dealer/vehicles/public/full");
+    if (!res.ok) {
+    console.warn("Không fetch được full vehicles:", res.status);
+    return;
+  }
+
+    const vehicles = await res.json();
+    if (!Array.isArray(vehicles) || vehicles.length === 0) {
+    console.warn("Full vehicle list rỗng.");
+    return;
+  }
+
+    // Ghi đè danh sách 2 xe ban đầu
+    dl.innerHTML = "";
+
+    vehicles.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = `${v.modelName} (${v.modelCode})`;
+    opt.dataset.id = v.id;
+    opt.dataset.code = v.modelCode;
+    dl.appendChild(opt);
+  });
+
+    console.log("Đã nạp FULL danh sách xe:", vehicles);
+
+  } catch (err) {
+    console.error("Lỗi load FULL xe:", err);
+  }
+  })();
 </script>
 </body>
 </html>

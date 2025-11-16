@@ -32,12 +32,7 @@ public class UserServiceImpl implements UserService {
                 .orElse(null);
     }
 
-    @Override
-    public Long findRegionIdByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .map(u -> u.getRegion() != null ? u.getRegion().getId() : null)
-                .orElse(null);
-    }
+
 
     @Override
     public Long getUserId(Principal principal) {
