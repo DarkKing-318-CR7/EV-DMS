@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface QuoteRepo extends JpaRepository<Quote, Long> {
     List<Quote> findByStatus(String status);
+    List<Quote> findByDealerBranchId(Long branchId);
+    List<Quote> findByDealerBranchIdAndStatus(Long branchId, String status);
+
 }

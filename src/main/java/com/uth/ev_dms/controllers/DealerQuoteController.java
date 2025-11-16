@@ -1,21 +1,22 @@
 package com.uth.ev_dms.controllers;
 
+import com.uth.ev_dms.auth.User;
 import com.uth.ev_dms.domain.PriceList;
 import com.uth.ev_dms.domain.Promotion;
 import com.uth.ev_dms.domain.Quote;
+import com.uth.ev_dms.domain.Trim;
 import com.uth.ev_dms.repo.PriceListRepo;
+import com.uth.ev_dms.repo.TrimRepo;
+import com.uth.ev_dms.repo.UserRepo;
 import com.uth.ev_dms.repo.VehicleRepo;
 import com.uth.ev_dms.service.PromotionService;
 import com.uth.ev_dms.service.SalesService;
 import com.uth.ev_dms.service.dto.CreateQuoteDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.uth.ev_dms.repo.TrimRepo;
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,23 +33,24 @@ public class DealerQuoteController {
     private final VehicleRepo vehicleRepo;
     private final PriceListRepo priceListRepo;
     private final TrimRepo trimRepo;
+    private final UserRepo userRepo;
 
-
-    // ✅ Constructor đầy đủ dependencies
     public DealerQuoteController(SalesService salesService,
                                  PromotionService promotionService,
                                  VehicleRepo vehicleRepo,
                                  PriceListRepo priceListRepo,
-                                 TrimRepo trimRepo) {
+                                 TrimRepo trimRepo,
+                                 UserRepo userRepo) {
+
         this.salesService = salesService;
         this.promotionService = promotionService;
         this.vehicleRepo = vehicleRepo;
         this.priceListRepo = priceListRepo;
         this.trimRepo = trimRepo;
+        this.userRepo = userRepo;
     }
 
     // ================= STAFF =================
-
     @GetMapping("/my")
     public String myQuotes(Model model) {
         List<Quote> quotes = salesService.findAll();
@@ -62,9 +64,26 @@ public class DealerQuoteController {
     public String createForm(Model model) {
         model.addAttribute("quote", new CreateQuoteDTO());
 
-        List<Promotion> promos = promotionService.getValidPromotions(null, null, null, LocalDate.now());
+        // Lấy username từ Security
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // Lấy toàn bộ user từ DB để truy xuất dealer + region
+        User u = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+
+        Long dealerId = (u.getDealer() != null) ? u.getDealer().getId() : null;
+        String region = (u.getDealerBranch() != null && u.getDealerBranch().getDealer() != null)
+                ? u.getDealerBranch().getDealer().getRegion()
+                : null;
+
+        // Debug nếu cần
+        System.out.println(">>> LOAD PROMOS FOR DealerId=" + dealerId + " | Region=" + region);
+
+        // 🎯 Chỉ load các promotion áp dụng đúng branch/dealer/region cho staff
+        List<Promotion> promos = promotionService.getValidPromotionsForQuote(dealerId, null, region);
         model.addAttribute("promotions", promos);
 
+        // Vehicles + Price
         List<Map<String, Object>> trimsWithPrice = trimRepo.findAllActiveWithPrice().stream()
                 .map(t -> {
                     Map<String, Object> m = new HashMap<>();
@@ -76,7 +95,7 @@ public class DealerQuoteController {
                 })
                 .toList();
 
-        model.addAttribute("vehicles", trimsWithPrice); // giữ nguyên key 'vehicles' để frontend không phải sửa HTML
+        model.addAttribute("vehicles", trimsWithPrice);
 
         return "dealer/quote-create";
     }
@@ -86,21 +105,18 @@ public class DealerQuoteController {
     public String saveQuote(@ModelAttribute CreateQuoteDTO dto,
                             @RequestParam(value = "promotionIds", required = false) List<Long> promotionIds) {
 
-        // 1️⃣ Tạo quote trước
         Quote q = salesService.createQuote(dto);
         System.out.println("💾 Quote vừa tạo ID = " + q.getId() + ", total = " + q.getTotalAmount());
 
-        // 2️⃣ Áp dụng khuyến mãi nếu có
         if (promotionIds != null && !promotionIds.isEmpty()) {
             Quote updated = salesService.applyPromotions(q.getId(), promotionIds);
-            System.out.println("✅ Áp dụng promotions: " + promotionIds +
+            System.out.println("✅ Apply promotions: " + promotionIds +
                     " -> discount = " + updated.getAppliedDiscount() +
                     ", final = " + updated.getFinalAmount());
         } else {
-            System.out.println("⚠️ Không có promotions được chọn!");
+            System.out.println("⚠️ No promotions selected");
         }
 
-        // 3️⃣ Quay lại trang danh sách
         return "redirect:/dealer/quotes/my";
     }
 
@@ -131,46 +147,74 @@ public class DealerQuoteController {
         return "redirect:/dealer/quotes/pending";
     }
 
-    // ================== AJAX: GET PRICE BY MODEL CODE ==================
-//    @GetMapping("/price/{modelCode}")
-//    @ResponseBody
-//    public BigDecimal getPriceByModelCode(@PathVariable String modelCode) {
-//        return priceListRepo.findActiveByModelCodeAtDate(modelCode, LocalDate.now())
-//                .map(PriceList::getMsrp)
-//                .orElse(BigDecimal.ZERO);
-//    }
+// ================= AJAX API =================
 
-    // ================== API: GET VEHICLES (cho JS fetch) ==================
-    @GetMapping("/api/vehicles")
+    // Lấy danh sách trims kèm giá để dùng trong dropdown
+    @GetMapping("/api/trims")
     @ResponseBody
-    public List<Map<String, Object>> getVehiclesApi() {
-        return vehicleRepo.findAll().stream()
-                .map(v -> {
-                    BigDecimal price = priceListRepo
-                            .findActiveByModelCodeAtDate(v.getModelCode(), LocalDate.now())
-                            .map(PriceList::getMsrp)
-                            .orElse(BigDecimal.ZERO);
-
+    public List<Map<String, Object>> getAllTrims() {
+        return trimRepo.findAllActiveWithPrice().stream()
+                .map(t -> {
                     Map<String, Object> m = new HashMap<>();
-                    m.put("id", v.getId());
-                    m.put("brand", v.getBrand());
-                    m.put("modelName", v.getModelName());
-                    m.put("modelCode", v.getModelCode());
-                    m.put("price", price);
+                    m.put("trimId", t.getId());
+                    m.put("trimName", t.getTrimName());
+                    m.put("vehicleName", t.getVehicle().getModelName());
+                    m.put("price", t.getCurrentPrice());
                     return m;
                 })
                 .toList();
     }
 
-
-    // ⚙️ Lấy giá xe theo TrimId (đúng cho form Quote)
-    @GetMapping("/price/{trimId}")
+    // Lấy giá theo trimId
+    @GetMapping("/api/price/{trimId}")
     @ResponseBody
-    public BigDecimal getTrimPrice(@PathVariable Long trimId) {
+    public BigDecimal getPriceByTrim(@PathVariable Long trimId) {
         return trimRepo.findById(trimId)
-                .map(t -> t.getCurrentPrice())
+                .map(Trim::getCurrentPrice)
                 .orElse(BigDecimal.ZERO);
     }
+
+
+    @GetMapping("/api/promotions")
+    @ResponseBody
+    public List<Map<String, Object>> getPromotionsApi() {
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User u = userRepo.findByUsername(username).orElseThrow();
+
+        Long dealerId = (u.getDealer() != null) ? u.getDealer().getId() : null;
+        String region  = (u.getDealerBranch() != null && u.getDealerBranch().getDealer() != null)
+                ? u.getDealerBranch().getDealer().getRegion()
+                : null;
+
+        List<Promotion> list = promotionService.getValidPromotionsForQuote(dealerId, null, region);
+
+        return list.stream().map(p -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", p.getId());
+
+            // Lấy tên hiển thị ưu tiên theo thứ tự
+            if (p.getTitle() != null && !p.getTitle().isEmpty())
+                m.put("name", p.getTitle());
+            else if (p.getName() != null && !p.getName().isEmpty())
+                m.put("name", p.getName());
+            else if (p.getDescription() != null && !p.getDescription().isEmpty())
+                m.put("name", p.getDescription());
+            else
+                m.put("name", "(Unnamed promotion)");
+
+            // giá trị giảm: ưu tiên discountPercent → discountRate
+            if (p.getDiscountPercent() != null)
+                m.put("discount", p.getDiscountPercent() + "%");
+            else if (p.getDiscountRate() != null)
+                m.put("discount", p.getDiscountRate());
+            else
+                m.put("discount", "N/A");
+
+            return m;
+        }).toList();
+    }
+
 
 
 
