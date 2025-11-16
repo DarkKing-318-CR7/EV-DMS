@@ -49,9 +49,13 @@
 
             <!-- Location Type -->
             <div class="field">
-                <label>Location Type</label>
-                <input th:field="*{locationType}" placeholder="EVM / DEALER">
+                <label for="locationType">Location Type</label>
+                <select id="locationType" th:field="*{locationType}" class="form-select">
+                    <option value="HQ">HQ (Kho tổng)</option>
+                    <option value="BRANCH">Branch (Kho chi nhánh)</option>
+                </select>
             </div>
+
 
             <!-- Qty -->
             <div class="field">

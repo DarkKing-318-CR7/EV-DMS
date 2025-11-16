@@ -3,6 +3,7 @@ package com.uth.ev_dms.admin;
 import com.uth.ev_dms.domain.Inventory;
 import com.uth.ev_dms.domain.Trim;
 import com.uth.ev_dms.domain.Dealer;
+import com.uth.ev_dms.repo.InventoryRepo;
 import com.uth.ev_dms.service.dto.InventoryUpdateRequest;
 import com.uth.ev_dms.service.InventoryService;
 import com.uth.ev_dms.service.ProductService;
@@ -26,19 +27,30 @@ public class AdminInventoryController {
     private final InventoryService inventoryService;
     private final ProductService productService;
     private final DealerService dealerService;
+    private final InventoryRepo inventoryRepo;
 
     // 1. Danh sách tồn kho
     @GetMapping
-    public String list(
-            @RequestParam(value = "success", required = false) String successFlag,
-            Model model
-    ) {
-        model.addAttribute("inventories", inventoryService.findAll());
-        model.addAttribute("success", successFlag != null);
-        model.addAttribute("active", "inventory");
-        model.addAttribute("pageTitle", "Inventory");
+    public String list(Model model) {
+
+        List<Inventory> all = inventoryRepo.findAll();
+
+        // Kho tổng = branch null
+        List<Inventory> hqList = all.stream()
+                .filter(inv -> inv.getBranch() == null)
+                .toList();
+
+        // Kho chi nhánh = branch != null
+        List<Inventory> branchList = all.stream()
+                .filter(inv -> inv.getBranch() != null)
+                .toList();
+
+        model.addAttribute("hqInventories", hqList);
+        model.addAttribute("branchInventories", branchList);
+
         return "admin/inventory/list";
     }
+
 
     // 2. Form tạo mới
     @GetMapping("/create")

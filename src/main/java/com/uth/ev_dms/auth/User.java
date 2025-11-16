@@ -5,13 +5,20 @@ import com.uth.ev_dms.domain.Region;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "users") // khớp tên bảng của bạn
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false, length = 100)
@@ -29,17 +36,18 @@ public class User {
     @Builder.Default
     private boolean enabled = true;
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "users_roles",               // khớp bảng link của bạn
+    @JoinTable(name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles;
+    private Set<Role> roles = new HashSet<>(); // ✅ mutable set
 
     @ManyToOne
-    @JoinColumn(name = "dealer_id")  // cột FK trong bảng users
+    @JoinColumn(name = "dealer_id")
     private Dealer dealer;
 
     @ManyToOne
-    @JoinColumn(name = "region_id")  // cột FK trong bảng users
+    @JoinColumn(name = "region_id")
     private Region region;
 }

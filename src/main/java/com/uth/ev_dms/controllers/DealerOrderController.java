@@ -7,14 +7,20 @@ import com.uth.ev_dms.service.OrderService;
 import com.uth.ev_dms.service.PaymentService;
 import com.uth.ev_dms.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.time.LocalDateTime; // ✅ thêm
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/dealer/orders")
@@ -26,33 +32,82 @@ public class DealerOrderController {
     private final OrderRepo orderRepo;
     private final PaymentService paymentService;
 
+    // ========= Helpers (dùng SecurityContext để lấy role) =========
+    private boolean hasRole(String role) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(role));
+    }
+    private boolean isManager() { return hasRole("ROLE_DEALER_MANAGER"); }
+    private boolean isStaff()   { return hasRole("ROLE_DEALER_STAFF"); }
+
+    /** Kiểm tra quyền trên 1 đơn:
+     *  - Manager: chỉ đơn cùng dealerId.
+     *  - Staff: chỉ đơn do chính họ tạo/bán (salesStaffId hoặc createdBy = userId).
+     */
+    private void assertCanAccess(Principal principal, OrderHdr o) {
+        String username = principal.getName();
+        Long meId = userService.findIdByUsername(username);
+        Long myDealer = userService.findDealerIdByUsername(username);
+
+        if (isManager()) {
+            if (!Objects.equals(o.getDealerId(), myDealer)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không cùng đại lý");
+            }
+            return;
+        }
+        if (isStaff()) {
+            boolean mine = Objects.equals(o.getSalesStaffId(), meId)
+                    || Objects.equals(o.getCreatedBy(), meId);
+            if (!mine) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không phải đơn của bạn");
+            }
+            return;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+
+    // ========= MY ORDERS =========
     @GetMapping("/my")
     public String myOrders(Model model, Principal principal) {
         String username = principal.getName();
-        Long staffId = userService.findIdByUsername(username);
+        Long staffId  = userService.findIdByUsername(username);
         Long dealerId = userService.findDealerIdByUsername(username);
-        var orders = orderRepo.findBySalesStaffIdAndDealerIdOrderByIdDesc(staffId, dealerId);
+
+        List<OrderHdr> orders;
+        if (isManager()) {
+            // Manager thấy tất cả đơn của dealer
+            orders = orderService.findAllForDealer(dealerId);
+        } else {
+            // Staff chỉ thấy đơn của chính họ (và đúng dealer nếu có)
+            orders = (dealerId == null)
+                    ? orderRepo.findBySalesStaffIdOrderByIdDesc(staffId)
+                    : orderRepo.findBySalesStaffIdAndDealerIdOrderByIdDesc(staffId, dealerId);
+        }
+
         model.addAttribute("orders", orders);
         return "dealer/orders/my-list";
     }
 
+    // ========= ALL ORDERS (Manager only) =========
     @GetMapping
     public String listAll(Model model, Principal principal) {
+        if (isStaff()) {
+            // dstaff không được vào trang "Tất cả đơn"
+            return "redirect:/dealer/orders/my";
+        }
         Long dealerId = userService.findDealerIdByUsername(principal.getName());
         List<OrderHdr> orders = orderService.findAllForDealer(dealerId);
         model.addAttribute("orders", orders);
         return "dealer/orders/list";
     }
 
-    @PostMapping("/{orderId}/submit")
-    public String submit(@PathVariable("orderId") Long orderId) {
-        orderService.submitForAllocation(orderId);
-        return "redirect:/dealer/orders";
-    }
-
+    // ========= DETAIL =========
     @GetMapping("/{id}")
-    public String detail(@PathVariable Long id, Model model) {
-        var order = orderRepo.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
+    public String detail(@PathVariable Long id, Model model, Principal principal) {
+        var order = orderRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        assertCanAccess(principal, order);
 
         model.addAttribute("order", order);
         model.addAttribute("items", order.getItems());
@@ -69,7 +124,6 @@ public class DealerOrderController {
         boolean isNew = order.getStatus() == OrderStatus.NEW;
         model.addAttribute("isNew", isNew);
 
-        // ===== Trả góp: chỉ NEW/PENDING_ALLOC và chưa có kế hoạch trước đó
         boolean hasInstallment = paymentService.hasInstallment(id);
         boolean canInstallment =
                 (order.getStatus() == OrderStatus.NEW || order.getStatus() == OrderStatus.PENDING_ALLOC)
@@ -80,11 +134,19 @@ public class DealerOrderController {
         return "dealer/orders/detail";
     }
 
+    // ========= ACTIONS =========
     @PostMapping("/{id}/allocate")
-    public String allocate(@PathVariable Long id, RedirectAttributes ra) {
-        OrderHdr o = orderRepo.findById(id).orElseThrow(() -> new RuntimeException("ORDER_NOT_FOUND"));
+    public String allocate(@PathVariable Long id, RedirectAttributes ra, Principal principal) {
+        OrderHdr o = orderRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ORDER_NOT_FOUND"));
+        assertCanAccess(principal, o);
+
         if (o.getStatus() == OrderStatus.NEW) {
             o.setStatus(OrderStatus.PENDING_ALLOC);
+            // ✅ ghi mốc đã submit nếu chưa có
+            if (o.getSubmittedAt() == null) {
+                o.setSubmittedAt(LocalDateTime.now());
+            }
             orderRepo.save(o);
             ra.addFlashAttribute("ok", "Đã gửi yêu cầu cấp xe.");
         } else {
@@ -97,7 +159,12 @@ public class DealerOrderController {
     public String payCash(@PathVariable Long orderId,
                           @RequestParam BigDecimal amount,
                           @RequestParam(required = false) String refNo,
-                          RedirectAttributes ra) {
+                          RedirectAttributes ra,
+                          Principal principal) {
+        var o = orderRepo.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assertCanAccess(principal, o);
+
         try {
             paymentService.addPayment(orderId, amount, "CASH", refNo);
             ra.addFlashAttribute("ok", "Đã ghi nhận thanh toán tiền mặt.");
@@ -108,34 +175,49 @@ public class DealerOrderController {
     }
 
     @PostMapping("/{id}/cancel")
-    public String cancel(@PathVariable Long id, RedirectAttributes ra, Principal p) {
-        var dealerId = userService.findDealerIdByUsername(p.getName());
+    public String cancel(@PathVariable Long id, RedirectAttributes ra, Principal principal) {
+        var order = orderRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assertCanAccess(principal, order);
+
+        var dealerId = userService.findDealerIdByUsername(principal.getName());
         orderService.cancelByDealer(id, dealerId, null);
         ra.addFlashAttribute("ok", "Đã hủy đơn #" + id);
         return "redirect:/dealer/orders";
     }
 
     @PostMapping("/{id}/request-allocate")
-    public String requestAllocate(@PathVariable Long id, Principal p, RedirectAttributes ra) {
-        OrderHdr o = orderRepo.findById(id).orElseThrow();
+    public String requestAllocate(@PathVariable Long id, Principal principal, RedirectAttributes ra) {
+        OrderHdr o = orderRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assertCanAccess(principal, o);
+
         if (o.getStatus() != OrderStatus.NEW) {
             ra.addFlashAttribute("err", "Chỉ đơn NEW mới được xin cấp.");
             return "redirect:/dealer/orders/" + id;
         }
         o.setStatus(OrderStatus.PENDING_ALLOC);
-        Long uid = userService.getUserId(p);
+        // ✅ ghi mốc đã submit nếu chưa có
+        if (o.getSubmittedAt() == null) {
+            o.setSubmittedAt(LocalDateTime.now());
+        }
+        Long uid = userService.getUserId(principal);
         o.setCreatedBy(uid);
         orderRepo.save(o);
         ra.addFlashAttribute("ok", "Đã gửi yêu cầu cấp xe (PENDING_ALLOC).");
         return "redirect:/dealer/orders/" + id;
     }
 
-    // ====== Tạo kế hoạch trả góp
     @PostMapping("/{orderId}/installment")
     public String createInstallment(@PathVariable Long orderId,
                                     @RequestParam("months") int months,
                                     @RequestParam("downPayment") BigDecimal downPayment,
-                                    RedirectAttributes ra) {
+                                    RedirectAttributes ra,
+                                    Principal principal) {
+        var o = orderRepo.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assertCanAccess(principal, o);
+
         try {
             paymentService.createInstallment(orderId, months, downPayment);
             ra.addFlashAttribute("ok", "Đã tạo trả góp " + months + " tháng, trả trước " + downPayment);

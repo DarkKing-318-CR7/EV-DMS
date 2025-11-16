@@ -45,4 +45,11 @@ public class InventoryAdjustment {
 
     @Column(name = "updated_by", length = 255)
     private String updatedBy;
+
+    // field: private Instant createdAtEvent;
+    public java.time.LocalDateTime getCreatedAtEventLdt() {
+        return createdAtEvent == null ? null
+                : createdAtEvent.atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+    }
+
 }

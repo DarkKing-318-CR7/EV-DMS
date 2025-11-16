@@ -1,247 +1,380 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Chi tiết đơn • Dealer</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" th:href="@{/dealer/orders}">EV-DMS</a>
-    </div>
-</nav>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='orders', pageTitle='Chi tiết đơn'"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
+    <head>
+        <meta charset="UTF-8">
+        <title>Chi tiết đơn • Dealer</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<div class="container py-4">
-    <div class="d-flex align-items-center mb-3">
-        <h3 class="me-auto m-0">Đơn #<span th:text="${order.id}">0</span></h3>
-        <span class="badge bg-secondary" th:text="${order.status}">NEW</span>
-    </div>
+        <!-- ===== CSS chỉ áp dụng trang này ===== -->
+        <style>
+            :root{
+                --glass: rgba(255,255,255,.06);
+                --glass-strong: rgba(255,255,255,.09);
+                --border: rgba(255,255,255,.12);
+                --muted: #9aa3b2;
+                --text:  #e8ecff;
+            }
+            .page{
+                max-width:1180px;margin:28px auto 64px;color:var(--text);
+                background: var(--glass);
+                border:1px solid var(--border); border-radius:20px;
+                box-shadow:0 12px 34px rgba(0,0,0,.45); backdrop-filter: blur(10px);
+            }
+            .page-head{padding:22px 26px 10px;border-bottom:1px solid var(--border)}
+            .eyebrow{
+                font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#a3b3ff;
+                background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);
+                padding:6px 10px;border-radius:8px;
+            }
+            .title{margin:12px 0 0;font-weight:800;font-size:30px}
+            .status-pill{border-radius:999px;padding:.42rem .66rem;font-weight:700;font-size:.78rem}
+            .st-new{background:#38bdf8;color:#0b1220}
+            .st-pending{background:#fbbf24;color:#1f2937}
+            .st-alloc{background:#60a5fa;color:#0b1220}
+            .st-done{background:#22c55e;color:#072b14}
+            .st-cancel{background:#9ca3af;color:#111827}
 
-    <div class="row g-3">
-        <!-- Cột trái -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">Thông tin đơn</div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="mb-2"><strong>khách hàng (id):</strong> <span th:text="${order.customerId}">--</span></div>
+            .page-body{padding:18px 18px 24px}
+            .card-glass{
+                background:var(--glass); border:1px solid var(--border); border-radius:16px;
+                box-shadow:0 8px 24px rgba(0,0,0,.35); overflow:hidden
+            }
+            .card-glass .card-header{
+                background:var(--glass-strong); border-bottom:1px solid var(--border); color:#cbd5ff; font-weight:700
+            }
 
-                            <div class="mb-2"><strong>tổng tiền:</strong>
-                                <span th:text="${#numbers.formatDecimal(totalAmountSafe,0,'POINT',0,'COMMA')}">0</span>
-                            </div>
+            /* summary tiles */
+            .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+            .tile{
+                background:var(--glass); border:1px solid var(--border); border-radius:14px; padding:14px 16px
+            }
+            .tile .label{color:var(--muted);font-size:.86rem}
+            .tile .value{font-size:1.25rem;font-weight:800}
 
-                            <div class="mb-2"><strong>đã trả:</strong>
-                                <span th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</span>
-                            </div>
-                            <div class="mb-2"><strong>còn lại:</strong>
-                                <span th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</span>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="mb-2"><strong>báo giá (id):</strong> <span th:text="${order.quoteId}">--</span></div>
-                            <div class="mb-2"><strong>tạo lúc:</strong>
-                                <span th:text="${#temporals.format(order.createdAt,'dd/MM/yyyy HH:mm')}">--</span>
-                            </div>
-                        </div>
-                    </div>
+            /* tables */
+            .table-wrap{border-top:1px solid var(--border)}
+            .tbl{
+                width:100%; border-collapse:separate; border-spacing:0 10px; color:var(--text);
+                margin: 0;
+            }
+            .tbl thead th{
+                font-weight:700; color:#a5b4fc; padding:12px 14px;
+                border-bottom:1px solid var(--border); background:rgba(15,23,42,.55); position:sticky;top:0; backdrop-filter: blur(6px);
+            }
+            .tbl tbody td{
+                padding:12px 14px; background:rgba(255,255,255,.05);
+                border-top:1px solid rgba(255,255,255,.06);
+                border-bottom:1px solid rgba(255,255,255,.06);
+            }
+            .tbl tbody tr:hover td{background:rgba(59,130,246,.16)}
+            .tbl tbody td:first-child{border-left:1px solid rgba(255,255,255,.06);border-radius:10px 0 0 10px}
+            .tbl tbody td:last-child{border-right:1px solid rgba(255,255,255,.06);border-radius:0 10px 10px 0}
+
+            /* actions */
+            .btn-soft{border-radius:12px}
+            .btn-soft-warning{background:#fde68a;border:1px solid #fbbf24;color:#111}
+            .btn-soft-warning:hover{background:#fcd34d}
+            .btn-soft-outline{background:transparent;border:1px solid var(--border);color:#e5e7eb}
+
+            /* timeline */
+            .timeline{position:relative;padding-left:18px}
+            .timeline::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:#e5e7eb33}
+            .tl-item{position:relative;margin-bottom:14px}
+            .tl-item::before{content:'';position:absolute;left:-2px;top:2px;width:10px;height:10px;border-radius:50%;background:#0d6efd}
+            .tl-title{font-weight:700}
+            .muted{color:var(--muted)}
+        </style>
+    </head>
+
+    <body>
+    <section class="page">
+        <!-- Header -->
+        <div class="page-head">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="eyebrow">EV-DMS</span>
+                    <h2 class="title">Đơn #<span th:text="${order.id}">0</span></h2>
+                </div>
+                <div>
+                    <th:block th:switch="${order.status}">
+                        <span class="status-pill st-new"     th:case="${T(com.uth.ev_dms.domain.OrderStatus).NEW}"            th:text="${order.status}">NEW</span>
+                        <span class="status-pill st-pending" th:case="${T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}" th:text="${order.status}">PENDING_ALLOC</span>
+                        <span class="status-pill st-alloc"   th:case="${T(com.uth.ev_dms.domain.OrderStatus).ALLOCATED}"     th:text="${order.status}">ALLOCATED</span>
+                        <span class="status-pill st-done"    th:case="${T(com.uth.ev_dms.domain.OrderStatus).DELIVERED}"     th:text="${order.status}">DELIVERED</span>
+                        <span class="status-pill st-cancel"  th:case="${T(com.uth.ev_dms.domain.OrderStatus).CANCELLED}"     th:text="${order.status}">CANCELLED</span>
+                        <span class="status-pill bg-dark"    th:case="*" th:text="${order.status}">UNKNOWN</span>
+                    </th:block>
                 </div>
             </div>
 
-            <!-- Items -->
-            <div class="card mt-3">
-                <div class="card-header">Danh sách xe</div>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle m-0">
-                        <thead class="table-light">
-                        <tr>
-                            <th>trim_id</th>
-                            <th class="text-end">đơn giá</th>
-                            <th class="text-end">số lượng</th>
-                            <th class="text-end">giảm</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="it : ${items}">
-                            <td th:text="${it.trimId}">1</td>
-                            <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'POINT',0,'COMMA')}">0</td>
-                            <td class="text-end" th:text="${it.qty}">1</td>
-                            <td class="text-end" th:text="${#numbers.formatDecimal(it.discountAmount,0,'POINT',0,'COMMA')}">0</td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(items)}">
-                            <td colspan="4" class="text-center text-muted">Chưa có item</td>
-                        </tr>
-                        </tbody>
-                    </table>
+            <!-- quick summary -->
+            <div class="summary mt-3">
+                <div class="tile">
+                    <div class="label">khách hàng (id)</div>
+                    <div class="value" th:text="${order.customerId}">—</div>
                 </div>
-            </div>
-
-            <!-- Payments -->
-            <div class="card mt-3">
-                <div class="card-header">Thanh toán</div>
-                <div class="card-body">
-                    <div class="table-responsive mb-3">
-                        <table class="table table-sm m-0">
-                            <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>loại</th>
-                                <th class="text-end">số tiền</th>
-                                <th>ref</th>
-                                <th>thời gian</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="p : ${payments}">
-                                <td th:text="${p.id}">1</td>
-                                <td th:text="${p.type}">CASH</td>
-                                <td class="text-end" th:text="${#numbers.formatDecimal(p.amount,0,'POINT',0,'COMMA')}">0</td>
-                                <td th:text="${p.refNo}">ref</td>
-                                <td th:text="${#temporals.format(p.paidAt,'dd/MM/yyyy HH:mm')}">--</td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(payments)}">
-                                <td colspan="5" class="text-center text-muted">Chưa có thanh toán</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Form thanh toán tiền mặt -->
-                    <form class="row gy-2 gx-2 align-items-end"
-                          th:action="@{|/dealer/orders/${order.id}/pay-cash|}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <div class="col-md-4">
-                            <label class="form-label">số tiền</label>
-                            <input class="form-control" name="amount" type="number" step="0.01" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">ref</label>
-                            <input class="form-control" name="refNo" placeholder="CASH-001">
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-primary w-100">Thanh toán tiền mặt</button>
-                        </div>
-                    </form>
+                <div class="tile">
+                    <div class="label">tổng tiền</div>
+                    <div class="value" th:text="${#numbers.formatDecimal(totalAmountSafe,0,'POINT',0,'COMMA')}">0</div>
+                </div>
+                <div class="tile">
+                    <div class="label">đã trả</div>
+                    <div class="value" th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</div>
+                </div>
+                <div class="tile">
+                    <div class="label">còn lại</div>
+                    <div class="value" th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</div>
                 </div>
             </div>
         </div>
 
-        <!-- Cột phải -->
-        <div class="col-lg-4"
-             th:with="
+        <!-- Body -->
+        <div class="page-body">
+            <div class="row g-3">
+                <!-- Left -->
+                <div class="col-lg-8">
+                    <div class="card-glass">
+                        <div class="card-header">Thông tin đơn</div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mb-2"><strong>báo giá (id):</strong> <span th:text="${order.quoteId}">—</span></div>
+                                    <div class="mb-2"><strong>tạo lúc:</strong>
+                                        <span th:text="${#temporals.format(order.createdAt,'dd/MM/yyyy HH:mm')}">—</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2"><strong>trạng thái:</strong> <span th:text="${order.status}">NEW</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="card-glass mt-3">
+                        <div class="card-header">Danh sách xe</div>
+                        <div class="table-wrap">
+                            <div class="table-responsive">
+                                <table class="tbl align-middle">
+                                    <thead>
+                                    <tr>
+                                        <th>trim_id</th>
+                                        <th class="text-end">đơn giá</th>
+                                        <th class="text-end">số lượng</th>
+                                        <th class="text-end">giảm</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="it : ${items}">
+                                        <td th:text="${it.trimId}">1</td>
+                                        <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'POINT',0,'COMMA')}">0</td>
+                                        <td class="text-end" th:text="${it.qty}">1</td>
+                                        <td class="text-end" th:text="${#numbers.formatDecimal(it.discountAmount,0,'POINT',0,'COMMA')}">0</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(items)}">
+                                        <td colspan="4" class="text-center text-muted py-4">Chưa có item</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payments -->
+                    <div class="card-glass mt-3">
+                        <div class="card-header">Thanh toán</div>
+                        <div class="card-body">
+                            <div class="table-responsive mb-3">
+                                <table class="tbl">
+                                    <thead>
+                                    <tr>
+                                        <th style="width:70px">#</th>
+                                        <th>loại</th>
+                                        <th class="text-end">số tiền</th>
+                                        <th>ref</th>
+                                        <th>thời gian</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="p : ${payments}">
+                                        <td th:text="${p.id}">1</td>
+                                        <td th:text="${p.type}">CASH</td>
+                                        <td class="text-end" th:text="${#numbers.formatDecimal(p.amount,0,'POINT',0,'COMMA')}">0</td>
+                                        <td th:text="${p.refNo}">ref</td>
+                                        <td th:text="${#temporals.format(p.paidAt,'dd/MM/yyyy HH:mm')}">—</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(payments)}">
+                                        <td colspan="5" class="text-center text-muted py-4">Chưa có thanh toán</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- pay cash form -->
+                            <form class="row gy-2 gx-2 align-items-end"
+                                  th:action="@{|/dealer/orders/${order.id}/pay-cash|}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <div class="col-md-4">
+                                    <label class="form-label">số tiền</label>
+                                    <input class="form-control" name="amount" type="number" step="0.01" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">ref</label>
+                                    <input class="form-control" name="refNo" placeholder="CASH-001">
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-primary w-100 btn-soft"><i class="bi bi-cash-stack me-1"></i>Thanh toán tiền mặt</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right -->
+                <div class="col-lg-4"
+                     th:with="
                st=${order.status},
                canInsModel=${canInstallment},
                hasInsModel=${hasInstallment},
                canInstallmentFinal=${canInsModel != null ? canInsModel : (st=='NEW' or st=='PENDING_ALLOC')},
                hasInstallmentFinal=${hasInsModel != null ? hasInsModel : false}
              ">
-            <div class="card">
-                <div class="card-header">Hành động</div>
-                <div class="card-body d-grid gap-2">
-                    <div th:if="${ok != null or error != null}">
-                        <div class="alert alert-success" th:if="${ok != null}" th:text="${ok}"></div>
-                        <div class="alert alert-danger" th:if="${error != null}" th:text="${error}"></div>
-                    </div>
-
-                    <form th:action="@{|/dealer/orders/${order.id}/allocate|}" method="post" class="d-grid">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button class="btn btn-warning" th:disabled="${!isNew}">
-                            Xin cấp xe
-                        </button>
-                    </form>
-
-                    <form th:if="${isNew}"
-                          th:action="@{|/dealer/orders/${order.id}/cancel|}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <button class="btn btn-outline-danger w-100">Hủy đơn</button>
-                    </form>
-
-                    <a class="btn btn-outline-secondary w-100" th:href="@{/dealer/orders}">Quay lại</a>
-                </div>
-            </div>
-
-            <!-- Kế hoạch trả góp (nếu có) -->
-            <div class="card mt-3" th:if="${installment != null}">
-                <div class="card-header">Kế hoạch trả góp</div>
-                <div class="card-body">
-                    <div class="mb-1"><strong>ngân hàng:</strong> <span th:text="${installment.bank}">bank</span></div>
-                    <div class="mb-1"><strong>kỳ:</strong> <span th:text="${installment.tenorMonths}">12</span> tháng</div>
-                    <div class="mb-1"><strong>trả trước:</strong>
-                        <span th:text="${#numbers.formatDecimal(installment.downPayment,0,'POINT',0,'COMMA')}">0</span>
-                    </div>
-                    <div class="mb-1"><strong>lãi suất:</strong> <span th:text="${installment.interestRate}">0.1</span></div>
-                    <div class="mb-1"><strong>mỗi kỳ:</strong>
-                        <span th:text="${#numbers.formatDecimal(installment.monthlyAmount,0,'POINT',0,'COMMA')}">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Form Tạo trả góp -->
-            <div class="card mt-3">
-                <div class="card-header d-flex align-items-center">
-                    <span>Tạo trả góp</span>
-                    <span class="ms-auto small text-muted" th:if="${hasInstallmentFinal}">đã có kế hoạch</span>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-warning py-2 mb-3" th:if="${!canInstallmentFinal}">
-                        Chỉ cho phép khi trạng thái <strong>NEW</strong> hoặc <strong>PENDING_ALLOC</strong>.
-                    </div>
-                    <div class="alert alert-info py-2 mb-3" th:if="${hasInstallmentFinal}">
-                        Đơn đã có kế hoạch trả góp — không thể tạo thêm.
-                    </div>
-
-                    <form th:action="@{|/dealer/orders/${order.id}/installment|}" method="post" class="row g-2">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <div class="col-6">
-                            <label class="form-label">Kỳ (tháng)</label>
-                            <input class="form-control" name="months" type="number" min="3" value="12" required
-                                   th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">Trả trước</label>
-                            <input class="form-control" name="downPayment" type="number" step="0.01"
-                                   placeholder="50000000" required
-                                   th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
-                        </div>
-                        <div class="col-12">
-                            <button class="btn btn-primary w-100"
-                                    th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
-                                Tạo kế hoạch trả góp
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Timeline -->
-            <div class="card mt-3">
-                <div class="card-header">Timeline</div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2">
-                            <div><strong>Tạo đơn</strong></div>
-                            <small class="text-muted" th:text="${#temporals.format(order.createdAt,'dd/MM/yyyy HH:mm')}">--</small>
-                        </li>
-                        <li class="mb-2">
-                            <div><strong>Trạng thái hiện tại</strong>: <span th:text="${order.status}">NEW</span></div>
-                        </li>
-                        <li class="mb-2" th:each="p : ${payments}">
-                            <div>
-                                <strong>Thanh toán</strong>
-                                <span th:text="${#numbers.formatDecimal(p.amount,0,'POINT',0,'COMMA')}">0</span>
-                                <small class="text-muted">(<span th:text="${p.method}">CASH</span>)</small>
+                    <!-- Actions -->
+                    <div class="card-glass">
+                        <div class="card-header">Hành động</div>
+                        <div class="card-body d-grid gap-2">
+                            <div th:if="${ok != null or error != null}">
+                                <div class="alert alert-success py-2" th:if="${ok != null}" th:text="${ok}"></div>
+                                <div class="alert alert-danger  py-2" th:if="${error != null}" th:text="${error}"></div>
                             </div>
-                            <small class="text-muted" th:text="${#temporals.format(p.paidAt,'dd/MM/yyyy HH:mm')}">--</small>
-                        </li>
-                        <li class="text-muted" th:if="${#lists.isEmpty(payments)}">Chưa có sự kiện thanh toán</li>
-                    </ul>
+
+                            <form th:action="@{|/dealer/orders/${order.id}/allocate|}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button class="btn btn-soft-warning w-100" th:disabled="${!isNew}">
+                                    <i class="bi bi-truck-front me-1"></i> Xin cấp xe
+                                </button>
+                            </form>
+
+                            <form th:if="${isNew}" th:action="@{|/dealer/orders/${order.id}/cancel|}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button class="btn btn-outline-danger w-100 btn-soft"><i class="bi bi-x-octagon me-1"></i> Hủy đơn</button>
+                            </form>
+
+                            <a class="btn btn-soft-outline w-100" th:href="@{/dealer/orders}">
+                                <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Installment plan (if exists) -->
+                    <div class="card-glass mt-3" th:if="${installment != null}">
+                        <div class="card-header">Kế hoạch trả góp</div>
+                        <div class="card-body">
+                            <div class="mb-1"><strong>ngân hàng:</strong> <span th:text="${installment.bank}">bank</span></div>
+                            <div class="mb-1"><strong>kỳ:</strong> <span th:text="${installment.tenorMonths}">12</span> tháng</div>
+                            <div class="mb-1"><strong>trả trước:</strong>
+                                <span th:text="${#numbers.formatDecimal(installment.downPayment,0,'POINT',0,'COMMA')}">0</span>
+                            </div>
+                            <div class="mb-1"><strong>lãi suất:</strong> <span th:text="${installment.interestRate}">0.1</span></div>
+                            <div class="mb-1"><strong>mỗi kỳ:</strong>
+                                <span th:text="${#numbers.formatDecimal(installment.monthlyAmount,0,'POINT',0,'COMMA')}">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Create installment -->
+                    <div class="card-glass mt-3">
+                        <div class="card-header d-flex align-items-center">
+                            <span>Tạo trả góp</span>
+                            <span class="ms-auto small text-muted" th:if="${hasInstallmentFinal}">đã có kế hoạch</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning py-2 mb-3" th:if="${!canInstallmentFinal}">
+                                Chỉ cho phép khi trạng thái <b>NEW</b> hoặc <b>PENDING_ALLOC</b>.
+                            </div>
+                            <div class="alert alert-info py-2 mb-3" th:if="${hasInstallmentFinal}">
+                                Đơn đã có kế hoạch trả góp — không thể tạo thêm.
+                            </div>
+
+                            <form th:action="@{|/dealer/orders/${order.id}/installment|}" method="post" class="row g-2">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <div class="col-6">
+                                    <label class="form-label">Kỳ (tháng)</label>
+                                    <input class="form-control" name="months" type="number" min="3" value="12" required
+                                           th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Trả trước</label>
+                                    <input class="form-control" name="downPayment" type="number" step="0.01" placeholder="50000000" required
+                                           th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-primary w-100 btn-soft"
+                                            th:disabled="${!canInstallmentFinal or hasInstallmentFinal}">
+                                        <i class="bi bi-calculator me-1"></i> Tạo kế hoạch trả góp
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="card-glass mt-3">
+                        <div class="card-header">Timeline</div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="tl-item">
+                                    <div class="tl-title">Tạo đơn</div>
+                                    <div class="muted" th:text="${#temporals.format(order?.createdAt, 'dd/MM/yyyy HH:mm') ?: '—'}">—</div>
+                                </div>
+
+                                <div class="tl-item" th:if="${order != null and order.status != T(com.uth.ev_dms.domain.OrderStatus).NEW}">
+                                    <div class="tl-title">Đã submit</div>
+                                    <div class="muted">—</div>
+                                </div>
+
+                                <div class="tl-item" th:if="${order != null and order.status == T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}">
+                                    <div class="tl-title">Chờ allocate</div>
+                                    <div class="muted">—</div>
+                                </div>
+
+                                <div class="tl-item" th:if="${order != null and (order.status == T(com.uth.ev_dms.domain.OrderStatus).ALLOCATED or order.status == T(com.uth.ev_dms.domain.OrderStatus).DELIVERED)}">
+                                    <div class="tl-title">Đã allocate</div>
+                                    <div class="muted">—</div>
+                                </div>
+
+                                <div class="tl-item" th:if="${order != null and order.status == T(com.uth.ev_dms.domain.OrderStatus).DELIVERED}">
+                                    <div class="tl-title">Đã giao xe</div>
+                                    <div class="muted">—</div>
+                                </div>
+
+                                <div class="tl-item" th:if="${order != null and order.status == T(com.uth.ev_dms.domain.OrderStatus).CANCELLED}">
+                                    <div class="tl-title">Đã hủy</div>
+                                    <div class="muted">—</div>
+                                </div>
+
+                                <div class="tl-item" th:each="p : ${payments}">
+                                    <div class="tl-title">
+                                        Thanh toán
+                                        <span th:text="${#numbers.formatDecimal(p.amount,0,'POINT',0,'COMMA')}">0</span>
+                                        <small class="muted">(<span th:text="${p.method}">CASH</span>)</small>
+                                    </div>
+                                    <div class="muted" th:text="${#temporals.format(p?.paidAt, 'dd/MM/yyyy HH:mm') ?: '—'}">—</div>
+                                </div>
+
+                                <div class="muted" th:if="${#lists.isEmpty(payments)}">Chưa có sự kiện thanh toán</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /Timeline -->
                 </div>
             </div>
-            <!-- /Timeline -->
         </div>
-        <!-- /Cột phải -->
-    </div>
-</div>
-</body>
+    </section>
+    </body>
+</main>
 </html>
