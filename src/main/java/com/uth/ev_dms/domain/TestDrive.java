@@ -4,6 +4,8 @@ import com.uth.ev_dms.auth.User;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import jakarta.persistence.PrePersist;
+
 
 @Entity @Table(name="test_drives")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
@@ -13,10 +15,10 @@ public class TestDrive {
 
     private String customerName;
     private String customerPhone;
-    private String vehicleName;            // đơn giản: tên xe
+    private String vehicleName;
     private String location;
 
-    private LocalDateTime scheduleAt;      // thời gian hẹn
+    private LocalDateTime scheduleAt;
     private String notes;
 
     @Enumerated(EnumType.STRING)
@@ -24,13 +26,21 @@ public class TestDrive {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
-    private User createdBy;                 // staff tạo
+    private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_staff_id")
-    private User assignedStaff;            // staff phụ trách (optional)
+    private User assignedStaff;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dealer_id")
-    private Dealer dealer;                 // đại lý thuộc manager
+    private Dealer dealer;
+
+    // ⭐ THÊM ĐÚNG ĐOẠN NÀY — KHÔNG SỬA CODE KHÁC
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = TestDriveStatus.REQUESTED;
+        }
+    }
 }

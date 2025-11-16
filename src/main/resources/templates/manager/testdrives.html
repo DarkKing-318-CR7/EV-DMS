@@ -10,7 +10,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
-    /* ===== Theme ===== */
     :root{
       --glass: rgba(18,18,24,.58);
       --glass-strong: rgba(15,15,21,.78);
@@ -18,18 +17,19 @@
       --muted: #a6adbb;
       --text:  #e5e7eb;
     }
+
     html,body{height:100%}
-    body{
+
+    body {
       margin:0;
       color:var(--text);
-      background:#0b1220 url([[ @{/image/dark-sunset.jpg} ]]) no-repeat center/cover fixed;
-      -webkit-font-smoothing:antialiased;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background: url("/image/dark-sunset.jpg") center/cover fixed no-repeat;
+      -webkit-font-smoothing: antialiased;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     .page{padding:22px}
     .shell{max-width:1160px;margin:0 auto}
 
-    /* ===== Glass cards ===== */
     .glass{
       background:var(--glass);
       backdrop-filter: blur(10px);
@@ -39,30 +39,25 @@
     }
     .glass-strong{ background:var(--glass-strong); }
 
-    /* ===== Header ===== */
     .hdr{padding:22px}
     .hdr-title{font-weight:900;font-size:28px;line-height:1}
     .hdr-sub{font-size:12px;color:var(--muted)}
-    .hdr-actions .btn{border-radius:12px}
 
-    /* ===== Filters ===== */
+    .hdr-actions .btn{border-radius:12px}
     label{font-size:12px;color:var(--muted);margin-bottom:6px}
+
     .form-control,.form-select{
       background:rgba(255,255,255,.06);
       color:var(--text);
       border:1px solid var(--border);
       border-radius:12px;
     }
-    .form-control::placeholder{color:#9aa3b2}
-    .ig-addon{
-      background:transparent;border:0;color:var(--muted)
-    }
-    .btn-darkglass{background:#1f2937;color:#fff;border:1px solid #111827;border-radius:12px}
-    .btn-darkglass:hover{opacity:.92}
-    .btn-ghost{color:#fff;border:1px solid var(--border);background:transparent;border-radius:12px}
-    .btn-ghost:hover{background:rgba(255,255,255,.04)}
 
-    /* ===== Table ===== */
+    .ig-addon{background:transparent;border:0;color:var(--muted)}
+
+    .btn-darkglass{background:#1f2937;color:#fff;border:1px solid #111827;border-radius:12px}
+    .btn-ghost{color:#fff;border:1px solid var(--border);background:transparent;border-radius:12px}
+
     .table{color:var(--text);margin:0}
     thead th{
       background:rgba(255,255,255,.06);
@@ -74,16 +69,15 @@
       background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
     }
     .badge{font-weight:800;border-radius:999px;padding:.35rem .6rem;font-size:.74rem}
-
     .btn-slim{padding:.28rem .65rem;border-radius:12px;font-size:.82rem}
     .muted{color:var(--muted)}
   </style>
 </head>
+
 <body>
 <div class="page">
   <div class="shell">
 
-    <!-- Header -->
     <div class="glass d-flex align-items-center justify-content-between hdr mb-3">
       <div>
         <div class="hdr-title">Lịch lái thử</div>
@@ -99,7 +93,6 @@
       </div>
     </div>
 
-    <!-- Filters -->
     <form class="glass-strong p-3 mb-3" method="get" th:action="@{/manager/testdrives}">
       <div class="row g-3">
         <div class="col-12 col-md-4">
@@ -109,6 +102,7 @@
             <span class="input-group-text ig-addon"><i class="bi bi-calendar-date"></i></span>
           </div>
         </div>
+
         <div class="col-12 col-md-4">
           <label>Đến ngày</label>
           <div class="input-group">
@@ -116,14 +110,20 @@
             <span class="input-group-text ig-addon"><i class="bi bi-calendar2-week"></i></span>
           </div>
         </div>
+
         <div class="col-12 col-md-3">
           <label>Trạng thái</label>
           <select class="form-select" name="status">
             <option value="">-- Tất cả --</option>
+
             <option th:each="s : ${T(com.uth.ev_dms.domain.TestDriveStatus).values()}"
-                    th:value="${s}" th:text="${s}" th:selected="${s == status}"></option>
+                    th:value="${s}"
+                    th:text="${s}"
+                    th:selected="${status != null and status.name() == s.name()}">
+            </option>
           </select>
         </div>
+
         <div class="col-12 col-md-1 d-flex align-items-end justify-content-end gap-2">
           <button class="btn btn-darkglass btn-slim" type="submit">
             <i class="bi bi-sliders me-1"></i> Lọc
@@ -133,7 +133,6 @@
       </div>
     </form>
 
-    <!-- Table -->
     <div class="glass p-0">
       <div class="table-responsive">
         <table class="table align-middle table-hover">
@@ -150,50 +149,92 @@
             <th style="width:160px" class="text-end">Hành động</th>
           </tr>
           </thead>
+
           <tbody>
           <tr th:each="td : ${list}" class="row-grad">
-            <td th:text="${td.id}">1</td>
-            <td th:text="${td.customerName}">Nguyễn Văn A</td>
-            <td th:text="${td.customerPhone}">0901234567</td>
-            <td th:text="${td.vehicleName}">VF e34</td>
-            <td th:text="${td.location}">Showroom Q7</td>
-            <td th:text="${#temporals.format(td.scheduleAt, 'dd/MM/yyyy HH:mm')}">03/11/2025 09:00</td>
-            <td th:text="${td.notes}">Ghi chú</td>
+            <td th:text="${td.id}"></td>
+            <td th:text="${td.customerName}"></td>
+            <td th:text="${td.customerPhone}"></td>
+            <td th:text="${td.vehicleName}"></td>
+            <td th:text="${td.location}"></td>
+            <td th:text="${#temporals.format(td.scheduleAt, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${td.notes}"></td>
 
-            <td th:switch="${td.status}">
-              <span th:case="'REQUESTED'" class="badge text-bg-secondary" th:text="${td.status}"></span>
-              <span th:case="'CONFIRMED'" class="badge text-bg-info" th:text="${td.status}"></span>
-              <span th:case="'COMPLETED'" class="badge text-bg-success" th:text="${td.status}"></span>
-              <span th:case="'CANCELLED'" class="badge text-bg-danger" th:text="${td.status}"></span>
-              <span th:case="*" class="badge text-bg-light text-dark" th:text="${td.status}"></span>
+            <!-- 🔥 FIXED ENUM STATUS (NO CRASH) -->
+            <td>
+              <span th:if="${td.status == null}"
+                    class="badge text-bg-light text-dark">UNKNOWN</span>
+
+              <span th:if="${td.status != null and td.status.name() == 'REQUESTED'}"
+                    class="badge text-bg-secondary">REQUESTED</span>
+
+              <span th:if="${td.status != null and td.status.name() == 'CONFIRMED'}"
+                    class="badge text-bg-info">CONFIRMED</span>
+
+              <span th:if="${td.status != null and td.status.name() == 'COMPLETED'}"
+                    class="badge text-bg-success">COMPLETED</span>
+
+              <span th:if="${td.status != null and td.status.name() == 'CANCELLED'}"
+                    class="badge text-bg-danger">CANCELLED</span>
             </td>
 
             <td class="text-end">
-              <!-- Nút Chi tiết -->
+
               <a th:href="@{/dealer/test-drive/detail/{id}(id=${td.id})}"
                  class="btn btn-ghost btn-slim">
                 <i class="bi bi-info-circle me-1"></i> Chi tiết
               </a>
 
-              <!-- ✅ Nút Xóa (mới thêm, không đổi gì khác) -->
+              <!-- REQUESTED -->
+              <form th:if="${td.status != null and td.status.name() == 'REQUESTED'}"
+                    th:action="@{|/manager/testdrives/${td.id}/approve|}"
+                    method="post"
+                    style="display:inline;">
+                <button class="btn btn-success btn-slim ms-1">
+                  <i class="bi bi-check2-circle"></i> Duyệt
+                </button>
+              </form>
+
+              <!-- CONFIRMED -->
+              <form th:if="${td.status != null and td.status.name() == 'CONFIRMED'}"
+                    th:action="@{|/manager/testdrives/${td.id}/complete|}"
+                    method="post"
+                    style="display:inline;">
+                <button class="btn btn-primary btn-slim ms-1">
+                  <i class="bi bi-flag"></i> Hoàn tất
+                </button>
+              </form>
+
+              <!-- NOT COMPLETED -->
+              <form th:if="${td.status == null or td.status.name() != 'COMPLETED'}"
+                    th:action="@{|/manager/testdrives/${td.id}/cancel|}"
+                    method="post"
+                    style="display:inline;">
+                <button class="btn btn-warning btn-slim ms-1">
+                  <i class="bi bi-x-circle"></i> Hủy
+                </button>
+              </form>
+
               <a th:href="@{'/dealer/test-drive/delete/' + ${td.id}}"
                  class="btn btn-outline-danger btn-slim ms-1"
-                 onclick="return confirm('Bạn có chắc chắn muốn xóa lịch #' + [[${td.id}]] + ' không?');">
+                 onclick="return confirm('Xóa lịch #' + [[${td.id}]] + '?');">
                 <i class="bi bi-trash"></i> Xóa
               </a>
             </td>
-
           </tr>
 
           <tr th:if="${#lists.isEmpty(list)}">
             <td colspan="9" class="text-center muted py-4">Không có dữ liệu</td>
           </tr>
+
           </tbody>
         </table>
       </div>
     </div>
 
-    <div class="text-end mt-2 muted" th:text="${#lists.size(list)} + ' mục'">0 mục</div>
+    <div class="text-end mt-2 muted"
+         th:text="${#lists.size(list)} + ' mục'"></div>
+
   </div>
 </div>
 

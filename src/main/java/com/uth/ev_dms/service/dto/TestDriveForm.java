@@ -14,7 +14,6 @@ public class TestDriveForm {
     private LocalDateTime scheduleAt;
 
     private String notes;
-
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String v) { this.customerName = v; }
     public String getCustomerPhone() { return customerPhone; }
