@@ -161,17 +161,21 @@ public class EvmInventoryService {
 
         Trim trim = evmInv.getTrim();
 
-        // Inventory chi nhánh cho trim, nếu chưa có thì tạo mới
-        Inventory dealerInv = inventoryRepo.findByTrim_IdAndBranch_Id(trim.getId(), mainBranch.getId())
+        // 🔧 SỬA CHỖ NÀY:
+        // Thay vì tìm theo (trim, branch), ta lock theo (dealer, trim)
+        // đúng với unique key (dealer_id, trim_id) và mô hình 1 dealer 1 branch.
+        Inventory dealerInv = inventoryRepo.lockByDealerAndTrim(dealer.getId(), trim.getId())
                 .orElseGet(() -> {
                     Inventory inv = new Inventory();
                     inv.setDealer(dealer);
-                    inv.setBranch(mainBranch);
                     inv.setTrim(trim);
                     inv.setQtyOnHand(0);
                     inv.setReserved(0);
-                    return inventoryRepo.save(inv);
+                    return inv;
                 });
+
+        // đảm bảo branch luôn là MAIN branch (migrate record cũ nếu cần)
+        dealerInv.setBranch(mainBranch);
 
         // cập nhật HQ
         evmInv.setQtyOnHand(onHand - qty);
@@ -195,8 +199,7 @@ public class EvmInventoryService {
 
         adjRepo.save(out);
 
-
-        // cập nhật dealer branch
+        // cập nhật dealer branch (inventory)
         int dealerOnHand = dealerInv.getQtyOnHand() == null ? 0 : dealerInv.getQtyOnHand();
         dealerInv.setQtyOnHand(dealerOnHand + qty);
         dealerInv.setUpdatedAt(LocalDateTime.now());

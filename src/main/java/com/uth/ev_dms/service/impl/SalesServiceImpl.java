@@ -19,7 +19,7 @@ import java.util.List;
 public class SalesServiceImpl implements SalesService {
 
     private final QuoteRepo quoteRepo;
-    private final QuoteItemRepo quoteItemRepo;        // ✅ thêm
+    private final QuoteItemRepo quoteItemRepo;
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
     private final PaymentRepo paymentRepo;
@@ -30,7 +30,7 @@ public class SalesServiceImpl implements SalesService {
 
     public SalesServiceImpl(
             QuoteRepo quoteRepo,
-            QuoteItemRepo quoteItemRepo,             // ✅ thêm
+            QuoteItemRepo quoteItemRepo,
             OrderRepo orderRepo,
             OrderItemRepo orderItemRepo,
             PaymentRepo paymentRepo,
@@ -40,7 +40,7 @@ public class SalesServiceImpl implements SalesService {
             UserRepo userRepo
     ) {
         this.quoteRepo = quoteRepo;
-        this.quoteItemRepo = quoteItemRepo;         // ✅ thêm
+        this.quoteItemRepo = quoteItemRepo;
         this.orderRepo = orderRepo;
         this.orderItemRepo = orderItemRepo;
         this.paymentRepo = paymentRepo;
@@ -58,11 +58,14 @@ public class SalesServiceImpl implements SalesService {
         q.setDealerId(dto.getDealerId());
         q.setStatus("DRAFT");
 
-        // Lấy user hiện tại để backfill dealer/owner nếu thiếu
+        // Lấy user hiện tại để backfill dealer/owner/salesStaff
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getName() != null) {
                 userRepo.findByUsername(auth.getName()).ifPresent(u -> {
+                    // 👇 staff tạo quote
+                    q.setSalesStaffId(u.getId());
+
                     if (q.getDealerId() == null && u.getDealer() != null) {
                         q.setDealerId(u.getDealer().getId());
                     }
@@ -85,25 +88,22 @@ public class SalesServiceImpl implements SalesService {
                 if (it == null) continue;
                 Integer qty = it.getQuantity();
                 BigDecimal unit = it.getUnitPrice();
-                Long trimId = it.getVehicleId(); // ⚠️ field name là vehicleId nhưng thực chất là trim_id
+                Long trimId = it.getVehicleId(); // trim_id
 
                 if (trimId == null || qty == null || qty <= 0) continue;
-
-                // nếu front không gửi giá, để 0 tạm thời (hoặc lấy từ price list)
                 if (unit == null) unit = BigDecimal.ZERO;
 
                 QuoteItem qi = new QuoteItem();
                 qi.setVehicleId(trimId);
                 qi.setQuantity(qty);
                 qi.setUnitPrice(unit);
-                qi.setQuote(q); // thiết lập quan hệ ngược
+                qi.setQuote(q);
 
                 items.add(qi);
             }
         }
         q.setItems(items);
 
-        // Tính tổng nếu DTO không set hoặc set sai
         BigDecimal total = dto.getTotalAmount();
         if (total == null || total.compareTo(BigDecimal.ZERO) <= 0) {
             total = items.stream()
@@ -114,10 +114,8 @@ public class SalesServiceImpl implements SalesService {
         q.setAppliedDiscount(BigDecimal.ZERO);
         q.setFinalAmount(total);
 
-        // Lưu quote trước để có ID
         Quote saved = quoteRepo.save(q);
 
-        // ✅ Đảm bảo items được lưu ngay cả khi entity chưa cấu hình cascade
         if (!items.isEmpty()) {
             quoteItemRepo.saveAll(items);
         }
@@ -156,7 +154,7 @@ public class SalesServiceImpl implements SalesService {
 
         // Bảo vệ: quote phải có item
         if (quote.getItems() == null || quote.getItems().isEmpty()) {
-            throw new IllegalStateException("Order has no items"); // sẽ hiển thị đúng cảnh báo bạn thấy
+            throw new IllegalStateException("Order has no items");
         }
 
         quote.setStatus("APPROVED");
@@ -171,24 +169,39 @@ public class SalesServiceImpl implements SalesService {
         order.setCustomerId(quote.getCustomerId());
         order.setDealerId(quote.getDealerId());
 
-        // Ưu tiên owner của customer làm sales
-        customerRepo.findById(quote.getCustomerId()).ifPresent(c -> {
-            order.setCustomerName(c.getTen());
-            if (order.getSalesStaffId() == null) order.setSalesStaffId(c.getOwnerId());
-            if (order.getDealerId() == null && c.getOwnerId() != null) {
-                userRepo.findById(c.getOwnerId()).ifPresent(u -> {
-                    if (u.getDealer() != null) order.setDealerId(u.getDealer().getId());
-                });
-            }
-        });
+        // 🔹 ƯU TIÊN: salesStaff từ quote (staff tạo quote)
+        order.setSalesStaffId(quote.getSalesStaffId());
 
-        // Fallback lấy từ user hiện tại
+        // Thông tin customer + fallback nếu thiếu sales/dealer
+        if (quote.getCustomerId() != null) {
+            customerRepo.findById(quote.getCustomerId()).ifPresent(c -> {
+                order.setCustomerName(c.getTen());
+
+                // nếu quote không set sales_staff_id thì dùng owner
+                if (order.getSalesStaffId() == null) {
+                    order.setSalesStaffId(c.getOwnerId());
+                }
+
+                // nếu dealerId vẫn null thì lấy theo dealer của owner
+                if (order.getDealerId() == null && c.getOwnerId() != null) {
+                    userRepo.findById(c.getOwnerId()).ifPresent(u -> {
+                        if (u.getDealer() != null) {
+                            order.setDealerId(u.getDealer().getId());
+                        }
+                    });
+                }
+            });
+        }
+
+        // Fallback cuối cùng: user hiện tại (manager) nếu vẫn thiếu
         if (order.getSalesStaffId() == null || order.getDealerId() == null) {
             try {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 if (auth != null && auth.getName() != null) {
                     userRepo.findByUsername(auth.getName()).ifPresent(u -> {
-                        if (order.getSalesStaffId() == null) order.setSalesStaffId(u.getId());
+                        if (order.getSalesStaffId() == null) {
+                            order.setSalesStaffId(u.getId());
+                        }
                         if (order.getDealerId() == null && u.getDealer() != null) {
                             order.setDealerId(u.getDealer().getId());
                         }
@@ -210,7 +223,7 @@ public class SalesServiceImpl implements SalesService {
 
         OrderHdr savedOrder = orderRepo.save(order);
 
-        // ✅ Copy items: set đủ unit_price, qty, line_amount (NOT NULL)
+        // Copy items sang order
         for (QuoteItem qi : quote.getItems()) {
             if (qi.getVehicleId() == null || qi.getQuantity() == null || qi.getQuantity() <= 0) continue;
 
@@ -223,7 +236,7 @@ public class SalesServiceImpl implements SalesService {
             oi.setTrimId(qi.getVehicleId());   // vehicleId = trim_id
             oi.setQty(qty);
             oi.setUnitPrice(unit);
-            oi.setLineAmount(line);            // ❗ bắt buộc
+            oi.setLineAmount(line);
             orderItemRepo.save(oi);
         }
 
@@ -252,10 +265,14 @@ public class SalesServiceImpl implements SalesService {
 
     // ======================= FIND =======================
     @Override
-    public List<Quote> findPending() { return quoteRepo.findByStatus("PENDING"); }
+    public List<Quote> findPending() {
+        return quoteRepo.findByStatus("PENDING");
+    }
 
     @Override
-    public List<Quote> findAll() { return quoteRepo.findAll(); }
+    public List<Quote> findAll() {
+        return quoteRepo.findAll();
+    }
 
     // ======================= PAYMENT =======================
     @Override
