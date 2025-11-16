@@ -19,7 +19,7 @@ import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/staff/testdrives")
+@RequestMapping("/dealer/test-drive")
 public class StaffTestDriveController {
 
     private final TestDriveService testDriveService;
@@ -53,10 +53,10 @@ public class StaffTestDriveController {
         try {
             testDriveService.createByStaff(form, staffId);
             ra.addFlashAttribute("msg", "Tạo lịch lái thử thành công!");
-            return "redirect:/staff/testdrives";
+            return "redirect:/dealer/testdrive";
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
-            return "redirect:/staff/testdrives/create";
+            return "redirect:/dealer/testdrive/create";
         }
     }
 }
