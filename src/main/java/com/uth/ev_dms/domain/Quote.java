@@ -49,6 +49,9 @@ public class Quote {
     @JsonManagedReference
     private List<QuoteItem> items = new ArrayList<>();
 
+
+
+
     // ==========================
     // Getters & Setters
     // ==========================
@@ -148,4 +151,17 @@ public class Quote {
     public void setItems(List<QuoteItem> items) {
         this.items = items;
     }
+    @Column(name = "sales_staff_id")
+    private Long salesStaffId;
+
+    // getters/setters
+    public Long getSalesStaffId() {
+        return salesStaffId;
+    }
+
+    public void setSalesStaffId(Long salesStaffId) {
+        this.salesStaffId = salesStaffId;
+    }
+
+
 }
