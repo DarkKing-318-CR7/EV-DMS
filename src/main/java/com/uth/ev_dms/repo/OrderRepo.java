@@ -79,4 +79,8 @@ public interface OrderRepo extends JpaRepository<OrderHdr, Long> {
       """)
     List<OrderHdr> findByStatusAndDealerRegion(@Param("status") OrderStatus status,
                                                @Param("region") String region);
+    @Query("select sum(o.totalAmount) from OrderHdr o where o.status = 'COMPLETED'")
+    Long sumRevenue();
+
 }
+
