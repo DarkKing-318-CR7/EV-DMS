@@ -1,12 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings • EV-DMS</title>
-  <link rel="stylesheet" href="/css/settings.css">
-</head>
-<body>
-   Settings
-</body>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active=${active}, pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Admin Settings</h2>
+
+        <div class="row g-4 justify-content-center">
+
+            <!-- System Parameters card -->
+            <div class="col-md-5">
+                <div class="card bg-dark border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">System Parameters</h5>
+                        <p class="text-muted">
+                            Configure global system parameters for the EV-DMS system such as limits,
+                            thresholds, default values, and platform-wide behavior.
+                        </p>
+
+                        <a th:href="@{/admin/settings/system}"
+                           class="btn btn-outline-primary btn-sm px-4">
+                            Manage Parameters
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Logs card -->
+            <div class="col-md-5">
+                <div class="card bg-dark border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Audit Logs</h5>
+                        <p class="text-muted">
+                            View recent admin actions, configuration changes, account updates,
+                            and system-level events recorded for security compliance.
+                        </p>
+
+                        <a th:href="@{/admin/audit}"
+                           class="btn btn-outline-secondary btn-sm px-4">
+                            View Audit Logs
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
 </html>
