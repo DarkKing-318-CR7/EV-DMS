@@ -2,6 +2,7 @@ package com.uth.ev_dms.service;
 
 import com.uth.ev_dms.domain.TestDrive;
 import com.uth.ev_dms.domain.TestDriveStatus;
+import com.uth.ev_dms.service.dto.TestDriveCreateForm;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,4 +26,6 @@ public interface TestDriveService {
     TestDrive save(TestDrive td);
     TestDrive get(Long id);
     void delete(Long id);
+    void createByStaff(TestDriveCreateForm form, Long staffId);
+
 }

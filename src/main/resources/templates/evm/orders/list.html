@@ -12,6 +12,18 @@
 
         <!-- ========== CSS chỉ áp dụng trang này (glass/dark, không ảnh hưởng layout chung) ========== -->
         <style>
+
+            /* ===== FIX NAVBAR/TRÊN CÙNG TRÙNG NỀN ===== */
+            .navbar, .topbar, header, .dealer-header {
+                background: rgba(0,0,0,0.55) !important;
+                backdrop-filter: blur(12px) !important;
+                border-bottom: 1px solid rgba(255,255,255,0.15) !important;
+            }
+            .navbar a, .topbar a, .dealer-header a,
+            .navbar span, .topbar span, .dealer-header span {
+                color: #e5e7eb !important;
+            }
+
             :root{
                 --glass: rgba(255,255,255,.06);
                 --glass-2: rgba(255,255,255,.09);

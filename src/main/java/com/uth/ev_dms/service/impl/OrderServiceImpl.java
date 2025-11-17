@@ -7,6 +7,7 @@ import com.uth.ev_dms.exception.BusinessException;
 import com.uth.ev_dms.repo.OrderItemRepo;
 import com.uth.ev_dms.repo.OrderRepo;
 import com.uth.ev_dms.repo.PaymentRepo;
+import com.uth.ev_dms.repo.QuoteRepo;
 import com.uth.ev_dms.service.InventoryService;
 import com.uth.ev_dms.service.OrderService;
 import jakarta.transaction.Transactional;
@@ -26,6 +27,8 @@ public class OrderServiceImpl implements OrderService {
     private final InventoryService inventoryService;
     private final OrderItemRepo orderItemRepo;
 
+    private final QuoteRepo quoteRepo;
+
     @Override
     public OrderHdr findById(Long id) {
         return orderRepo.findById(id)
@@ -39,29 +42,39 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderHdr createFromQuote(Long quoteId, Long dealerId, Long customerId, Long staffId) {
+    public OrderHdr createFromQuote(Long quoteId, Long dealerIdIgnored, Long customerIdIgnored, Long staffIdIgnored) {
+
+        // 🔹 Lấy quote từ DB
+        var quote = quoteRepo.findById(quoteId)
+                .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
+
         OrderHdr o = new OrderHdr();
-        o.setQuoteId(quoteId);
-        o.setDealerId(dealerId);
-        o.setCustomerId(customerId);
-        o.setSalesStaffId(staffId);
+        o.setQuoteId(quote.getId());
+        o.setDealerId(quote.getDealerId());
+        o.setCustomerId(quote.getCustomerId());
+
+        // 👇 QUAN TRỌNG: salesStaffId lấy từ quote (người tạo)
+        o.setSalesStaffId(quote.getSalesStaffId());
+
         o.setOrderNo(generateOrderNo());
         o.setStatus(OrderStatus.NEW);
 
-        if (o.getItems() != null && !o.getItems().isEmpty()) {
-            BigDecimal total = o.getItems().stream()
-                    .map(OrderItem::getLineAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            o.setTotalAmount(total);
-        } else {
-            o.setTotalAmount(BigDecimal.ZERO);
-        }
+        // Tổng tiền: ưu tiên finalAmount nếu có, fallback sang totalAmount
+        BigDecimal total = quote.getFinalAmount() != null
+                ? quote.getFinalAmount()
+                : quote.getTotalAmount();
+        if (total == null) total = BigDecimal.ZERO;
 
-        o.setDepositAmount(o.getDepositAmount() == null ? BigDecimal.ZERO : o.getDepositAmount());
+        o.setTotalAmount(total);
+        o.setDepositAmount(BigDecimal.ZERO);
         o.setPaidAmount(BigDecimal.ZERO);
-        o.setBalanceAmount(o.getTotalAmount().subtract(o.getDepositAmount()));
+        o.setBalanceAmount(total);
+
+        // (Nếu muốn chi tiết hơn có thể copy luôn các QuoteItem -> OrderItem ở đây)
+
         return orderRepo.save(o);
     }
+
 
     @Override
     @Transactional

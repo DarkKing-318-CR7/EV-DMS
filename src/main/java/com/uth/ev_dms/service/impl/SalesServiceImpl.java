@@ -1,6 +1,5 @@
 package com.uth.ev_dms.service.impl;
 
-import com.uth.ev_dms.auth.User;
 import com.uth.ev_dms.domain.*;
 import com.uth.ev_dms.repo.*;
 import com.uth.ev_dms.service.PromotionService;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +19,7 @@ import java.util.List;
 public class SalesServiceImpl implements SalesService {
 
     private final QuoteRepo quoteRepo;
-    private final QuoteItemRepo quoteItemRepo;
+    private final QuoteItemRepo quoteItemRepo;        // ✅ thêm
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
     private final PaymentRepo paymentRepo;
@@ -30,25 +28,19 @@ public class SalesServiceImpl implements SalesService {
     private final CustomerRepo customerRepo;
     private final UserRepo userRepo;
 
-    private User currentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth.getName() == null) return null;
-        return userRepo.findByUsername(auth.getName()).orElse(null);
-    }
-
     public SalesServiceImpl(
             QuoteRepo quoteRepo,
-            QuoteItemRepo quoteItemRepo,
+            QuoteItemRepo quoteItemRepo,             // ✅ thêm
             OrderRepo orderRepo,
             OrderItemRepo orderItemRepo,
             PaymentRepo paymentRepo,
-            PromotionRepo promotionRepo, // vẫn inject để không phá chỗ khác
+            PromotionRepo promotionRepo,            // giữ nguyên để không phá DI khác
             PromotionService promotionService,
             CustomerRepo customerRepo,
             UserRepo userRepo
     ) {
         this.quoteRepo = quoteRepo;
-        this.quoteItemRepo = quoteItemRepo;
+        this.quoteItemRepo = quoteItemRepo;         // ✅ thêm
         this.orderRepo = orderRepo;
         this.orderItemRepo = orderItemRepo;
         this.paymentRepo = paymentRepo;
@@ -63,62 +55,69 @@ public class SalesServiceImpl implements SalesService {
     public Quote createQuote(CreateQuoteDTO dto) {
         Quote q = new Quote();
         q.setCustomerId(dto.getCustomerId());
+        q.setDealerId(dto.getDealerId());
         q.setStatus("DRAFT");
 
-        User u = currentUser();
-
-        // Gán chi nhánh & vùng theo user đang login
-        if (u != null && u.getDealerBranch() != null) {
-            q.setDealerBranch(u.getDealerBranch());
-            if (u.getDealerBranch().getDealer() != null) {
-                q.setRegion(u.getDealerBranch().getDealer().getRegion());
+        // Lấy user hiện tại để backfill dealer/owner nếu thiếu
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                userRepo.findByUsername(auth.getName()).ifPresent(u -> {
+                    if (q.getDealerId() == null && u.getDealer() != null) {
+                        q.setDealerId(u.getDealer().getId());
+                    }
+                    if (dto.getCustomerId() != null) {
+                        customerRepo.findById(dto.getCustomerId()).ifPresent(c -> {
+                            if (c.getOwnerId() == null) {
+                                c.setOwnerId(u.getId());
+                                customerRepo.save(c);
+                            }
+                        });
+                    }
+                });
             }
-        }
-
-        // Gán owner cho customer nếu chưa có
-        if (dto.getCustomerId() != null && u != null) {
-            customerRepo.findById(dto.getCustomerId()).ifPresent(c -> {
-                if (c.getOwnerId() == null) {
-                    c.setOwnerId(u.getId());
-                    customerRepo.save(c);
-                }
-            });
-        }
+        } catch (Exception ignore) {}
 
         // Build items từ DTO
         List<QuoteItem> items = new ArrayList<>();
         if (dto.getItems() != null) {
             for (CreateQuoteItemDTO it : dto.getItems()) {
                 if (it == null) continue;
-                Long trimId = it.getVehicleId(); // thực chất là trim_id
                 Integer qty = it.getQuantity();
                 BigDecimal unit = it.getUnitPrice();
+                Long trimId = it.getVehicleId(); // ⚠️ field name là vehicleId nhưng thực chất là trim_id
 
                 if (trimId == null || qty == null || qty <= 0) continue;
+
+                // nếu front không gửi giá, để 0 tạm thời (hoặc lấy từ price list)
                 if (unit == null) unit = BigDecimal.ZERO;
 
                 QuoteItem qi = new QuoteItem();
                 qi.setVehicleId(trimId);
                 qi.setQuantity(qty);
                 qi.setUnitPrice(unit);
-                qi.setQuote(q);
+                qi.setQuote(q); // thiết lập quan hệ ngược
 
                 items.add(qi);
             }
         }
         q.setItems(items);
 
-        // Tính tổng từ items (an toàn hơn dùng totalAmount client gửi)
-        BigDecimal total = items.stream()
-                .map(x -> x.getUnitPrice().multiply(BigDecimal.valueOf(x.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+        // Tính tổng nếu DTO không set hoặc set sai
+        BigDecimal total = dto.getTotalAmount();
+        if (total == null || total.compareTo(BigDecimal.ZERO) <= 0) {
+            total = items.stream()
+                    .map(x -> x.getUnitPrice().multiply(BigDecimal.valueOf(x.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
         q.setTotalAmount(total);
         q.setAppliedDiscount(BigDecimal.ZERO);
         q.setFinalAmount(total);
 
-        // Lưu quote + items
+        // Lưu quote trước để có ID
         Quote saved = quoteRepo.save(q);
+
+        // ✅ Đảm bảo items được lưu ngay cả khi entity chưa cấu hình cascade
         if (!items.isEmpty()) {
             quoteItemRepo.saveAll(items);
         }
@@ -139,34 +138,14 @@ public class SalesServiceImpl implements SalesService {
             return quoteRepo.save(quote);
         }
 
-        Long dealerId = (quote.getDealerBranch() != null && quote.getDealerBranch().getDealer() != null)
-                ? quote.getDealerBranch().getDealer().getId()
-                : null;
-
-        String region = quote.getRegion();
-        Long trimId = quote.getItems() != null && !quote.getItems().isEmpty()
-                ? quote.getItems().get(0).getVehicleId()
-                : null;
-
-        BigDecimal discount = promotionService.computeDiscountForQuote(
-                quote.getTotalAmount(),
-                promotionIds,
-                dealerId,
-                trimId,
-                region,
-                LocalDate.now()
-        );
-
+        BigDecimal discount = promotionService.computeDiscount(quote.getTotalAmount(), promotionIds);
         BigDecimal finalAmount = quote.getTotalAmount().subtract(discount);
-        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-            finalAmount = BigDecimal.ZERO;
-        }
+        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) finalAmount = BigDecimal.ZERO;
 
         quote.setAppliedDiscount(discount);
         quote.setFinalAmount(finalAmount);
         return quoteRepo.save(quote);
     }
-
 
     // ======================= APPROVE QUOTE =======================
     @Override
@@ -175,9 +154,9 @@ public class SalesServiceImpl implements SalesService {
         Quote quote = quoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
 
-        // Quote phải có ít nhất 1 item
+        // Bảo vệ: quote phải có item
         if (quote.getItems() == null || quote.getItems().isEmpty()) {
-            throw new IllegalStateException("Order has no items");
+            throw new IllegalStateException("Order has no items"); // sẽ hiển thị đúng cảnh báo bạn thấy
         }
 
         quote.setStatus("APPROVED");
@@ -190,38 +169,32 @@ public class SalesServiceImpl implements SalesService {
         order.setCreatedAt(java.time.LocalDateTime.now());
 
         order.setCustomerId(quote.getCustomerId());
-
-        // Lấy dealerId từ dealerBranch (nếu có)
-        if (quote.getDealerBranch() != null && quote.getDealerBranch().getDealer() != null) {
-            order.setDealerId(quote.getDealerBranch().getDealer().getId());
-        }
+        order.setDealerId(quote.getDealerId());
 
         // Ưu tiên owner của customer làm sales
         customerRepo.findById(quote.getCustomerId()).ifPresent(c -> {
             order.setCustomerName(c.getTen());
-            if (order.getSalesStaffId() == null) {
-                order.setSalesStaffId(c.getOwnerId());
-            }
+            if (order.getSalesStaffId() == null) order.setSalesStaffId(c.getOwnerId());
             if (order.getDealerId() == null && c.getOwnerId() != null) {
                 userRepo.findById(c.getOwnerId()).ifPresent(u -> {
-                    if (u.getDealer() != null) {
-                        order.setDealerId(u.getDealer().getId());
-                    }
+                    if (u.getDealer() != null) order.setDealerId(u.getDealer().getId());
                 });
             }
         });
 
-        // Fallback lấy từ user hiện tại nếu vẫn thiếu
+        // Fallback lấy từ user hiện tại
         if (order.getSalesStaffId() == null || order.getDealerId() == null) {
-            User u = currentUser();
-            if (u != null) {
-                if (order.getSalesStaffId() == null) {
-                    order.setSalesStaffId(u.getId());
+            try {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getName() != null) {
+                    userRepo.findByUsername(auth.getName()).ifPresent(u -> {
+                        if (order.getSalesStaffId() == null) order.setSalesStaffId(u.getId());
+                        if (order.getDealerId() == null && u.getDealer() != null) {
+                            order.setDealerId(u.getDealer().getId());
+                        }
+                    });
                 }
-                if (order.getDealerId() == null && u.getDealer() != null) {
-                    order.setDealerId(u.getDealer().getId());
-                }
-            }
+            } catch (Exception ignore) {}
         }
 
         // Tiền
@@ -237,7 +210,7 @@ public class SalesServiceImpl implements SalesService {
 
         OrderHdr savedOrder = orderRepo.save(order);
 
-        // Copy items từ Quote sang OrderItem
+        // ✅ Copy items: set đủ unit_price, qty, line_amount (NOT NULL)
         for (QuoteItem qi : quote.getItems()) {
             if (qi.getVehicleId() == null || qi.getQuantity() == null || qi.getQuantity() <= 0) continue;
 
@@ -250,7 +223,7 @@ public class SalesServiceImpl implements SalesService {
             oi.setTrimId(qi.getVehicleId());   // vehicleId = trim_id
             oi.setQty(qty);
             oi.setUnitPrice(unit);
-            oi.setLineAmount(line);
+            oi.setLineAmount(line);            // ❗ bắt buộc
             orderItemRepo.save(oi);
         }
 
@@ -279,18 +252,10 @@ public class SalesServiceImpl implements SalesService {
 
     // ======================= FIND =======================
     @Override
-    public List<Quote> findPending() {
-        User u = currentUser();
-        if (u == null || u.getDealerBranch() == null) return List.of();
-        return quoteRepo.findByDealerBranchIdAndStatus(u.getDealerBranch().getId(), "PENDING");
-    }
+    public List<Quote> findPending() { return quoteRepo.findByStatus("PENDING"); }
 
     @Override
-    public List<Quote> findAll() {
-        User u = currentUser();
-        if (u == null || u.getDealerBranch() == null) return List.of();
-        return quoteRepo.findByDealerBranchId(u.getDealerBranch().getId());
-    }
+    public List<Quote> findAll() { return quoteRepo.findAll(); }
 
     // ======================= PAYMENT =======================
     @Override

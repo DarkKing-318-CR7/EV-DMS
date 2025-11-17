@@ -18,26 +18,29 @@ public class Quote {
     @Column(name = "customer_id")
     private Long customerId;
 
+    @Column(name = "dealer_id")
+    private Long dealerId;
+
     @Column(name = "vehicle_trim_id")
     private Long vehicleTrimId;
 
     @Column(name = "region")
-    private String region;
+    private String region; // phục vụ validate promotion
 
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
     @Column(name = "applied_discount")
-    private BigDecimal appliedDiscount;
+    private BigDecimal appliedDiscount; // tổng giảm
 
     @Column(name = "final_amount")
-    private BigDecimal finalAmount;
+    private BigDecimal finalAmount; // totalAmount - appliedDiscount
 
     @Column(name = "status")
     private String status = "DRAFT";
 
     @Column(name = "reject_comment", length = 500)
-    private String rejectComment;
+    private String rejectComment; // lý do từ chối (manager)
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -46,12 +49,7 @@ public class Quote {
     @JsonManagedReference
     private List<QuoteItem> items = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "dealer_branch_id")
-    private DealerBranch dealerBranch;
-
-
-// ==========================
+    // ==========================
     // Getters & Setters
     // ==========================
 
@@ -71,13 +69,13 @@ public class Quote {
         this.customerId = customerId;
     }
 
-//    public Long getDealerId() {
-//        return dealerId;
-//    }
-//
-//    public void setDealerId(Long dealerId) {
-//        this.dealerId = dealerId;
-//    }
+    public Long getDealerId() {
+        return dealerId;
+    }
+
+    public void setDealerId(Long dealerId) {
+        this.dealerId = dealerId;
+    }
 
     public Long getVehicleTrimId() {
         return vehicleTrimId;
@@ -150,13 +148,4 @@ public class Quote {
     public void setItems(List<QuoteItem> items) {
         this.items = items;
     }
-
-    public DealerBranch getDealerBranch() {
-        return dealerBranch;
-    }
-
-    public void setDealerBranch(DealerBranch dealerBranch) {
-        this.dealerBranch = dealerBranch;
-    }
-
 }
