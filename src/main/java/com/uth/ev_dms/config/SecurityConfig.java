@@ -45,7 +45,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF: nới lỏng cho các tuyến đang test
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/evm/**", "/dealer/**"))
 
                 .authorizeHttpRequests(auth -> auth
@@ -54,22 +53,26 @@ public class SecurityConfig {
                                 "/favicon.ico","/login","/error","/error/**"
                         ).permitAll()
 
-                        // ===== Admin
+                        // ===== Admin =====
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // ===== Dealer: CHỈ "Đơn của tôi" cho Staff/Manager
+                        // ===== Manager: QUẢN LÝ STAFF =====
+                        .requestMatchers("/manager/users/**")
+                        .hasAnyRole("DEALER_MANAGER", "ADMIN")
+
+                        // ===== Dealer: My Orders =====
                         .requestMatchers("/dealer/orders/my/**")
                         .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
 
-                        // Trang LIST "Tất cả đơn" CHỈ Manager (dstaff bị chặn)
+                        // LIST ALL orders → only manager
                         .requestMatchers(HttpMethod.GET, "/dealer/orders", "/dealer/orders/")
                         .hasAnyRole("DEALER_MANAGER","ADMIN")
 
-                        // Trang chi tiết đơn: cho cả Staff/Manager (controller sẽ tự kiểm tra đúng quyền trên từng đơn)
+                        // Order detail → staff + manager
                         .requestMatchers(HttpMethod.GET, "/dealer/orders/*")
                         .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
 
-                        // Các hành động POST của dealer (tùy nghiệp vụ, có thể siết thêm)
+                        // Dealer POST actions
                         .requestMatchers(HttpMethod.POST, "/dealer/orders/*/allocate",
                                 "/dealer/orders/*/cancel",
                                 "/dealer/orders/*/pay-cash",
@@ -77,10 +80,15 @@ public class SecurityConfig {
                                 "/dealer/orders/*/request-allocate")
                         .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
 
-                        // ===== EVM
-                        .requestMatchers(HttpMethod.GET,  "/evm/orders/pending").hasAnyRole("EVM_STAFF","ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate").hasAnyRole("EVM_STAFF","ADMIN")
-                        .requestMatchers("/evm/orders/**").hasAnyRole("EVM_STAFF","ADMIN")
+                        // ===== EVM =====
+                        .requestMatchers(HttpMethod.GET,  "/evm/orders/pending")
+                        .hasAnyRole("EVM_STAFF","ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate")
+                        .hasAnyRole("EVM_STAFF","ADMIN")
+
+                        .requestMatchers("/evm/orders/**")
+                        .hasAnyRole("EVM_STAFF","ADMIN")
 
                         .anyRequest().authenticated()
                 )

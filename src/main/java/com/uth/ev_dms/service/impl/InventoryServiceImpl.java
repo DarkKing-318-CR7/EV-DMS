@@ -203,21 +203,16 @@ public class InventoryServiceImpl implements InventoryService {
 
         for (OrderItem it : items) {
             Long trimId = resolveTrimId(it);
-            int qty = it.getQty() != null ? 0 : it.getQty();
+            int qty = (it.getQty() == null) ? 0 : it.getQty();   // ✔ sửa lại dòng này
             if (qty <= 0) continue;
 
             Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
-                    .orElseGet(() ->
-                            Inventory.builder()
-                                    .dealer(em.getReference(Dealer.class, dealerId))
-                                    .branch(em.getReference(DealerBranch.class, branchId))
-                                    .trim(em.getReference(Trim.class, trimId))
-                                    .qtyOnHand(0)
-                                    .reserved(0)
-                                    .build()
-                    );
+                    .orElseThrow(() -> new IllegalStateException("Inventory not found (branch="
+                            + branchId + ", trim=" + trimId + ")"));
 
             int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
+
+            // ✔ CHỈ GIẢM RESERVED, KHÔNG ĐỤNG QTY_ON_HAND
             inv.setReserved(Math.max(0, reserved - qty));
             inventoryRepo.save(inv);
 
@@ -228,10 +223,12 @@ public class InventoryServiceImpl implements InventoryService {
                     .type("RELEASE")
                     .refType("ORDER")
                     .refId(it.getId())
-                    .note("Release for orderItem " + it.getId())
+                    .note("Release reserved for orderItem " + it.getId())
                     .build());
         }
     }
+
+
 
     // ===============================
     // ========== ADMIN FLOW =========
@@ -260,10 +257,41 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional
     public Inventory createInventory(Inventory inv, String createdBy) {
-        if (inv.getDealer() == null || inv.getDealer().getId() == null) {
-            throw new IllegalStateException("Dealer is required");
+
+        // Nếu là kho tổng (HQ)
+        if ("HQ".equalsIgnoreCase(inv.getLocationType())) {
+            inv.setDealer(null);      // HQ không thuộc dealer
+            inv.setBranch(null);      // HQ không có branch
+
+            Inventory saved = inventoryRepo.save(inv);
+
+            // Log initial stock nếu có
+            Integer onHand = saved.getQtyOnHand() == null ? 0 : saved.getQtyOnHand();
+            if (onHand > 0) {
+                LocalDateTime now = LocalDateTime.now();
+                InventoryAdjustment adj = new InventoryAdjustment();
+                adj.setInventory(saved);
+                adj.setDeltaQty(onHand);
+                adj.setReason("Initial stock (HQ)");
+                adj.setCreatedAtEvent(now);
+                adj.setCreatedAt(now);
+                adj.setUpdatedAt(now);
+                adj.setCreatedBy(createdBy);
+                adj.setUpdatedBy(createdBy);
+                inventoryAdjustmentRepo.save(adj);
+            }
+
+            return saved;
         }
-        // Tự gán MAIN branch nếu UI không truyền
+
+        // ============================
+        // ===== KHO CHI NHÁNH ========
+        // ============================
+        if (inv.getDealer() == null || inv.getDealer().getId() == null) {
+            throw new IllegalStateException("Dealer is required for BRANCH inventory");
+        }
+
+        // Nếu không truyền branch → tự gán Main branch
         if (inv.getBranch() == null || inv.getBranch().getId() == null) {
             Long dealerId = inv.getDealer().getId();
             DealerBranch main = dealerBranchRepo.findByDealerId(dealerId)
@@ -278,7 +306,7 @@ public class InventoryServiceImpl implements InventoryService {
             LocalDateTime now = LocalDateTime.now();
             InventoryAdjustment adj = new InventoryAdjustment();
             adj.setInventory(saved);
-            adj.setDeltaQty(onHand);             // từ 0 -> onHand
+            adj.setDeltaQty(onHand);
             adj.setReason("Initial stock");
             adj.setCreatedAtEvent(now);
             adj.setCreatedAt(now);
@@ -287,8 +315,10 @@ public class InventoryServiceImpl implements InventoryService {
             adj.setUpdatedBy(createdBy);
             inventoryAdjustmentRepo.save(adj);
         }
+
         return saved;
     }
+
 
     @Override
     @Transactional
