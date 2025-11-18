@@ -47,11 +47,19 @@
 
       <div class="mb-3">
         <label class="form-label">Chọn xe</label>
-        <select class="form-control" th:field="*{vehicleId}">
+        <select class="form-control" id="vehicleSelect" th:field="*{vehicleId}">
+        <option value="">-- Chọn xe --</option>
           <option th:each="v : ${vehicles}"
                   th:value="${v.id}"
                   th:text="${v.ten}">
           </option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Phiên bản (Trim)</label>
+        <select class="form-control" id="trimSelect" th:field="*{trimId}">
+          <option value="">Chọn phiên bản sau khi chọn xe</option>
         </select>
       </div>
 
@@ -75,5 +83,36 @@
   </div>
 </div>
 
+<!-- ⭐ SCRIPT TẢI TRIM THEO XE (KHÔNG SỬA GÌ CODE CŨ) -->
+<script>
+  document.getElementById("vehicleSelect").addEventListener("change", function () {
+    const vehicleId = this.value;
+    const trimSelect = document.getElementById("trimSelect");
+
+    trimSelect.innerHTML = "<option>Đang tải...</option>";
+
+    if (!vehicleId) {
+      trimSelect.innerHTML = "<option>Chọn phiên bản sau khi chọn xe</option>";
+      return;
+    }
+
+    // ⭐ URL tuyệt đối — FIX CHO MANAGER + DEALER + STAFF
+    fetch('/dealer/vehicles/api/vehicles/' + vehicleId + '/trims')
+            .then(r => r.json())
+            .then(list => {
+              trimSelect.innerHTML = "";
+              if (list.length === 0) {
+                trimSelect.innerHTML = "<option>Không có phiên bản</option>";
+                return;
+              }
+              list.forEach(t => {
+                const op = document.createElement("option");
+                op.value = t.id;
+                op.textContent = t.name;
+                trimSelect.appendChild(op);
+              });
+            });
+  });
+</script>
 </body>
 </html>

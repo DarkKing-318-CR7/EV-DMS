@@ -14,7 +14,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -126,6 +128,21 @@ public class DealerVehicleController {
         model.addAttribute("pageTitle", vehicle.getModelName());
 
         return "dealer/vehicles/detail";
+    }
+    // ====================== API TRẢ VỀ DANH SÁCH TRIM ======================
+    @GetMapping("/api/vehicles/{id}/trims")
+    @ResponseBody
+    public List<Map<String, Object>> getTrims(@PathVariable Long id) {
+
+        Vehicle vehicle = vehicleRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found"));
+
+        return vehicle.getTrims().stream()
+                .map(t -> Map.<String, Object>of(
+                        "id", t.getId(),
+                        "name", t.getTrimName() // Nếu trường là trimName thì đổi thành t.getTrimName()
+                ))
+                .toList();
     }
 
 }

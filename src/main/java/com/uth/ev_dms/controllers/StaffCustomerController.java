@@ -30,14 +30,16 @@ public class StaffCustomerController {
         model.addAttribute("list", list);
         model.addAttribute("q", q);
 
-        // ⭐ STAFF view
-        return "dealer/customers/my-list";
+        // ⭐⭐ ĐÚNG THƯ MỤC MỚI
+        return "dealer/customers-page/my-list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
         model.addAttribute("c", new Customer());
-        return "dealer/customers/form";
+
+        // ⭐⭐ ĐÚNG THƯ MỤC MỚI
+        return "dealer/customers-page/form";
     }
 
     @PostMapping
@@ -59,6 +61,7 @@ public class StaffCustomerController {
                          RedirectAttributes ra) {
 
         Customer c = customerService.findById(id);
+
         if (c == null) {
             ra.addFlashAttribute("msg", "Không tìm thấy");
             return "redirect:/staff/customers";
@@ -71,7 +74,8 @@ public class StaffCustomerController {
 
         model.addAttribute("c", c);
 
-        return "dealer/customers/detail";
+        // ⭐⭐ ĐÚNG THƯ MỤC MỚI
+        return "dealer/customers-page/detail";
     }
 
     private Long currentUserId(Authentication auth) {

@@ -23,4 +23,14 @@ public interface TestDriveRepo extends JpaRepository<TestDrive, Long> {
     List<TestDrive> findByCreatedBy_IdOrderByScheduleAt(Long ownerId);
     boolean existsByVehicleNameAndScheduleAt(String vehicleName, LocalDateTime scheduleAt);
     List<TestDrive> findByCreatedByIdOrderByScheduleAtDesc(Long createdById);
+    // ⭐ THÊM (CHỐNG TRÙNG LỊCH) — KHÔNG SỬA CODE CŨ
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT t FROM TestDrive t
+        WHERE t.vehicleId = :vehicleId
+          AND (
+                t.startTime <= :endTime
+                AND t.endTime >= :startTime
+          )
+    """)
+    List<TestDrive> findOverlap(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime);
 }

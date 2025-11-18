@@ -26,14 +26,19 @@
 
     <h3 class="fw-bold mb-4">Chi tiết lịch lái thử</h3>
 
-    <p><strong>Khách hàng:</strong> <span th:text="${t.customerName}"></span></p>
-    <p><strong>Xe:</strong> <span th:text="${t.vehicleName}"></span></p>
-    <p><strong>Thời gian:</strong> <span th:text="${#temporals.format(t.scheduleAt,'dd/MM/yyyy HH:mm')}"></span></p>
-    <p><strong>Ghi chú:</strong> <span th:text="${t.note}"></span></p>
-    <p><strong>Trạng thái:</strong> <span th:text="${t.status}"></span></p>
+    <p><strong>Khách hàng:</strong> <span th:text="${item.customerName}"></span></p>
+    <p><strong>Xe:</strong> <span th:text="${item.vehicleName}"></span></p>
+
+    <p><strong>Thời gian:</strong>
+      <span th:text="${#temporals.format(item.startTime,'dd/MM/yyyy HH:mm')}"></span>
+    </p>
+
+    <p><strong>Ghi chú:</strong> <span th:text="${item.notes}"></span></p>
+
+    <p><strong>Trạng thái:</strong> <span th:text="${item.status}"></span></p>
 
     <div class="d-flex justify-content-between mt-4">
-      <a class="btn btn-outline-light" th:href="@{/dealer/testdrive/my}">← Quay lại</a>
+      <button type="button" class="btn btn-outline-light" onclick="history.back()">← Quay lại</button>
     </div>
 
   </div>

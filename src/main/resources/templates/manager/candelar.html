@@ -60,8 +60,15 @@
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
+
+            // ⭐ THÊM MỚI (chỉ 1 dòng) — Load từ API
+            events: '/dealer/test-drive/api/events',
+            eventColor: '#3b82f6',
+
+            // ⭐ GIỮ NGUYÊN ĐOẠN CŨ (comment)
+            /*
             events: [
-                /*[[${#lists.map(list, td -> {
+                [[${#lists.map(list, td -> {
                     return {
                       title: td.customerName + ' - ' + td.vehicleName,
                       start: td.scheduleAt,
@@ -70,8 +77,10 @@
                              : td.status.name() === 'CANCELLED' ? '#ef4444'
                              : '#3b82f6'
                     }
-                })}]]*/
+                })}]]
             ],
+            */
+
             eventClick: function(info) {
                 window.location.href = '/dealer/test-drive/detail/' + info.event.id;
             }
@@ -80,6 +89,5 @@
     });
     /*]]>*/
 </script>
-
 </body>
 </html>

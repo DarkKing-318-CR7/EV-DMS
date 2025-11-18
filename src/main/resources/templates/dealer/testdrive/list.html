@@ -65,10 +65,12 @@
 
                 <td>
                     <span class="badge"
-                          th:classappend="${t.status == 'REQUESTED'} ? 'bg-warning text-dark' :
-                                          ${t.status == 'CONFIRMED'} ? 'bg-info' :
-                                          ${t.status == 'COMPLETED'} ? 'bg-success' :
-                                          'bg-danger'"
+                          th:classappend="${
+                                t.status == 'REQUESTED'  ? 'bg-warning text-dark' :
+                                t.status == 'CONFIRMED' ? 'bg-info' :
+                                t.status == 'COMPLETED' ? 'bg-success' :
+                                                          'bg-danger'
+                          }"
                           th:text="${t.status}">
                     </span>
                 </td>
@@ -84,7 +86,7 @@
 
         </table>
 
-        <div class="text-center text-muted mt-3" th:if="${list.size() == 0}">
+        <div class="text-center text-muted mt-3" th:if="${list.empty}">
             Chưa có lịch nào
         </div>
 
