@@ -4,6 +4,7 @@ import com.uth.ev_dms.domain.Inventory;
 import com.uth.ev_dms.domain.Trim;
 import com.uth.ev_dms.domain.Dealer;
 import com.uth.ev_dms.repo.InventoryRepo;
+import com.uth.ev_dms.repo.TrimRepo;
 import com.uth.ev_dms.service.dto.InventoryUpdateRequest;
 import com.uth.ev_dms.service.InventoryService;
 import com.uth.ev_dms.service.ProductService;
@@ -28,6 +29,7 @@ public class AdminInventoryController {
     private final ProductService productService;
     private final DealerService dealerService;
     private final InventoryRepo inventoryRepo;
+    private final TrimRepo trimRepo;
 
     // 1. Danh sách tồn kho
     @GetMapping
@@ -60,18 +62,18 @@ public class AdminInventoryController {
         blank.setLocationType("EVM");
         blank.setQtyOnHand(0);
 
-        List<Trim> allTrims = productService.getAllTrims();
-        List<Dealer> allDealers = dealerService.getAllDealers();
+
 
         model.addAttribute("inventory", blank);
-        model.addAttribute("allTrims", allTrims);
-        model.addAttribute("allDealers", allDealers);
+        model.addAttribute("allTrims", trimRepo.findAll());
+        model.addAttribute("allDealers", dealerService.getAllDealers());
         model.addAttribute("isEdit", false);
         model.addAttribute("active", "inventory");
         model.addAttribute("pageTitle", "Create Inventory");
 
         return "admin/inventory/form";
     }
+
 
     // 3. Form edit
     @GetMapping("/{id}/edit")
@@ -84,7 +86,7 @@ public class AdminInventoryController {
         List<Dealer> allDealers = dealerService.getAllDealers();
 
         model.addAttribute("inventory", inv);
-        model.addAttribute("allTrims", allTrims);
+        model.addAttribute("allTrims", trimRepo.findAll());
         model.addAttribute("allDealers", allDealers);
         model.addAttribute("isEdit", true);
         model.addAttribute("active", "inventory");
@@ -108,7 +110,8 @@ public class AdminInventoryController {
         System.out.println("    inventory.id       = " + inventory.getId());
         System.out.println("    dealer = " + (inventory.getDealer() == null ? "null" : inventory.getDealer().getId()));
         System.out.println("    trim   = " + (inventory.getTrim() == null   ? "null" : inventory.getTrim().getId()));
-        System.out.println("    qtyOnHand          = " + inventory.getQtyOnHand());
+        System.out.println("qtyOnHand = " + inventory.getQtyOnHand());
+
 
         // load dropdown lại cho view (nếu có lỗi)
         List<Trim> allTrims = productService.getAllTrims();

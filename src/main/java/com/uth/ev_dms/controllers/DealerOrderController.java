@@ -5,6 +5,7 @@ import com.uth.ev_dms.domain.OrderItem;
 import com.uth.ev_dms.domain.OrderStatus;
 import com.uth.ev_dms.domain.Trim;
 import com.uth.ev_dms.domain.Vehicle;
+import com.uth.ev_dms.repo.InventoryRepo;
 import com.uth.ev_dms.repo.OrderRepo;
 import com.uth.ev_dms.repo.TrimRepo;
 import com.uth.ev_dms.repo.VehicleRepo;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -39,6 +41,7 @@ public class DealerOrderController {
     private final PaymentService paymentService;
     private final TrimRepo trimRepo;
     private final VehicleRepo vehicleRepo;
+    private final InventoryRepo inventoryRepo;
 
     // ================= ROLE HELPERS =================
     private boolean hasRole(String role) {
@@ -169,27 +172,54 @@ public class DealerOrderController {
     // ================= ACTIONS =================
 
     @PostMapping("/{id}/allocate")
+    @Transactional
     public String allocate(@PathVariable Long id, RedirectAttributes ra, Principal principal) {
 
         OrderHdr o = orderRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         assertCanAccess(principal, o);
 
-        if (o.getStatus() == OrderStatus.NEW) {
-            o.setStatus(OrderStatus.PENDING_ALLOC);
-
-            if (o.getSubmittedAt() == null) {
-                o.setSubmittedAt(LocalDateTime.now());
-            }
-
-            orderRepo.save(o);
-            ra.addFlashAttribute("ok", "Đã gửi yêu cầu cấp xe.");
-        } else {
+        // Chỉ được xin cấp khi NEW
+        if (o.getStatus() != OrderStatus.NEW) {
             ra.addFlashAttribute("error", "Trạng thái hiện tại không cho phép xin cấp xe.");
+            return "redirect:/dealer/orders/" + id;
         }
 
+        Long dealerId = o.getDealerId();
+        if (dealerId == null) {
+            ra.addFlashAttribute("error", "Dealer ID không hợp lệ. Không thể xin cấp xe.");
+            return "redirect:/dealer/orders/" + id;
+        }
+
+        // ====== LẤY ITEMS VÀ TRỪ TỒN ======
+        List<OrderItem> items = o.getItems();
+        for (OrderItem it : items) {
+            Long trimId = it.getTrimId();
+            Integer qty = it.getQty();
+
+            // Gọi update giảm tồn kho
+            int affected = inventoryRepo.reduceInventory(dealerId, trimId, qty);
+
+            if (affected == 0) {
+                ra.addFlashAttribute("error",
+                        "Kho không đủ xe cho trim ID " + trimId + " — Không thể cấp hàng.");
+                return "redirect:/dealer/orders/" + id;
+            }
+        }
+
+        // ====== CẬP NHẬT TRẠNG THÁI ======
+        o.setStatus(OrderStatus.PENDING_ALLOC);
+
+        if (o.getSubmittedAt() == null) {
+            o.setSubmittedAt(LocalDateTime.now());
+        }
+
+        orderRepo.save(o);
+
+        ra.addFlashAttribute("ok", "✔ Đã xin cấp xe và trừ tồn kho thành công.");
         return "redirect:/dealer/orders/" + id;
     }
+
 
     @PostMapping("/{orderId}/pay-cash")
     public String payCash(

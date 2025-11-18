@@ -117,3 +117,61 @@
     .field, .field.sm { grid-column: span 12; }
     .card.form-card{ max-width: 100%; }
 }
+
+
+
+
+/* Scroll gọn cho dropdown form */
+.form-card select {
+    max-height: 150px !important;     /* điều chỉnh tùy ý: 120 - 200px */
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    scrollbar-width: thin;            /* Firefox */
+}
+
+/* Hiệu ứng scrollbar đẹp hơn (Chrome, Edge, CocCoc) */
+.form-card select::-webkit-scrollbar {
+    width: 6px;
+}
+.form-card select::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 4px;
+}
+.form-card select::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+
+/* === FIX DROPDOWN COLOR & STYLE === */
+.form-card select {
+    background-color: rgba(0, 0, 0, 0.65) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    padding: 8px 10px;
+}
+
+/* Style options */
+.form-card select option {
+    background-color: #1b2330 !important;
+    color: #fff !important;
+}
+
+/* Hover style */
+.form-card select option:hover {
+    background-color: #4da3ff !important;
+    color: #000 !important;
+    cursor: pointer;
+}
+
+/* Scroll dropdown đẹp hơn */
+.form-card select {
+    max-height: 200px !important;
+    overflow-y: auto !important;
+}
+
+/* Fix placeholder bị mờ */
+.form-card select option[value=""] {
+    color: #cccccc !important;
+}
+

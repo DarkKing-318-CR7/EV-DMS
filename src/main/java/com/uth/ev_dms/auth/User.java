@@ -43,9 +43,8 @@ public class User {
     private Set<Role> roles = new HashSet<>(); // ✅ mutable set
 
     @ManyToOne
-    @JoinColumn(name = "dealer_id", nullable = true)
+    @JoinColumn(name = "dealer_id")
     private Dealer dealer;
-
 
   
 }

@@ -2,89 +2,59 @@ package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.Instant;
+import com.uth.ev_dms.domain.DealerBranch;
 
 @Entity
-@Table(
-        name = "inventories",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"branch_id", "trim_id"}),
-        indexes = {
-                @Index(columnList = "dealer_id"),
-                @Index(columnList = "branch_id"),
-                @Index(columnList = "trim_id")
-        }
-)
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "inventories")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Inventory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ===== Audit =====
-    @CreationTimestamp
-    @Column(name="created_at", nullable=false, updatable=false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name="updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name="created_by")
-    private String createdBy;
-
-    @Column(name="updated_by")
-    private String updatedBy;
-
-    // ===== Quan hệ bắt buộc =====
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="dealer_id", nullable = false)
-    private Dealer dealer;
-
-    // ⭐ Cho phép NULL = kho tổng (HQ)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="branch_id")
-    private DealerBranch branch;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="trim_id", nullable = false)
+    @JoinColumn(name = "trim_id")
     private Trim trim;
 
-    // ===== Số lượng kho =====
-    @Column(name="location_type")
-    private String locationType;     // HQ hoặc BRANCH
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dealer_id")
+    private Dealer dealer;
 
-    @Column(name="qty_on_hand")
-    private Integer qtyOnHand = 0;   // tồn vật lý
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private DealerBranch branch;
 
-    @Column(name="reserved")
-    private Integer reserved = 0;    // số đã giữ
+    @Column(name = "location_type")
+    private String locationType;
 
-    // ==== Defaults ====
+    @Column(name = "quantity")      // ✔ DB column là quantity
+    private Integer qtyOnHand;      // ✔ Field tên qtyOnHand
+
+    @Column(name = "reserved")
+    private Integer reserved;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
     @PrePersist
     public void prePersist() {
-        if (locationType == null || locationType.isBlank()) {
-            locationType = (branch == null) ? "HQ" : "BRANCH";
-        }
-        if (qtyOnHand == null) qtyOnHand = 0;
-        if (reserved == null) reserved = 0;
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        if (this.reserved == null) this.reserved = 0;   // optional, tránh null
+        if (this.qtyOnHand == null) this.qtyOnHand = 0; // optional
     }
 
     @PreUpdate
     public void preUpdate() {
-        if (locationType == null || locationType.isBlank()) {
-            locationType = (branch == null) ? "HQ" : "BRANCH";
-        }
-        if (qtyOnHand == null) qtyOnHand = 0;
-        if (reserved == null) reserved = 0;
+        this.updatedAt = Instant.now();
     }
-
-    List<Inventory> findByBranchIsNull() {
-        return null;
-    }
-
 }

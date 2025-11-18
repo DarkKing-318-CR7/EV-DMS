@@ -12,6 +12,8 @@ public class AuditController {
     @GetMapping("/admin/audit")
     public String audit(Model model) {
         model.addAttribute("logs", service.findAll());
-        return "audit/audit";
+        model.addAttribute("pageTitle", "Audit Logs");
+        model.addAttribute("active", "settings");
+        return "admin/audit";   // ✅ đổi từ "audit/audit" hoặc "audit" sang "admin/audit"
     }
 }
