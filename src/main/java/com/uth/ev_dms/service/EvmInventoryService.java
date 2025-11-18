@@ -15,6 +15,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class EvmInventoryService {
         }
 
         inv.setQtyOnHand(newQty);
-        inv.setUpdatedAt(LocalDateTime.now());
+        inv.setUpdatedAt(Instant.now());
         inventoryRepo.save(inv);
 
         if (delta != 0) {
@@ -179,46 +180,44 @@ public class EvmInventoryService {
 
         // cập nhật HQ
         evmInv.setQtyOnHand(onHand - qty);
-        evmInv.setUpdatedAt(LocalDateTime.now());
+        evmInv.setUpdatedAt(Instant.now());   // ✔ instant
         inventoryRepo.save(evmInv);
 
-        // adjustment OUT cho EVM
         LocalDateTime now = LocalDateTime.now();
 
+// adjustment OUT cho EVM
         InventoryAdjustment out = new InventoryAdjustment();
         out.setInventory(evmInv);
         out.setDeltaQty(-qty);
         out.setReason("TRANSFER_OUT to dealer " + dealer.getName()
                 + (form.getNote() != null ? " (" + form.getNote() + ")" : ""));
-        out.setCreatedAtEvent(now);
-
-        out.setCreatedAt(now);      // ⭐
+        out.setCreatedAtEvent(now);   // ✔ localdatetime
+        out.setCreatedAt(now);
         out.setUpdatedAt(now);
         out.setCreatedBy("EVM Staff");
         out.setUpdatedBy("EVM Staff");
-
         adjRepo.save(out);
 
-        // cập nhật dealer branch (inventory)
+// cập nhật dealer branch (inventory)
         int dealerOnHand = dealerInv.getQtyOnHand() == null ? 0 : dealerInv.getQtyOnHand();
         dealerInv.setQtyOnHand(dealerOnHand + qty);
-        dealerInv.setUpdatedAt(LocalDateTime.now());
+        dealerInv.setUpdatedAt(Instant.now());   // ✔ instant
         inventoryRepo.save(dealerInv);
 
-        // adjustment IN cho dealer
+// adjustment IN cho dealer
         InventoryAdjustment in = new InventoryAdjustment();
         in.setInventory(dealerInv);
         in.setDeltaQty(qty);
         in.setReason("TRANSFER_IN from EVM"
                 + (form.getNote() != null ? " (" + form.getNote() + ")" : ""));
-        in.setCreatedAtEvent(now);
-
-        in.setCreatedAt(now);       // ⭐
+        in.setCreatedAtEvent(now);   // ✔ localdatetime
+        in.setCreatedAt(now);
         in.setUpdatedAt(now);
         in.setCreatedBy("EVM Staff");
         in.setUpdatedBy("EVM Staff");
 
         adjRepo.save(in);
+
 
     }
 }

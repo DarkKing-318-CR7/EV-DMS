@@ -32,7 +32,7 @@
                 <td th:text="${#numbers.formatDecimal(q.appliedDiscount,1,2)}"></td>
                 <td th:text="${#numbers.formatDecimal(q.finalAmount,1,2)}"></td>
 
-                <!-- Cách A: switch (khuyên dùng) -->
+
                 <td>
                     <th:block th:switch="${q.status}">
                         <span class="badge bg-success"   th:case="'APPROVED'">APPROVED</span>

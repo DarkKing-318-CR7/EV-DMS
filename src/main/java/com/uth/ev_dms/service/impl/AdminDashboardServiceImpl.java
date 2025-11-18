@@ -4,6 +4,7 @@ import com.uth.ev_dms.repo.*;
 import com.uth.ev_dms.service.AdminDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.uth.ev_dms.repo.InventoryRepo;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +26,12 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override public long totalTrims() { return trimRepo.count(); }
     @Override public long totalPromotions() { return promotionRepo.count(); }
     @Override public long totalOrders() { return orderRepo.count(); }
-    @Override public long totalInventory() { return inventoryRepo.sumTotalQty(); }
+    @Override
+    public long totalInventory() {
+        Long qty = inventoryRepo.sumTotalQty();
+        return qty == null ? 0 : qty;
+    }
+
     @Override public long totalUsers() { return userRepo.count(); }
     @Override public long totalCustomers() { return customerRepo.count(); }
     @Override public long totalQuotes() { return quoteRepo.count(); }

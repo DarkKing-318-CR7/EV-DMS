@@ -117,3 +117,102 @@
     /* Branch table: Branch name nổi bật hơn */
     font-weight: 600;
 }
+
+
+/* ===== INVENTORY PAGE ===== */
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.inventory-header h1 {
+    margin-bottom: 4px;
+}
+
+.inventory-header .subtitle {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.inventory-card {
+    margin-top: 16px;
+    padding: 20px 24px;
+    border-radius: 18px;
+    background: radial-gradient(
+        circle at top left,
+        rgba(255,255,255,0.06),
+        rgba(0,0,0,0.75)
+    );
+    box-shadow: 0 18px 40px rgba(0,0,0,0.55);
+}
+
+.inventory-card__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.inventory-card__header h2 {
+    font-size: 1.3rem;
+}
+
+.inventory-card__header .sub {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-left: 6px;
+}
+
+/* Empty text */
+.inventory-empty {
+    padding: 16px 0;
+    text-align: center;
+    font-size: 0.95rem;
+    opacity: 0.7;
+}
+
+/* Table */
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+.inventory-table thead {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.inventory-table th,
+.inventory-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.inventory-table tbody tr:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+
+.link-action {
+    font-size: 0.85rem;
+    text-decoration: none;
+    color: #7bd7ff;
+}
+
+.link-action:hover {
+    text-decoration: underline;
+}
+
+.divider {
+    color: rgba(255,255,255,0.3);
+    margin: 0 6px;
+}

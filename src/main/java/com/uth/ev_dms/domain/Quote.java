@@ -49,6 +49,18 @@ public class Quote {
     @JsonManagedReference
     private List<QuoteItem> items = new ArrayList<>();
 
+
+    @Column(name = "dealer_branch_id")
+    private Long dealerBranchId;
+
+    private Long salesStaffId;
+    private Long createdBy;
+
+    public Long getDealerBranchId() { return dealerBranchId; }
+    public void setDealerBranchId(Long dealerBranchId) { this.dealerBranchId = dealerBranchId; }
+
+
+
     // ==========================
     // Getters & Setters
     // ==========================
@@ -147,5 +159,21 @@ public class Quote {
 
     public void setItems(List<QuoteItem> items) {
         this.items = items;
+    }
+
+    public Long getSalesStaffId() {
+        return salesStaffId;
+    }
+
+    public void setSalesStaffId(Long salesStaffId) {
+        this.salesStaffId = salesStaffId;
+    }
+
+    public Long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
     }
 }
