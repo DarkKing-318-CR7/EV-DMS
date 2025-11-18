@@ -11,10 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,6 +28,9 @@ public class DealerVehicleController {
     private final UserRepo userRepo;
     private final VehicleRepo vehicleRepo;
 
+    // =========================================================
+    //           LIST XE (DÙNG CHUNG CẢ HAI BẢN)
+    // =========================================================
     @GetMapping
     public String list(Model model) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -37,6 +39,7 @@ public class DealerVehicleController {
         Long dealerId = Optional.ofNullable(user.getDealer())
                 .map(d -> d.getId())
                 .orElseThrow(() -> new IllegalStateException("User has no dealer"));
+
         Long branchId = dealerBranchRepo.findByDealerId(dealerId)
                 .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
                 .getId();
@@ -47,65 +50,44 @@ public class DealerVehicleController {
         model.addAttribute("activePage", "vehicles");
         model.addAttribute("pageTitle", "Vehicles - Dealer View");
 
-        boolean isManager = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEALER_MANAGER"));
+        boolean isManager = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_DEALER_MANAGER"));
         model.addAttribute("canViewPrice", isManager);
-        // Không hiện màn kho ở Dealer ⇒ false
+
+        // Dealer *không* xem kho tổng
         model.addAttribute("canViewInventory", false);
 
         return "dealer/vehicles/list";
     }
 
-//    @GetMapping("/{id}")
-//    public String detail(@PathVariable Long id, Model model) {
-//        var vehicle = productService.getVehicleById(id);
-//        if (vehicle == null) {
-//            throw new EntityNotFoundException("Vehicle not found: " + id);
-//        }
-//
-//        Long dealerId = 1L; // tạm
-//        var stockByTrim = inventoryService.getStockByTrimForDealer(dealerId);
-//
-//        System.out.println("=== CONTROLLER stockByTrim ===");
-//        stockByTrim.forEach((tid, q) ->
-//                System.out.println("trimId=" + tid + " qty=" + q)
-//        );
-//
-//        model.addAttribute("vehicle", vehicle);
-//        model.addAttribute("stockByTrim", stockByTrim);
-//        model.addAttribute("canViewInventory", true);
-//        model.addAttribute("active", "vehicles");
-//        model.addAttribute("pageTitle", vehicle.getModelName());
-//
-//        return "dealer/vehicles/detail";
-//    }
-
+    // =========================================================
+    //           CHI TIẾT XE (BẢN HOÀN CHỈNH NHẤT)
+    // =========================================================
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
-        // 1. Lấy xe
+
         Vehicle vehicle = vehicleRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Vehicle not found"));
 
-        // 2. Lấy user hiện tại
+        // Lấy user
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
-
-        var user = userRepo.findByUsername(username)
+        var user = userRepo.findByUsername(auth.getName())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        // 3. Lấy branch từ dealer của user (ở đây đang giả sử mỗi dealer có 1 branch)
+        // Lấy branch từ dealer
         Long branchId = dealerBranchRepo.findByDealerId(user.getDealer().getId())
                 .map(b -> b.getId())
                 .orElse(null);
 
-        // 4. Lấy tồn kho theo branch
+        // Map tồn kho trim
         Map<Long, Integer> stockByTrim = new java.util.HashMap<>();
         boolean canViewInventory = false;
 
         if (branchId != null) {
-            // Lấy map: trimId -> qty
+            // Map: trimId -> quantity
             Map<Long, Integer> raw = inventoryService.getStockByTrimForBranch(branchId);
 
-            // Chỉ giữ các trim thuộc vehicle đang xem
+            // Chỉ lấy tồn kho của trims thuộc model xe
             vehicle.getTrims().forEach(trim ->
                     stockByTrim.put(trim.getId(), raw.getOrDefault(trim.getId(), 0))
             );
@@ -113,12 +95,12 @@ public class DealerVehicleController {
             canViewInventory = true;
         }
 
-        // Debug nếu muốn
+        // Debug
         stockByTrim.forEach((tid, q) ->
                 System.out.println("trimId=" + tid + " qty=" + q)
         );
 
-        // 5. Đẩy ra view
+        // Push data ra view
         model.addAttribute("vehicle", vehicle);
         model.addAttribute("stockByTrim", stockByTrim);
         model.addAttribute("canViewInventory", canViewInventory);
@@ -126,6 +108,24 @@ public class DealerVehicleController {
         model.addAttribute("pageTitle", vehicle.getModelName());
 
         return "dealer/vehicles/detail";
+    }
+
+    // =========================================================
+    //   API TRẢ VỀ DANH SÁCH TRIM (dùng ở màn tạo báo giá, test-drive…)
+    // =========================================================
+    @GetMapping("/api/vehicles/{id}/trims")
+    @ResponseBody
+    public List<Map<String, Object>> getTrims(@PathVariable Long id) {
+
+        Vehicle vehicle = vehicleRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Vehicle not found"));
+
+        return vehicle.getTrims().stream()
+                .map(t -> Map.<String, Object>of(
+                        "id", t.getId(),
+                        "name", t.getTrimName()
+                ))
+                .toList();
     }
 
 }

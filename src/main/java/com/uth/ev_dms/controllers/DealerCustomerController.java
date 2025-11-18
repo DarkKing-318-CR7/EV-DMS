@@ -16,6 +16,21 @@ public class DealerCustomerController {
 
     private final CustomerService customerService;
 
+    // ⭐ BỔ SUNG — Dealer xem tất cả khách hàng
+    @GetMapping
+    public String listAll(@RequestParam(required = false) String q,
+                          Model model) {
+
+        var list = (q != null && !q.isBlank())
+                ? customerService.searchAll(q)
+                : customerService.findAll();
+
+        model.addAttribute("list", list);
+        model.addAttribute("q", q);
+
+        return "dealer/customers";
+    }
+
     @GetMapping("/my")
     public String myList(@RequestParam(required = false) String q,
                          Authentication auth,
@@ -32,7 +47,7 @@ public class DealerCustomerController {
     @GetMapping("/new")
     public String newForm(Model model) {
         model.addAttribute("c", new Customer());
-        return "dealer/form"; // nếu bạn muốn form riêng: đổi thành dealer/customers-form
+        return "dealer/form";
     }
 
     @PostMapping
@@ -60,7 +75,7 @@ public class DealerCustomerController {
             return "redirect:/dealer/customers";
         }
         model.addAttribute("c", c);
-        return "dealer/detail"; // nếu có trang detail riêng cho customer thì đổi tên file theo bạn
+        return "dealer/detail";
     }
 
     @PostMapping("/{id}")
@@ -102,6 +117,7 @@ public class DealerCustomerController {
         try { return Long.parseLong(auth.getName()); }
         catch (Exception e) { return null; }
     }
+
     private boolean isManager(Authentication auth) {
         return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DMANAGER"));
     }
