@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:with="active=${active}, pageTitle=${pageTitle}"
       th:replace="~{layout :: layout(~{::main})}">
 
 <main>
@@ -9,14 +8,13 @@
         <!-- Tiêu đề -->
         <h2 class="text-center mb-4">Sales Report</h2>
 
-        <!-- Summary cards -->
+        <!-- Summary cards (dùng đơn giản để không lỗi nếu thiếu biến) -->
         <div class="row g-3 mb-4">
             <div class="col-md-4">
                 <div class="card bg-dark border-0 shadow-sm h-100">
                     <div class="card-body">
                         <h6 class="text-uppercase text-muted mb-2">Total Orders</h6>
-                        <h3 class="fw-bold mb-0"
-                            th:text="${totalOrders} ?: 0">0</h3>
+                        <h3 class="fw-bold mb-0" th:text="${totalOrders}">0</h3>
                         <small class="text-secondary">Number of sales orders</small>
                     </div>
                 </div>
@@ -26,10 +24,7 @@
                 <div class="card bg-dark border-0 shadow-sm h-100">
                     <div class="card-body">
                         <h6 class="text-uppercase text-muted mb-2">Total Revenue</h6>
-                        <h3 class="fw-bold mb-0"
-                            th:text="${#numbers.formatDecimal(totalRevenue ?: 0, 0, 'COMMA', 2, 'POINT')}">
-                            0.00
-                        </h3>
+                        <h3 class="fw-bold mb-0" th:text="${totalRevenue}">0</h3>
                         <small class="text-secondary">Total sales amount</small>
                     </div>
                 </div>
@@ -39,8 +34,7 @@
                 <div class="card bg-dark border-0 shadow-sm h-100">
                     <div class="card-body">
                         <h6 class="text-uppercase text-muted mb-2">Top Vehicle</h6>
-                        <h5 class="fw-bold mb-1"
-                            th:text="${topVehicle} ?: 'N/A'">N/A</h5>
+                        <h5 class="fw-bold mb-1" th:text="${topVehicle}">N/A</h5>
                         <small class="text-secondary">Most sold model</small>
                     </div>
                 </div>
@@ -50,7 +44,7 @@
         <!-- Form lọc -->
         <div class="card bg-dark border-0 shadow-sm mb-4">
             <div class="card-body">
-                <form th:action="@{/reports/sale}" method="get" class="row g-3 align-items-end">
+                <form th:action="@{/reports/advanced-sale}" method="get" class="row g-3 align-items-end">
                     <div class="col-md-3">
                         <label class="form-label">Dealer</label>
                         <input type="text" class="form-control"
@@ -85,7 +79,7 @@
                         <button type="submit" class="btn btn-primary me-2">
                             Filter
                         </button>
-                        <a th:href="@{/reports/sale}" class="btn btn-outline-light">
+                        <a th:href="@{/reports/advanced-sale}" class="btn btn-outline-light">
                             Reset
                         </a>
                     </div>
@@ -99,10 +93,10 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0">Sales Result</h5>
                     <div>
-                        <a th:href="@{/reports/sale/export/excel}" class="btn btn-success btn-sm me-2">
+                        <a href="#" class="btn btn-success btn-sm me-2">
                             Export Excel
                         </a>
-                        <a th:href="@{/reports/sale/export/pdf}" class="btn btn-danger btn-sm">
+                        <a href="#" class="btn btn-danger btn-sm">
                             Export PDF
                         </a>
                     </div>
@@ -124,14 +118,10 @@
                         <tr th:each="sale, iterStat : ${sales}">
                             <td th:text="${iterStat.index + 1}">1</td>
                             <td th:text="${sale.dealerName}">Dealer A</td>
-                            <td th:text="${sale.modelName}">EV Model</td>
+                            <td th:text="${sale.modelName}">Model X</td>
                             <td th:text="${sale.quantity}">10</td>
-                            <td th:text="${#numbers.formatDecimal(sale.totalRevenue, 0, 'COMMA', 2, 'POINT')}">
-                                0.00
-                            </td>
-                            <td th:text="${#temporals.format(sale.date, 'dd/MM/yyyy')}">
-                                01/01/2025
-                            </td>
+                            <td th:text="${sale.totalRevenue}">0</td>
+                            <td th:text="${sale.date}">2025-01-01</td>
                         </tr>
 
                         <tr th:if="${sales == null or #lists.isEmpty(sales)}">
