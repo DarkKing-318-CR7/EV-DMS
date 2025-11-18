@@ -102,7 +102,15 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
     int sumAvailableByBranch(@Param("branchId") Long branchId);
 
     List<Inventory> findByBranchIsNull();   // HQ
-    List<Inventory> findByBranchIsNotNull(); // Chi nhánh
+    List<Inventory> findByBranchIsNotNull();
+
+    @Query("select sum(i.qtyOnHand) from Inventory i")
+    Long sumQty();
+
+    @Query("SELECT SUM(i.qtyOnHand) FROM Inventory i")
+    Long sumTotalQty();
+
+// Chi nhánh
 
 
 }

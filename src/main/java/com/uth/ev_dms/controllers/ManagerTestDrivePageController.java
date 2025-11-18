@@ -28,7 +28,8 @@ public class ManagerTestDrivePageController {
         model.addAttribute("from", from);
         model.addAttribute("to", to);
         model.addAttribute("status", status);
-        return "manager/testdrives"; // must match template path below
+
+        return "manager/testdrives";   // ✔ đúng file
     }
 
     @PostMapping("/{id}/approve")

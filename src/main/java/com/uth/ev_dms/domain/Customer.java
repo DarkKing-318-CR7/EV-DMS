@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,6 +21,15 @@ public class Customer {
     private String diachi;
 
     private Long ownerId;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = Instant.now();
+    }
+
 
     @Enumerated(EnumType.STRING)
     private CustomerStatus status = CustomerStatus.ACTIVE;

@@ -5,7 +5,7 @@
 <nav class="sidebar" sec:authorize="hasRole('DEALER_MANAGER')" th:fragment="sidebar(active)">
     <ul>
         <li th:classappend="${active=='dashboard' ? 'active' : ''}">
-            <a th:href="@{/manager/dashboard}">Dashboard</a>
+            <a th:href="@{/dealer/home}">Dashboard</a>
         </li>
 
         <li th:classappend="${active=='vehicles' ? 'active' : ''}">

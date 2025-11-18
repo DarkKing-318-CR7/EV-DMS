@@ -142,6 +142,20 @@ public class TestDriveServiceImpl implements TestDriveService {
                 form.getDate() + "T" + form.getTime()
         );
 
+        // ⭐ THÊM — KHÔNG ĐỤNG scheduleAt cũ
+        LocalDateTime startTime = scheduleAt;
+        LocalDateTime endTime = scheduleAt.plusMinutes(30); // slot 30 phút
+
+        // ⭐ THÊM CHECK TRÙNG LỊCH — KHÔNG ĐỤNG CODE CŨ
+        List<TestDrive> overlaps = testDriveRepo.findOverlap(
+                form.getVehicleId(),
+                startTime,
+                endTime
+        );
+        if (!overlaps.isEmpty()) {
+            throw new RuntimeException("Xe này đã bị đặt trong khung giờ này!");
+        }
+
         // Tạo entity
         TestDrive td = TestDrive.builder()
                 .customerName(customer.getTen())
@@ -154,6 +168,11 @@ public class TestDriveServiceImpl implements TestDriveService {
                 .assignedStaff(staff)
                 .createdBy(staff)
                 .dealer(staff.getDealer())
+
+                // ⭐ THÊM — KHÔNG ĐỤNG CODE CŨ
+                .startTime(startTime)
+                .endTime(endTime)
+
                 .build();
 
         testDriveRepo.save(td);
