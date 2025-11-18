@@ -1,6 +1,7 @@
 package com.uth.ev_dms.controllers;
 
 import com.uth.ev_dms.domain.Promotion;
+import com.uth.ev_dms.repo.RegionRepo;
 import com.uth.ev_dms.service.PromotionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,45 +14,50 @@ import java.util.List;
 public class EvmPromotionController {
 
     private final PromotionService promotionService;
+    private final RegionRepo regionRepo;
 
-    public EvmPromotionController(PromotionService promotionService) {
+    // ⭐ Constructor injection đúng chuẩn
+    public EvmPromotionController(PromotionService promotionService, RegionRepo regionRepo) {
         this.promotionService = promotionService;
+        this.regionRepo = regionRepo;
     }
 
-    // 📋 List tất cả khuyến mãi EVM
     @GetMapping
     public String listPromotions(Model model) {
         List<Promotion> promos = promotionService.getAllPromotions();
         model.addAttribute("promotions", promos);
-        // templates/evm/orders/promotion.html
         return "evm/orders/promotion";
     }
 
-    // ➕ Form tạo mới
     @GetMapping("/new")
     public String newPromotionForm(Model model) {
         model.addAttribute("promotion", new Promotion());
-        // templates/evm/orders/promotion-form.html
+        model.addAttribute("regionsList", regionRepo.findAll());
         return "evm/orders/promotion-form";
     }
 
-    // 💾 Lưu (tạo mới / update)
     @PostMapping("/save")
     public String savePromotion(@ModelAttribute Promotion promotion) {
+
+        // Nếu chọn ALL thì chỉ lưu ALL duy nhất
+        if (promotion.getRegions() != null && promotion.getRegions().contains("ALL")) {
+            promotion.setRegions(List.of("ALL"));
+        }
+
         promotionService.savePromotion(promotion);
         return "redirect:/evm/promotions";
     }
 
-    // ✏️ Form sửa
     @GetMapping("/edit/{id}")
     public String editPromotion(@PathVariable Long id, Model model) {
         Promotion promo = promotionService.getPromotionById(id)
                 .orElseThrow(() -> new RuntimeException("Promotion not found"));
+
         model.addAttribute("promotion", promo);
+        model.addAttribute("regionsList", regionRepo.findAll());
         return "evm/orders/promotion-form";
     }
 
-    // 🗑️ Xóa
     @GetMapping("/delete/{id}")
     public String deletePromotion(@PathVariable Long id) {
         promotionService.deletePromotion(id);

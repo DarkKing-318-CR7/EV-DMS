@@ -4,14 +4,14 @@ import com.uth.ev_dms.domain.OrderHdr;
 import com.uth.ev_dms.domain.OrderItem;
 import com.uth.ev_dms.domain.OrderStatus;
 import com.uth.ev_dms.exception.BusinessException;
-import com.uth.ev_dms.repo.OrderItemRepo;
-import com.uth.ev_dms.repo.OrderRepo;
-import com.uth.ev_dms.repo.PaymentRepo;
+import com.uth.ev_dms.repo.*;
 import com.uth.ev_dms.service.InventoryService;
 import com.uth.ev_dms.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,6 +25,8 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentRepo paymentRepo;
     private final InventoryService inventoryService;
     private final OrderItemRepo orderItemRepo;
+    private final QuoteRepo quoteRepo;
+    private final UserRepo userRepo;
 
     @Override
     public OrderHdr findById(Long id) {
@@ -39,27 +41,43 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderHdr createFromQuote(Long quoteId, Long dealerId, Long customerId, Long staffId) {
+    public OrderHdr createFromQuote(Long quoteId, Long dealerIdIgnored, Long customerIdIgnored, Long staffIdIgnored) {
+
+        // 🔹 Get quote
+        var quote = quoteRepo.findById(quoteId)
+                .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
+
         OrderHdr o = new OrderHdr();
-        o.setQuoteId(quoteId);
-        o.setDealerId(dealerId);
-        o.setCustomerId(customerId);
-        o.setSalesStaffId(staffId);
+        o.setQuoteId(quote.getId());
+        o.setDealerId(quote.getDealerId());
+        o.setCustomerId(quote.getCustomerId());
+
+        // 🔹 Sales staff
+        if (o.getSalesStaffId() == null) {
+            try {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getName() != null) {
+                    userRepo.findByUsername(auth.getName()).ifPresent(u -> {
+                        o.setSalesStaffId(u.getId());
+                    });
+                }
+            } catch (Exception ignore) {}
+        }
+
         o.setOrderNo(generateOrderNo());
         o.setStatus(OrderStatus.NEW);
 
-        if (o.getItems() != null && !o.getItems().isEmpty()) {
-            BigDecimal total = o.getItems().stream()
-                    .map(OrderItem::getLineAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            o.setTotalAmount(total);
-        } else {
-            o.setTotalAmount(BigDecimal.ZERO);
-        }
+        // 🔹 Total amount: finalAmount ưu tiên, fallback totalAmount
+        BigDecimal total = quote.getFinalAmount() != null
+                ? quote.getFinalAmount()
+                : quote.getTotalAmount();
+        if (total == null) total = BigDecimal.ZERO;
 
-        o.setDepositAmount(o.getDepositAmount() == null ? BigDecimal.ZERO : o.getDepositAmount());
+        o.setTotalAmount(total);
+        o.setDepositAmount(BigDecimal.ZERO);
         o.setPaidAmount(BigDecimal.ZERO);
-        o.setBalanceAmount(o.getTotalAmount().subtract(o.getDepositAmount()));
+        o.setBalanceAmount(total);
+
         return orderRepo.save(o);
     }
 
@@ -95,7 +113,6 @@ public class OrderServiceImpl implements OrderService {
         inventoryService.allocateForOrder(orderId);
 
         o.setStatus(OrderStatus.ALLOCATED);
-        // ✅ Ghi mốc thời gian allocate
         if (o.getAllocatedAt() == null) {
             o.setAllocatedAt(LocalDateTime.now());
         }
@@ -111,11 +128,10 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("INVALID_STATE", "Only ALLOCATED orders can be delivered");
         }
 
-        // ✅ CHẶN GIAO HÀNG KHI CHƯA THANH TOÁN ĐỦ
+        // 🔹 Check paid >= total
         BigDecimal total = o.getTotalAmount() == null ? BigDecimal.ZERO : o.getTotalAmount();
         BigDecimal paid  = o.getPaidAmount()  == null ? BigDecimal.ZERO : o.getPaidAmount();
         if (paid.compareTo(total) < 0) {
-            // dùng BusinessException để controller hiển thị message đẹp
             throw new BusinessException(
                     "UNPAID",
                     "Không thể giao hàng: đơn chưa thanh toán đủ (" + paid + " / " + total + ")"
@@ -125,7 +141,6 @@ public class OrderServiceImpl implements OrderService {
         inventoryService.shipForOrder(orderId);
 
         o.setStatus(OrderStatus.DELIVERED);
-        // ✅ Ghi mốc thời gian delivered
         if (o.getDeliveredAt() == null) {
             o.setDeliveredAt(LocalDateTime.now());
         }

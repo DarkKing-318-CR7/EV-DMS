@@ -21,4 +21,5 @@ public interface OrderService {
     // EVM huy (cho NEW, PENDING_ALLOC; hoac sau khi da deallocate)
     OrderHdr cancelByEvm(Long orderId, Long actorId, String reason);
     OrderHdr cancelByDealer(Long id, Long dealerId, Long actorId);
+
 }

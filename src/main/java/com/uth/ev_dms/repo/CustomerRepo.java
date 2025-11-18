@@ -1,6 +1,7 @@
 package com.uth.ev_dms.repo;
 
 import com.uth.ev_dms.domain.Customer;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,4 +29,10 @@ public interface CustomerRepo extends JpaRepository<Customer, Long> {
                    or lower(c.sdt) like lower(concat('%', :kw, '%')) )
            """)
     List<Customer> searchMine(@Param("ownerId") Long ownerId, @Param("kw") String kw);
+
+
+    @Query("""
+        SELECT c FROM Customer c ORDER BY c.createdAt DESC
+    """)
+    List<Customer> findLatestCustomers(Pageable pageable);
 }

@@ -3,7 +3,6 @@ package com.uth.ev_dms.service;
 import com.uth.ev_dms.auth.Role;
 import com.uth.ev_dms.auth.User;
 import com.uth.ev_dms.repo.DealerRepo;
-import com.uth.ev_dms.repo.RegionRepo;
 import com.uth.ev_dms.repo.RoleRepository;
 import com.uth.ev_dms.repo.UserRepo;
 import jakarta.transaction.Transactional;
@@ -20,14 +19,13 @@ public class AdminUserService {
     private final UserRepo userRepo;
     private final RoleRepository roleRepository;
     private final DealerRepo dealerRepo;
-    private final RegionRepo regionRepo;
     private final PasswordEncoder passwordEncoder;
 
     // ======================= CREATE USER ===========================
     @Transactional
     public User createUser(String username, String rawPassword, String email,
                            String fullName, String roleName,
-                           Long dealerId, Long regionId, boolean enabled) {
+                           Long dealerId, boolean enabled) {
 
         if (userRepo.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username đã tồn tại");
@@ -44,24 +42,18 @@ public class AdminUserService {
         u.setFullName(fullName);
         u.setEnabled(enabled);
 
-        // Dealer / Region: chỉ gán khi > 0
+        // Dealer: chỉ gán khi > 0
         if (dealerId != null && dealerId > 0) {
             dealerRepo.findById(dealerId).ifPresent(u::setDealer);
         } else {
             u.setDealer(null);
         }
 
-        if (regionId != null && regionId > 0) {
-            regionRepo.findById(regionId).ifPresent(u::setRegion);
-        } else {
-            u.setRegion(null);
-        }
-
         // Gán role chính (mutable)
         String rn = (roleName == null ? "" : roleName.trim());
         Role role = roleRepository.findByName(rn);
         if (role == null) throw new IllegalArgumentException("Role không tồn tại: " + rn);
-        u.setRoles(new HashSet<>(Collections.singleton(role))); // ✅ mutable set
+        u.setRoles(new HashSet<>(Collections.singleton(role)));
 
         return userRepo.save(u);
     }
@@ -69,7 +61,7 @@ public class AdminUserService {
     // ======================= UPDATE USER ===========================
     @Transactional
     public User updateUser(Long id, String email, String fullName,
-                           String roleName, Long dealerId, Long regionId, Boolean enabled,
+                           String roleName, Long dealerId, Boolean enabled,
                            String newRawPasswordIfAny) {
 
         User u = userRepo.findById(id)
@@ -89,17 +81,15 @@ public class AdminUserService {
             String rn = roleName.trim();
             Role role = roleRepository.findByName(rn);
             if (role == null) throw new IllegalArgumentException("Role không hợp lệ: " + rn);
-            u.setRoles(new HashSet<>(Collections.singleton(role))); // ✅ mutable set
+            u.setRoles(new HashSet<>(Collections.singleton(role)));
         }
 
-        // Dealer / Region: nếu 0 hoặc null → xóa
-        u.setDealer(null);
-        if (dealerId != null && dealerId > 0)
+        // Dealer: nếu 0 hoặc null → xóa
+        if (dealerId != null && dealerId > 0) {
             dealerRepo.findById(dealerId).ifPresent(u::setDealer);
-
-        u.setRegion(null);
-        if (regionId != null && regionId > 0)
-            regionRepo.findById(regionId).ifPresent(u::setRegion);
+        } else {
+            u.setDealer(null);
+        }
 
         return userRepo.save(u);
     }

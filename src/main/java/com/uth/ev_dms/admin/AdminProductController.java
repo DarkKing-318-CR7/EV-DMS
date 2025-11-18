@@ -1,6 +1,8 @@
 package com.uth.ev_dms.admin;
 
+import com.uth.ev_dms.domain.Trim;
 import com.uth.ev_dms.domain.Vehicle;
+import com.uth.ev_dms.repo.TrimRepo;
 import com.uth.ev_dms.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminProductController {
 
     private final ProductService productService;
+    private final TrimRepo trimRepo;   // <<< KHAI BÁO Ở ĐÂY
 
     // ===== LIST =====
     @GetMapping({"", "/"})
@@ -31,7 +34,7 @@ public class AdminProductController {
     public String createForm(Model model) {
         model.addAttribute("vehicle", new Vehicle());
         model.addAttribute("formTitle", "Create Vehicle");
-        model.addAttribute("formAction", "/admin/products"); // Đường dẫn post
+        model.addAttribute("formAction", "/admin/products");
         return "admin/products/form";
     }
 
@@ -41,14 +44,26 @@ public class AdminProductController {
                                BindingResult br,
                                Model model,
                                RedirectAttributes ra) {
+
         if (br.hasErrors()) {
             model.addAttribute("isEdit", false);
             model.addAttribute("active", "products");
             model.addAttribute("pageTitle", "Create Vehicle");
             return "admin/products/form";
         }
+
+        // Save vehicle
         Vehicle saved = productService.saveVehicle(v);
-        ra.addFlashAttribute("success", "Vehicle created successfully");
+
+        // Auto-create default trim
+        Trim defaultTrim = new Trim();
+        defaultTrim.setVehicle(saved);
+        defaultTrim.setTrimName(saved.getModelName() + " - Standard");
+        defaultTrim.setAvailable(true);
+
+        trimRepo.save(defaultTrim);
+
+        ra.addFlashAttribute("success", "Vehicle created successfully with default trim");
         return "redirect:/admin/products/" + saved.getId();
     }
 
@@ -69,10 +84,9 @@ public class AdminProductController {
         var v = productService.getVehicleOrThrow(id);
         model.addAttribute("vehicle", v);
         model.addAttribute("formTitle", "Edit Vehicle");
-        model.addAttribute("isEdit", true); // <-- quan trọng
+        model.addAttribute("isEdit", true);
         return "admin/products/form";
     }
-
 
     // ===== UPDATE (SUBMIT) =====
     @PostMapping("/{id}")
@@ -87,14 +101,17 @@ public class AdminProductController {
             model.addAttribute("pageTitle", "Edit Vehicle");
             return "admin/products/form";
         }
+
         vehicle.setId(id);
         productService.saveVehicle(vehicle);
         ra.addFlashAttribute("success", "Vehicle updated successfully");
         return "redirect:/admin/products/" + id;
     }
+
     @PostMapping("/{id}/delete")
     public String deleteVehicle(@PathVariable Long id) {
         productService.deleteVehicle(id);
         return "redirect:/admin/products";
     }
+
 }

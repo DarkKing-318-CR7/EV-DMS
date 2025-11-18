@@ -3,6 +3,7 @@ package com.uth.ev_dms.repo;
 import com.uth.ev_dms.domain.TestDrive;
 import com.uth.ev_dms.domain.TestDriveStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,4 +24,12 @@ public interface TestDriveRepo extends JpaRepository<TestDrive, Long> {
     List<TestDrive> findByCreatedBy_IdOrderByScheduleAt(Long ownerId);
     boolean existsByVehicleNameAndScheduleAt(String vehicleName, LocalDateTime scheduleAt);
     List<TestDrive> findByCreatedByIdOrderByScheduleAtDesc(Long createdById);
+    @Query("""
+SELECT t
+FROM TestDrive t
+WHERE DATE(t.scheduleAt) = CURRENT_DATE
+ORDER BY t.scheduleAt ASC
+""")
+    List<TestDrive> findTodayTestDrives();
+
 }

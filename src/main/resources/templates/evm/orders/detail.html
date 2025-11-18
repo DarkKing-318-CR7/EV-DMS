@@ -10,6 +10,18 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
         <style>
+
+            /* ===== FIX NAVBAR TRÙNG NỀN (áp dụng riêng trang này) ===== */
+            .navbar, .topbar, header, .dealer-header {
+                background: rgba(0,0,0,0.55) !important;
+                backdrop-filter: blur(12px) !important;
+                border-bottom: 1px solid rgba(255,255,255,0.15) !important;
+            }
+            .navbar a, .topbar a, .dealer-header a,
+            .navbar span, .topbar span, .dealer-header span {
+                color: #e5e7eb !important;
+            }
+
             :root{
                 --glass: rgba(255,255,255,.06);
                 --glass-2: rgba(255,255,255,.09);
@@ -85,14 +97,18 @@
                     </th:block>
 
                     <span class="chip">Tổng tiền:
-          <strong><span th:text="${order.totalAmount != null ? #numbers.formatDecimal(order.totalAmount,0,'POINT',0,'COMMA') : '0'}">0</span> ₫</strong>
-        </span>
-                    <span class="chip" th:if="${amountPaid != null}">Đã thanh toán:
-          <strong><span th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
-        </span>
-                    <span class="chip" th:if="${balance != null}">Còn phải thu:
-          <strong><span th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
-        </span>
+                        <strong><span th:text="${order.totalAmount != null ? #numbers.formatDecimal(order.totalAmount,0,'POINT',0,'COMMA') : '0'}">0</span> ₫</strong>
+                    </span>
+
+                    <span class="chip" th:if="${amountPaid != null}">
+                        Đã thanh toán:
+                        <strong><span th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+                    </span>
+
+                    <span class="chip" th:if="${balance != null}">
+                        Còn phải thu:
+                        <strong><span th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+                    </span>
                 </div>
             </div>
 
@@ -141,8 +157,8 @@
                         <div class="box-head d-flex align-items-center">
                             <span>Danh sách xe</span>
                             <span class="ms-auto small" style="color:var(--muted)" th:if="${items != null}">
-              Tổng dòng: <strong th:text="${#lists.size(items)}">0</strong>
-            </span>
+                                Tổng dòng: <strong th:text="${#lists.size(items)}">0</strong>
+                            </span>
                         </div>
                         <div class="pad">
                             <div class="table-responsive">
@@ -179,14 +195,16 @@
                         <div class="box-head d-flex align-items-center">
                             <span>Thanh toán</span>
                             <div class="ms-auto small" style="color:var(--muted)">
-              <span th:if="${amountPaid != null}">
-                Đã thanh toán: <strong><span th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
-              </span>
+                                <span th:if="${amountPaid != null}">
+                                    Đã thanh toán: <strong><span th:text="${#numbers.formatDecimal(amountPaid,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+                                </span>
+
                                 <span class="ms-3" th:if="${balance != null}">
-                Còn lại: <strong><span th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
-              </span>
+                                    Còn lại: <strong><span th:text="${#numbers.formatDecimal(balance,0,'POINT',0,'COMMA')}">0</span> ₫</strong>
+                                </span>
                             </div>
                         </div>
+
                         <div class="pad">
                             <div class="table-responsive">
                                 <table class="tbl">
@@ -207,6 +225,7 @@
                                         <td th:text="${p.refNo}">ref</td>
                                         <td th:text="${p.paidAt != null ? #temporals.format(p.paidAt,'dd/MM/yyyy HH:mm') : '--'}">--</td>
                                     </tr>
+
                                     <tr th:if="${payments == null or #lists.isEmpty(payments)}">
                                         <td colspan="5" class="text-center" style="color:var(--muted)">Chưa có thanh toán</td>
                                     </tr>
@@ -237,11 +256,12 @@
                     <div class="box sticky">
                         <div class="box-head">Hành động</div>
                         <div class="pad d-grid gap-2">
+
                             <div th:if="${ok != null}" class="alert alert-success py-2" th:text="${ok}"></div>
                             <div th:if="${error != null}" class="alert alert-danger py-2" th:text="${error}"></div>
 
                             <form th:if="${order.status == T(com.uth.ev_dms.domain.OrderStatus).NEW
-                        or order.status == T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}"
+                                or order.status == T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}"
                                   th:action="@{|/evm/orders/${order.id}/approve-allocate|}" method="post" class="js-disable">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                 <button class="btn btn-success btn-soft w-100">
@@ -274,7 +294,7 @@
                             </form>
 
                             <form th:if="${order.status == T(com.uth.ev_dms.domain.OrderStatus).NEW
-                        or order.status == T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}"
+                                or order.status == T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}"
                                   th:action="@{|/evm/orders/${order.id}/cancel|}" method="post" class="js-disable">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                 <button class="btn btn-outline-danger btn-soft w-100">
@@ -286,7 +306,8 @@
                                 <i class="bi bi-arrow-left me-1"></i> Quay lại
                             </a>
 
-                            <button class="btn btn-light border btn-soft w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#allocLog">
+                            <button class="btn btn-light border btn-soft w-100" type="button"
+                                    data-bs-toggle="offcanvas" data-bs-target="#allocLog">
                                 <i class="bi bi-clock-history me-1"></i> Nhật ký phân bổ
                             </button>
 
@@ -308,18 +329,23 @@
                                     <div class="list-group-item" th:each="log : ${allocLogs}">
                                         <div class="d-flex justify-content-between">
                                             <strong th:text="${log.message}">Phân bổ 2 xe → Dealer 1</strong>
-                                            <span class="text-muted small" th:text="${log.createdAt != null ? #temporals.format(log.createdAt,'dd/MM/yyyy HH:mm') : '--'}">--</span>
+                                            <span class="text-muted small"
+                                                  th:text="${log.createdAt != null ? #temporals.format(log.createdAt,'dd/MM/yyyy HH:mm') : '--'}">--</span>
                                         </div>
                                         <div class="small text-muted" th:text="${log.actor}">evm_user</div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-muted text-center" th:if="${allocLogs == null or #lists.isEmpty(allocLogs)}">Chưa có nhật ký</div>
+
+                            <div class="text-muted text-center"
+                                 th:if="${allocLogs == null or #lists.isEmpty(allocLogs)}">Chưa có nhật ký</div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
+
     </section>
 
     <script>
@@ -327,13 +353,15 @@
             document.querySelectorAll('form.js-disable').forEach(f => {
                 f.addEventListener('submit', () => {
                     const btn = f.querySelector('button[type="submit"]');
-                    if(btn){ btn.disabled = true;
+                    if(btn){
+                        btn.disabled = true;
                         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
                     }
                 });
             });
         });
     </script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 </main>

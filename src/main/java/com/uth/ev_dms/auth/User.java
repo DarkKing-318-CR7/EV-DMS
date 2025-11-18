@@ -1,7 +1,6 @@
 package com.uth.ev_dms.auth;
 
 import com.uth.ev_dms.domain.Dealer;
-import com.uth.ev_dms.domain.Region;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,7 +46,5 @@ public class User {
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
 
-    @ManyToOne
-    @JoinColumn(name = "region_id")
-    private Region region;
+  
 }

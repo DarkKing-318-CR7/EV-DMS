@@ -61,7 +61,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         // Khóa hàng tồn kho theo branch + trim
         Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
-                .orElseGet(() -> inventoryRepo.save(
+                .orElseGet(() ->
                         Inventory.builder()
                                 .dealer(em.getReference(Dealer.class, dealerId))
                                 .branch(em.getReference(DealerBranch.class, branchId))
@@ -69,7 +69,7 @@ public class InventoryServiceImpl implements InventoryService {
                                 .qtyOnHand(0)
                                 .reserved(0)
                                 .build()
-                ));
+                );
 
         int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
         int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
@@ -116,7 +116,7 @@ public class InventoryServiceImpl implements InventoryService {
             int need = it.getQty() != null ? it.getQty() : 0;
 
             Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
-                    .orElseGet(() -> inventoryRepo.save(
+                    .orElseGet(() ->
                             Inventory.builder()
                                     .dealer(em.getReference(Dealer.class, dealerId))
                                     .branch(em.getReference(DealerBranch.class, branchId))
@@ -124,7 +124,7 @@ public class InventoryServiceImpl implements InventoryService {
                                     .qtyOnHand(0)
                                     .reserved(0)
                                     .build()
-                    ));
+                    );
 
             int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
             int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
@@ -203,11 +203,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         for (OrderItem it : items) {
             Long trimId = resolveTrimId(it);
-            int qty = it.getQty() != null ? it.getQty() : 0;
+            int qty = it.getQty() != null ? 0 : it.getQty();
             if (qty <= 0) continue;
 
             Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
-                    .orElseGet(() -> inventoryRepo.save(
+                    .orElseGet(() ->
                             Inventory.builder()
                                     .dealer(em.getReference(Dealer.class, dealerId))
                                     .branch(em.getReference(DealerBranch.class, branchId))
@@ -215,7 +215,7 @@ public class InventoryServiceImpl implements InventoryService {
                                     .qtyOnHand(0)
                                     .reserved(0)
                                     .build()
-                    ));
+                    );
 
             int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
             inv.setReserved(Math.max(0, reserved - qty));
@@ -368,7 +368,5 @@ public class InventoryServiceImpl implements InventoryService {
                 })
                 .orElse(0);
     }
-
-
 
 }

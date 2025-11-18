@@ -5,13 +5,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "region")
-@Getter @Setter
+@Getter
+@Setter
 public class Region {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable=false, length=120)
+    @Column(nullable = false, unique = true)
     private String name;
 }

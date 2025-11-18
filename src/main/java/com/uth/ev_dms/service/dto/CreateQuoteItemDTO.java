@@ -6,6 +6,7 @@ public class CreateQuoteItemDTO {
     private Long vehicleId;
     private Integer quantity;
     private BigDecimal unitPrice;
+    private Long trimId;
 
     public Long getVehicleId() { return vehicleId; }
     public void setVehicleId(Long vehicleId) { this.vehicleId = vehicleId; }
@@ -15,4 +16,8 @@ public class CreateQuoteItemDTO {
 
     public BigDecimal getUnitPrice() { return unitPrice; }
     public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+
+    public Long getTrimId() { return trimId; }
+    public void setTrimId(Long trimId) { this.trimId = trimId; }
+
 }
