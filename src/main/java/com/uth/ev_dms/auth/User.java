@@ -46,5 +46,9 @@ public class User {
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
 
-  
+    @Column(name = "fcm_token")
+    private String fcmToken;
+
+
+
 }

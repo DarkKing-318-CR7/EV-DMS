@@ -1,7 +1,7 @@
 package com.uth.ev_dms.service;
 
 import com.uth.ev_dms.auth.User;
-import com.uth.ev_dms.repo.UserRepository;
+import com.uth.ev_dms.repo.UserRepository; // ⚠ repo bạn đang dùng là UserRepository
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -32,8 +32,6 @@ public class UserServiceImpl implements UserService {
                 .orElse(null);
     }
 
-
-
     @Override
     public Long getUserId(Principal principal) {
         if (principal == null) return null;
@@ -59,5 +57,25 @@ public class UserServiceImpl implements UserService {
             if (g.equalsIgnoreCase(r1) || g.equalsIgnoreCase(r2)) return true;
         }
         return false;
+    }
+
+    // ⭐ Thêm hàm LƯU FCM TOKEN
+    @Override
+    public void updateFcmToken(Long userId, String token) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userId));
+
+        user.setFcmToken(token);
+        userRepository.save(user);
+
+        System.out.println("📌 Updated FCM token for userId = " + userId);
+    }
+
+    // ⭐ Thêm hàm LẤY FCM TOKEN
+    @Override
+    public String getFcmToken(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getFcmToken)
+                .orElse(null);
     }
 }
