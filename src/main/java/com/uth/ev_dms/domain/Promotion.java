@@ -39,10 +39,14 @@ public class Promotion {
     private BigDecimal budget;        // Ngân sách tổng (optional)
 
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "promotion_regions", joinColumns = @JoinColumn(name = "promotion_id"))
-    @Column(name = "region")
-    private List<String> regions = new ArrayList<>();
+
+
+
+    @ElementCollection
+    @CollectionTable(name = "promotion_branches", joinColumns = @JoinColumn(name = "promotion_id"))
+    @Column(name = "branch_id")
+    private List<Long> branchIds = new ArrayList<>();
+
 
 
 }

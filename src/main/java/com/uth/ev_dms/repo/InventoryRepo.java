@@ -134,4 +134,33 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
 
 
 
+
+    // === TOTAL INVENTORY BY DEALER ===
+    @Query("""
+    select coalesce(sum(i.qtyOnHand), 0)
+    from Inventory i
+    where i.dealer.id = :dealerId""")
+    Integer totalByDealer(@Param("dealerId") Long dealerId);
+
+
+    // === INVENTORY GROUP BY MODEL ===
+    @Query("""
+    select i.trim.vehicle.modelName, sum(i.qtyOnHand)
+    from Inventory i
+    where i.dealer.id = :dealerId
+    group by i.trim.vehicle.modelName
+""")
+    List<Object[]> totalGroupByModel(@Param("dealerId") Long dealerId);
+
+    // === LOW STOCK ALERT (< 3 units) ===
+    @Query("""
+    select i.trim.vehicle.modelName, sum(i.qtyOnHand)
+    from Inventory i
+    where i.dealer.id = :dealerId
+      and i.qtyOnHand < 3
+    group by i.trim.vehicle.modelName
+""")
+    List<Object[]> findLowStockModels(@Param("dealerId") Long dealerId);
+
+
 }
