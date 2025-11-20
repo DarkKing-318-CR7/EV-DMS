@@ -1,5 +1,6 @@
 package com.uth.ev_dms.service.impl;
 
+import com.uth.ev_dms.config.CacheConfig;
 import com.uth.ev_dms.domain.OrderHdr;
 import com.uth.ev_dms.domain.OrderStatus;
 import com.uth.ev_dms.domain.Payment;
@@ -9,6 +10,8 @@ import com.uth.ev_dms.repo.PaymentRepo;
 import com.uth.ev_dms.service.PaymentService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,18 +25,43 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderRepo orderRepo;
     private final PaymentRepo paymentRepo;
 
+    // ======================================================
+    // =================== READ FUNCTIONS ===================
+    // ======================================================
+
     @Override
+    @Cacheable(
+            value = CacheConfig.CacheNames.PAYMENTS_BY_ORDER,
+            key = "#orderId"
+    )
     public List<Payment> findByOrderId(Long orderId) {
         return paymentRepo.findByOrder_IdOrderByPaidAtDesc(orderId);
     }
 
     @Override
+    @Cacheable(
+            value = CacheConfig.CacheNames.PAYMENTS_BY_ORDER,
+            key = "'installment_' + #orderId"
+    )
     public boolean hasInstallment(Long orderId) {
         return paymentRepo.existsByOrder_IdAndType(orderId, PaymentType.INSTALLMENT);
     }
 
+    // ======================================================
+    // ===================== ADD PAYMENT ====================
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.PAYMENTS_BY_ORDER,
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER
+            },
+            allEntries = true
+    )
     public Payment addPayment(Long orderId,
                               BigDecimal amount,
                               String method,
@@ -48,7 +76,6 @@ public class PaymentServiceImpl implements PaymentService {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
-        // không thu tiền khi CANCELLED / DELIVERED
         if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.DELIVERED) {
             throw new IllegalStateException("ORDER_STATUS_NOT_ALLOWED_FOR_PAYMENT");
         }
@@ -75,7 +102,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment saved = paymentRepo.save(p);
 
-        // cập nhật paid / balance
         BigDecimal paidNew = paid.add(amount);
         order.setPaidAmount(paidNew);
         order.setBalanceAmount(total.subtract(paidNew));
@@ -84,19 +110,47 @@ public class PaymentServiceImpl implements PaymentService {
         return saved;
     }
 
+    // ======================================================
+    // =============== ADD PAYMENT (SHORT VERSION) ==========
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.PAYMENTS_BY_ORDER,
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER
+            },
+            allEntries = true
+    )
     public Payment addPayment(Long orderId,
                               BigDecimal amount,
                               String method,
                               String refNo) {
+
         String m = (method == null || method.isBlank()) ? "CASH" : method;
         return addPayment(orderId, amount, m, refNo, null, PaymentType.CASH);
     }
 
+    // ======================================================
+    // ==================== INSTALLMENT =====================
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.PAYMENTS_BY_ORDER,
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER
+            },
+            allEntries = true
+    )
     public Payment createInstallment(Long orderId, int tenorMonths, BigDecimal downPayment) {
+
         if (tenorMonths <= 0) throw new IllegalArgumentException("INVALID_TENOR");
         if (downPayment == null || downPayment.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("INVALID_DOWN_PAYMENT");
@@ -104,7 +158,6 @@ public class PaymentServiceImpl implements PaymentService {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
-        // chỉ NEW hoặc PENDING_ALLOC; cấm CANCELLED/DELIVERED
         if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.DELIVERED) {
             throw new IllegalStateException("ORDER_STATUS_NOT_ALLOWED_FOR_INSTALLMENT");
         }
@@ -112,7 +165,6 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalStateException("ORDER_STATUS_BLOCKED_FOR_INSTALLMENT");
         }
 
-        // một đơn chỉ có 1 kế hoạch trả góp
         if (hasInstallment(orderId)) {
             throw new IllegalStateException("INSTALLMENT_ALREADY_EXISTS");
         }
@@ -138,7 +190,6 @@ public class PaymentServiceImpl implements PaymentService {
         p.setPaidAt(LocalDateTime.now());
         paymentRepo.save(p);
 
-        // cập nhật paid / balance
         BigDecimal paidNew = paid.add(downPayment);
         order.setPaidAmount(paidNew);
         order.setBalanceAmount(total.subtract(paidNew));

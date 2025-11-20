@@ -1,7 +1,10 @@
 package com.uth.ev_dms.service;
 
+import com.uth.ev_dms.config.CacheConfig;
 import com.uth.ev_dms.domain.Promotion;
 import com.uth.ev_dms.repo.PromotionRepo;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,25 +21,55 @@ public class PromotionService {
         this.promotionRepo = promotionRepo;
     }
 
+    // =====================================================
+    // ================ READ – LIST ALL ====================
+    // =====================================================
+
+    @Cacheable(value = CacheConfig.CacheNames.PROMOTIONS_ACTIVE)
     public List<Promotion> getAllPromotions() {
         return promotionRepo.findAll();
     }
 
+    @Cacheable(
+            value = CacheConfig.CacheNames.PROMOTIONS_ACTIVE,
+            key = "#id"
+    )
     public Optional<Promotion> getPromotionById(Long id) {
         return promotionRepo.findById(id);
     }
 
+    // =====================================================
+    // ================== CREATE / UPDATE ==================
+    // =====================================================
+
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.PROMOTIONS_ACTIVE
+            },
+            allEntries = true
+    )
     public Promotion savePromotion(Promotion promotion) {
         return promotionRepo.save(promotion);
     }
 
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.PROMOTIONS_ACTIVE
+            },
+            allEntries = true
+    )
     public void deletePromotion(Long id) {
         promotionRepo.deleteById(id);
     }
 
-    // ========================================
-    // VALIDATION + FILTER
-    // ========================================
+    // =====================================================
+    // ================ VALIDATION + FILTER ================
+    // =====================================================
+
+    @Cacheable(
+            value = CacheConfig.CacheNames.PROMOTIONS_ACTIVE,
+            key = "T(java.util.Objects).hash(#dealerId, #trimId, #region, #today)"
+    )
     public List<Promotion> getValidPromotions(Long dealerId, Long trimId, String region, LocalDate today) {
         return promotionRepo.findAll().stream()
                 .filter(p -> Boolean.TRUE.equals(p.getActive()))
@@ -70,7 +103,10 @@ public class PromotionService {
         return true;
     }
 
-    // Tính tổng giảm
+    // =====================================================
+    // ===================== DISCOUNT ======================
+    // =====================================================
+
     public BigDecimal computeDiscount(BigDecimal quoteTotal, List<Long> promotionIds) {
         BigDecimal total = BigDecimal.ZERO;
         if (promotionIds == null) return total;
@@ -87,10 +123,15 @@ public class PromotionService {
         return total.max(BigDecimal.ZERO);
     }
 
+    @Cacheable(value = CacheConfig.CacheNames.PROMOTIONS_ACTIVE)
     public List<Promotion> findAll() {
         return promotionRepo.findAll();
     }
 
+    @Cacheable(
+            value = CacheConfig.CacheNames.PROMOTIONS_ACTIVE,
+            key = "'quote_' + #dealerId + '_' + #trimId + '_' + #region"
+    )
     public List<Promotion> getValidPromotionsForQuote(Long dealerId, Long trimId, String region) {
         return getValidPromotions(dealerId, trimId, region, LocalDate.now());
     }

@@ -1,5 +1,6 @@
 package com.uth.ev_dms.service.impl;
 
+import com.uth.ev_dms.config.CacheConfig;
 import com.uth.ev_dms.domain.*;
 import com.uth.ev_dms.repo.*;
 import com.uth.ev_dms.service.InventoryService;
@@ -8,6 +9,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,27 +26,30 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class InventoryServiceImpl implements InventoryService {
 
-    // ===== Repos dùng cho ORDER FLOW =====
     private final InventoryRepo inventoryRepo;
     private final InventoryMoveRepo moveRepo;
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
     private final DealerBranchRepo dealerBranchRepo;
 
-    // ===== Repos dùng cho ADMIN INVENTORY =====
     private final InventoryAdjustmentRepo inventoryAdjustmentRepo;
 
     @PersistenceContext
     private EntityManager em;
 
-    // ===============================
-    // ========== ORDER FLOW =========
-    // ===============================
+    // ============================================================
+    // =============== ORDER FLOW FUNCTIONS (WRITE) ================
+    // ============================================================
 
-    /** Allocate cho 1 item (giữ lại cho tương thích cũ) */
     @Override
     @Transactional
+    @CacheEvict(value = {
+            CacheConfig.CacheNames.INVENTORY_BY_BRANCH,
+            CacheConfig.CacheNames.INVENTORY_BY_DEALER,
+            CacheConfig.CacheNames.INVENTORY_LIST
+    }, allEntries = true)
     public boolean allocateForOrder(OrderItem item) {
+
         OrderHdr order = item.getOrder();
         if (order == null || order.getDealerId() == null) {
             throw new IllegalStateException("Order or dealerId not found for item " + item.getId());
@@ -54,12 +60,10 @@ public class InventoryServiceImpl implements InventoryService {
         final int qty       = item.getQty() != null ? item.getQty() : 0;
         if (qty <= 0) return true;
 
-        // Lấy MAIN branch theo dealer
         final Long branchId = dealerBranchRepo.findByDealerId(dealerId)
                 .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
                 .getId();
 
-        // Khóa hàng tồn kho theo branch + trim
         Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
                 .orElseGet(() ->
                         Inventory.builder()
@@ -80,7 +84,6 @@ public class InventoryServiceImpl implements InventoryService {
         inv.setReserved(reserved + qty);
         inventoryRepo.save(inv);
 
-        // Log di chuyển kho (RESERVE)
         moveRepo.save(InventoryMove.builder()
                 .dealerId(dealerId)
                 .trimId(trimId)
@@ -94,13 +97,20 @@ public class InventoryServiceImpl implements InventoryService {
         return true;
     }
 
-    /** Allocate nguyên đơn (all-or-nothing) */
+
     @Override
     @Transactional
+    @CacheEvict(value = {
+            CacheConfig.CacheNames.INVENTORY_BY_BRANCH,
+            CacheConfig.CacheNames.INVENTORY_BY_DEALER,
+            CacheConfig.CacheNames.INVENTORY_LIST
+    }, allEntries = true)
     public void allocateForOrder(Long orderId) {
+
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
         List<OrderItem> items = orderItemRepo.findByOrderId(orderId);
+
         if (items == null || items.isEmpty()) {
             throw new IllegalStateException("Order has no items");
         }
@@ -110,7 +120,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
                 .getId();
 
-        // 1) Pre-check: đảm bảo đủ hàng cho tất cả item
+        // CHECK toàn bộ item
         for (OrderItem it : items) {
             Long trimId = resolveTrimId(it);
             int need = it.getQty() != null ? it.getQty() : 0;
@@ -135,7 +145,7 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
 
-        // 2) Reserve all
+        // RESERVE
         for (OrderItem it : items) {
             if (!allocateForOrder(it)) {
                 throw new IllegalStateException("Allocation failed for item " + it.getId());
@@ -143,10 +153,16 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
-    /** Giao hàng: reserved--, qtyOnHand-- */
+
     @Override
     @Transactional
+    @CacheEvict(value = {
+            CacheConfig.CacheNames.INVENTORY_BY_BRANCH,
+            CacheConfig.CacheNames.INVENTORY_BY_DEALER,
+            CacheConfig.CacheNames.INVENTORY_LIST
+    }, allEntries = true)
     public void shipForOrder(Long orderId) {
+
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
         List<OrderItem> items = orderItemRepo.findByOrderId(orderId);
@@ -157,13 +173,16 @@ public class InventoryServiceImpl implements InventoryService {
                 .getId();
 
         for (OrderItem it : items) {
+
             Long trimId = resolveTrimId(it);
             int qty = it.getQty() != null ? it.getQty() : 0;
             if (qty <= 0) continue;
 
             Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
-                    .orElseThrow(() -> new IllegalStateException("Inventory not found (branch="
-                            + branchId + ", trim=" + trimId + ")"));
+                    .orElseThrow(() ->
+                            new IllegalStateException("Inventory not found (branch="
+                                    + branchId + ", trim=" + trimId + ")")
+                    );
 
             int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
             int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
@@ -174,6 +193,7 @@ public class InventoryServiceImpl implements InventoryService {
 
             inv.setReserved(reserved - qty);
             inv.setQtyOnHand(onHand - qty);
+
             inventoryRepo.save(inv);
 
             moveRepo.save(InventoryMove.builder()
@@ -188,10 +208,16 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
-    /** Hủy đơn / deallocate: giải phóng reserved */
+
     @Override
     @Transactional
+    @CacheEvict(value = {
+            CacheConfig.CacheNames.INVENTORY_BY_BRANCH,
+            CacheConfig.CacheNames.INVENTORY_BY_DEALER,
+            CacheConfig.CacheNames.INVENTORY_LIST
+    }, allEntries = true)
     public void releaseForOrder(Long orderId) {
+
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
         List<OrderItem> items = orderItemRepo.findByOrderId(orderId);
@@ -202,17 +228,20 @@ public class InventoryServiceImpl implements InventoryService {
                 .getId();
 
         for (OrderItem it : items) {
+
             Long trimId = resolveTrimId(it);
-            int qty = (it.getQty() == null) ? 0 : it.getQty();   // ✔ sửa lại dòng này
+
+            int qty = (it.getQty() == null) ? 0 : it.getQty();
             if (qty <= 0) continue;
 
             Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
-                    .orElseThrow(() -> new IllegalStateException("Inventory not found (branch="
-                            + branchId + ", trim=" + trimId + ")"));
+                    .orElseThrow(() ->
+                            new IllegalStateException("Inventory not found (branch="
+                                    + branchId + ", trim=" + trimId + ")")
+                    );
 
             int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
 
-            // ✔ CHỈ GIẢM RESERVED, KHÔNG ĐỤNG QTY_ON_HAND
             inv.setReserved(Math.max(0, reserved - qty));
             inventoryRepo.save(inv);
 
@@ -229,43 +258,59 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
 
-
-    // ===============================
-    // ========== ADMIN FLOW =========
-    // ===============================
+    // ============================================================
+    // ======================= ADMIN INVENTORY =====================
+    // ============================================================
 
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_LIST)
     public List<Inventory> findAll() {
         return inventoryRepo.findAll();
     }
 
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_ONE, key = "#id")
     public Optional<Inventory> findById(Long id) {
         return inventoryRepo.findById(id);
     }
 
     @Override
+    @CacheEvict(value = {
+            CacheConfig.CacheNames.INVENTORY_LIST,
+            CacheConfig.CacheNames.INVENTORY_ONE,
+            CacheConfig.CacheNames.INVENTORY_BY_BRANCH,
+            CacheConfig.CacheNames.INVENTORY_BY_DEALER
+    }, allEntries = true)
     public Inventory save(Inventory inv) {
         return inventoryRepo.save(inv);
     }
 
     @Override
+    @CacheEvict(value = {
+            CacheConfig.CacheNames.INVENTORY_LIST,
+            CacheConfig.CacheNames.INVENTORY_ONE,
+            CacheConfig.CacheNames.INVENTORY_BY_BRANCH,
+            CacheConfig.CacheNames.INVENTORY_BY_DEALER
+    }, allEntries = true)
     public void delete(Long id) {
         inventoryRepo.deleteById(id);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = {
+            CacheConfig.CacheNames.INVENTORY_LIST,
+            CacheConfig.CacheNames.INVENTORY_BY_BRANCH,
+            CacheConfig.CacheNames.INVENTORY_BY_DEALER
+    }, allEntries = true)
     public Inventory createInventory(Inventory inv, String createdBy) {
 
-        // Nếu là kho tổng (HQ)
         if ("HQ".equalsIgnoreCase(inv.getLocationType())) {
-            inv.setDealer(null);      // HQ không thuộc dealer
-            inv.setBranch(null);      // HQ không có branch
+            inv.setDealer(null);
+            inv.setBranch(null);
 
             Inventory saved = inventoryRepo.save(inv);
 
-            // Log initial stock nếu có
             Integer onHand = saved.getQtyOnHand() == null ? 0 : saved.getQtyOnHand();
             if (onHand > 0) {
                 LocalDateTime now = LocalDateTime.now();
@@ -284,14 +329,10 @@ public class InventoryServiceImpl implements InventoryService {
             return saved;
         }
 
-        // ============================
-        // ===== KHO CHI NHÁNH ========
-        // ============================
         if (inv.getDealer() == null || inv.getDealer().getId() == null) {
             throw new IllegalStateException("Dealer is required for BRANCH inventory");
         }
 
-        // Nếu không truyền branch → tự gán Main branch
         if (inv.getBranch() == null || inv.getBranch().getId() == null) {
             Long dealerId = inv.getDealer().getId();
             DealerBranch main = dealerBranchRepo.findByDealerId(dealerId)
@@ -319,12 +360,19 @@ public class InventoryServiceImpl implements InventoryService {
         return saved;
     }
 
-
     @Override
     @Transactional
+    @CacheEvict(value = {
+            CacheConfig.CacheNames.INVENTORY_LIST,
+            CacheConfig.CacheNames.INVENTORY_BY_DEALER,
+            CacheConfig.CacheNames.INVENTORY_BY_BRANCH
+    }, allEntries = true)
     public Inventory updateInventory(InventoryUpdateRequest req, String updatedBy) {
+
         Inventory current = inventoryRepo.findById(req.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Inventory not found: " + req.getId()));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Inventory not found: " + req.getId())
+                );
 
         Integer oldQty = current.getQtyOnHand() == null ? 0 : current.getQtyOnHand();
         Integer newQty = req.getQtyOnHand() == null ? 0 : req.getQtyOnHand();
@@ -351,14 +399,19 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_ADJUSTMENTS, key = "#inventoryId")
     public List<InventoryAdjustment> getAdjustmentsForInventory(Long inventoryId) {
         return inventoryAdjustmentRepo.findByInventoryIdOrderByCreatedAtEventDesc(inventoryId);
     }
 
+
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_BY_DEALER, key = "#dealerId")
     public Map<Long, Integer> getStockByTrimForDealer(Long dealerId) {
+
         var invList = inventoryRepo.findByDealer_Id(dealerId);
         Map<Long, Integer> stockMap = new HashMap<>();
+
         for (var inv : invList) {
             if (inv.getTrim() == null) continue;
             Long trimId = inv.getTrim().getId();
@@ -368,16 +421,10 @@ public class InventoryServiceImpl implements InventoryService {
         return stockMap;
     }
 
-    // ===== Helper =====
-    private Long resolveTrimId(OrderItem item) {
-        if (item.getTrimId() != null) return item.getTrimId();
-        if (item.getVehicleId() != null) return item.getVehicleId(); // fallback legacy
-        throw new IllegalStateException("No trim or vehicle id on order item " + item.getId());
-    }
-
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_BY_BRANCH, key = "#branchId")
     public Map<Long,Integer> getStockByTrimForBranch(Long branchId) {
-        // tồn khả dụng = qty_on_hand - reserved, theo từng trim của branch
+
         var rows = inventoryRepo.sumAvailableByTrimAtBranch(branchId);
 
         Map<Long,Integer> map = new HashMap<>();
@@ -399,4 +446,14 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElse(0);
     }
 
+
+    // ============================================================
+    // ========================= HELPERS ===========================
+    // ============================================================
+
+    private Long resolveTrimId(OrderItem item) {
+        if (item.getTrimId() != null) return item.getTrimId();
+        if (item.getVehicleId() != null) return item.getVehicleId();
+        throw new IllegalStateException("No trim or vehicle id on order item " + item.getId());
+    }
 }

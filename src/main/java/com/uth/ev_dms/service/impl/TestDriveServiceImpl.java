@@ -1,10 +1,10 @@
 package com.uth.ev_dms.service.impl;
 
 import com.uth.ev_dms.auth.User;
+import com.uth.ev_dms.config.CacheConfig;
 import com.uth.ev_dms.domain.*;
 import com.uth.ev_dms.repo.TestDriveRepo;
 
-// ⭐ THÊM IMPORT — KHÔNG SỬA IMPORT CŨ
 import com.uth.ev_dms.repo.UserRepo;
 import com.uth.ev_dms.repo.CustomerRepo;
 import com.uth.ev_dms.repo.VehicleRepo;
@@ -13,6 +13,8 @@ import com.uth.ev_dms.repo.TrimRepo;
 import com.uth.ev_dms.service.TestDriveService;
 import com.uth.ev_dms.service.dto.TestDriveCreateForm;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,77 +25,170 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TestDriveServiceImpl implements TestDriveService {
 
     private final TestDriveRepo repo;
 
-    // ⭐⭐⭐ THÊM 5 REPO — KHÔNG ĐỤNG CODE KHÁC
     private final UserRepo userRepo;
     private final CustomerRepo customerRepo;
     private final VehicleRepo vehicleRepo;
     private final TrimRepo trimRepo;
     private final TestDriveRepo testDriveRepo;
 
+    // ======================================================
+    // ====================== FIND ALL ======================
+    // ======================================================
+
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.TESTDRIVES_MANAGER)
     public List<TestDrive> findAll() {
         return repo.findAllByOrderByScheduleAt();
     }
 
+    // ======================================================
+    // ================== LIST (MANAGER FILTER) =============
+    // ======================================================
+
     @Override
+    @Cacheable(
+            value = CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+            key = "T(java.util.Objects).hash(#from, #to, #status)"
+    )
     public List<TestDrive> list(LocalDate from, LocalDate to, TestDriveStatus status) {
+
         if (from != null && to != null) {
             LocalDateTime start = from.atStartOfDay();
             LocalDateTime end = to.atTime(LocalTime.MAX);
+
             return (status != null)
                     ? repo.findByScheduleAtBetweenAndStatusOrderByScheduleAt(start, end, status)
                     : repo.findByScheduleAtBetweenOrderByScheduleAt(start, end);
         }
+
         if (status != null) return repo.findByStatusOrderByScheduleAt(status);
+
         return repo.findAllByOrderByScheduleAt();
     }
 
+    // ======================================================
+    // ================= FIND MINE (ASSIGNED STAFF) =========
+    // ======================================================
+
     @Override
+    @Cacheable(
+            value = CacheConfig.CacheNames.TESTDRIVES_BY_OWNER,
+            key = "'assigned_' + #staffId"
+    )
     public List<TestDrive> findMineAssigned(Long staffId) {
         return repo.findByAssignedStaff_IdOrderByScheduleAt(staffId);
     }
 
+    // ======================================================
+    // ================= FIND MINE (CREATED BY STAFF) ======
+    // ======================================================
+
     @Override
+    @Cacheable(
+            value = CacheConfig.CacheNames.TESTDRIVES_BY_OWNER,
+            key = "'created_' + #ownerId"
+    )
+    public List<TestDrive> findMineCreated(Long ownerId) {
+        return repo.findByCreatedBy_IdOrderByScheduleAt(ownerId);
+    }
+
+    // ======================================================
+    // ===================== FIND BY ID =====================
+    // ======================================================
+
+    @Override
+    @Cacheable(
+            value = CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+            key = "'id_' + #id"
+    )
     public TestDrive findById(Long id) {
         return repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Khong tim thay TestDrive ID=" + id));
     }
 
     @Override
-    public List<TestDrive> findMineCreated(Long ownerId) {
-        return repo.findByCreatedBy_IdOrderByScheduleAt(ownerId);
+    @Cacheable(
+            value = CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+            key = "'get_' + #id"
+    )
+    public TestDrive get(Long id) {
+        return repo.findById(id).orElseThrow();
     }
+
+    // ======================================================
+    // ====================== APPROVE =======================
+    // ======================================================
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+                    CacheConfig.CacheNames.TESTDRIVES_BY_OWNER
+            },
+            allEntries = true
+    )
     public void approve(Long id) {
         TestDrive td = repo.findById(id).orElseThrow();
         td.setStatus(TestDriveStatus.CONFIRMED);
     }
 
+    // ======================================================
+    // ===================== COMPLETE =======================
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+                    CacheConfig.CacheNames.TESTDRIVES_BY_OWNER
+            },
+            allEntries = true
+    )
     public void complete(Long id) {
         TestDrive td = repo.findById(id).orElseThrow();
         td.setStatus(TestDriveStatus.COMPLETED);
     }
 
+    // ======================================================
+    // ====================== CANCEL ========================
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+                    CacheConfig.CacheNames.TESTDRIVES_BY_OWNER
+            },
+            allEntries = true
+    )
     public void cancel(Long id) {
         TestDrive td = repo.findById(id).orElseThrow();
         td.setStatus(TestDriveStatus.CANCELLED);
     }
 
+    // ======================================================
+    // ======================== SAVE ========================
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+                    CacheConfig.CacheNames.TESTDRIVES_BY_OWNER
+            },
+            allEntries = true
+    )
     public TestDrive save(TestDrive td) {
 
-        // ⭐ GIỮ NGUYÊN CODE CŨ
         if (td.getStatus() == null) {
             td.setStatus(TestDriveStatus.REQUESTED);
         }
@@ -105,48 +200,57 @@ public class TestDriveServiceImpl implements TestDriveService {
         return repo.save(td);
     }
 
-    @Override
-    public TestDrive get(Long id) {
-        return repo.findById(id).orElseThrow();
-    }
+    // ======================================================
+    // ======================= DELETE =======================
+    // ======================================================
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+                    CacheConfig.CacheNames.TESTDRIVES_BY_OWNER
+            },
+            allEntries = true
+    )
     public void delete(Long id) {
         repo.deleteById(id);
     }
 
+    // ======================================================
+    // ====================== CREATE BY STAFF ================
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.TESTDRIVES_MANAGER,
+                    CacheConfig.CacheNames.TESTDRIVES_BY_OWNER
+            },
+            allEntries = true
+    )
     public void createByStaff(TestDriveCreateForm form, Long staffId) {
 
-        // ⭐ GIỮ NGUYÊN TOÀN BỘ LOGIC CŨ
-
-        // Lấy staff
         User staff = userRepo.findById(staffId)
                 .orElseThrow(() -> new RuntimeException("Staff không tồn tại"));
 
-        // Lấy khách hàng
         Customer customer = customerRepo.findById(form.getCustomerId())
                 .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
 
-        // Lấy xe + trim
         Vehicle vehicle = vehicleRepo.findById(form.getVehicleId())
                 .orElseThrow(() -> new RuntimeException("Xe không tồn tại"));
 
         Trim trim = trimRepo.findById(form.getTrimId())
                 .orElseThrow(() -> new RuntimeException("Phiên bản không tồn tại"));
 
-        // Gộp ngày + giờ
         LocalDateTime scheduleAt = LocalDateTime.parse(
                 form.getDate() + "T" + form.getTime()
         );
 
-        // ⭐ THÊM — KHÔNG ĐỤNG scheduleAt cũ
         LocalDateTime startTime = scheduleAt;
-        LocalDateTime endTime = scheduleAt.plusMinutes(30); // slot 30 phút
+        LocalDateTime endTime = scheduleAt.plusMinutes(30);
 
-        // ⭐ THÊM CHECK TRÙNG LỊCH — KHÔNG ĐỤNG CODE CŨ
         List<TestDrive> overlaps = testDriveRepo.findOverlap(
                 form.getVehicleId(),
                 startTime,
@@ -156,7 +260,6 @@ public class TestDriveServiceImpl implements TestDriveService {
             throw new RuntimeException("Xe này đã bị đặt trong khung giờ này!");
         }
 
-        // Tạo entity
         TestDrive td = TestDrive.builder()
                 .customerName(customer.getTen())
                 .customerPhone(customer.getSdt())
@@ -168,11 +271,8 @@ public class TestDriveServiceImpl implements TestDriveService {
                 .assignedStaff(staff)
                 .createdBy(staff)
                 .dealer(staff.getDealer())
-
-                // ⭐ THÊM — KHÔNG ĐỤNG CODE CŨ
                 .startTime(startTime)
                 .endTime(endTime)
-
                 .build();
 
         testDriveRepo.save(td);

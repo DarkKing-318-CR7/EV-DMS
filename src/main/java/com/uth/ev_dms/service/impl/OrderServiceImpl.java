@@ -1,5 +1,6 @@
 package com.uth.ev_dms.service.impl;
 
+import com.uth.ev_dms.config.CacheConfig;
 import com.uth.ev_dms.config.RabbitConfig;
 import com.uth.ev_dms.domain.OrderHdr;
 import com.uth.ev_dms.domain.OrderItem;
@@ -12,9 +13,11 @@ import com.uth.ev_dms.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,22 +34,52 @@ public class OrderServiceImpl implements OrderService {
     private final QuoteRepo quoteRepo;
     private final UserRepo userRepo;
 
-    // 🟢 Thêm MQ vào service
     private final RabbitTemplate rabbitTemplate;
 
+    // ======================================================
+    // ========================== GET ======================
+    // ======================================================
+
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.ORDERS_MANAGER, key = "#id")
     public OrderHdr findById(Long id) {
         return orderRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + id));
     }
 
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.ORDER_ITEMS, key = "#id")
     public List<OrderItem> findItems(Long id) {
         return orderItemRepo.findByOrderId(id);
     }
 
     @Override
+    @Cacheable(value = CacheConfig.CacheNames.ORDERS_MY, key = "#staffId")
+    public List<OrderHdr> findMine(Long staffId) {
+        return orderRepo.findBySalesStaffIdOrderByIdDesc(staffId);
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.CacheNames.ORDERS_DEALER, key = "#dealerId")
+    public List<OrderHdr> findAllForDealer(Long dealerId) {
+        return orderRepo.findAllForDealer(dealerId);
+    }
+
+    // ======================================================
+    // ======================= CREATE =======================
+    // ======================================================
+
+    @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER,
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDER_ITEMS
+            },
+            allEntries = true
+    )
     public OrderHdr createFromQuote(Long quoteId, Long dealerIdIgnored, Long customerIdIgnored, Long staffIdIgnored) {
 
         var quote = quoteRepo.findById(quoteId)
@@ -60,9 +93,7 @@ public class OrderServiceImpl implements OrderService {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getName() != null) {
-                userRepo.findByUsername(auth.getName()).ifPresent(u -> {
-                    o.setSalesStaffId(u.getId());
-                });
+                userRepo.findByUsername(auth.getName()).ifPresent(u -> o.setSalesStaffId(u.getId()));
             }
         } catch (Exception ignore) {}
 
@@ -82,11 +113,25 @@ public class OrderServiceImpl implements OrderService {
         return orderRepo.save(o);
     }
 
+    // ======================================================
+    // ================ SUBMIT FOR ALLOC ====================
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_DEALER,
+                    CacheConfig.CacheNames.ORDERS_MY
+            },
+            allEntries = true
+    )
     public OrderHdr submitForAllocation(Long orderId) {
+
         OrderHdr o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
+
         if (o.getStatus() != OrderStatus.NEW) {
             throw new BusinessException("INVALID_STATE", "Only NEW orders can be submitted");
         }
@@ -97,13 +142,26 @@ public class OrderServiceImpl implements OrderService {
         }
 
         o.setStatus(OrderStatus.PENDING_ALLOC);
-
         return orderRepo.save(o);
     }
 
+    // ======================================================
+    // ====================== ALLOCATE ======================
+    // ======================================================
+
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER,
+                    CacheConfig.CacheNames.ORDER_ITEMS
+            },
+            allEntries = true
+    )
     public OrderHdr allocate(Long orderId) {
+
         OrderHdr o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
 
@@ -116,21 +174,15 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("NO_ITEMS", "Order has no items");
         }
 
-        // 🔹 Allocate tồn kho
         inventoryService.allocateForOrder(orderId);
 
-        // 🔹 Cập nhật trạng thái đơn
         o.setStatus(OrderStatus.ALLOCATED);
-        if (o.getAllocatedAt() == null) {
-            o.setAllocatedAt(LocalDateTime.now());
-        }
+        if (o.getAllocatedAt() == null) o.setAllocatedAt(LocalDateTime.now());
 
         OrderHdr saved = orderRepo.save(o);
 
-        // 🔹 User nhận thông báo = salesStaffId
         Long userId = saved.getSalesStaffId();
 
-        // 🔹 Gửi MQ Event ORDER_APPROVED
         rabbitTemplate.convertAndSend(
                 RabbitConfig.EXCHANGE_ORDER,
                 RabbitConfig.ROUTING_ORDER_APPROVED,
@@ -143,12 +195,25 @@ public class OrderServiceImpl implements OrderService {
         return saved;
     }
 
+    // ======================================================
+    // ==================== DELIVER =========================
+    // ======================================================
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_DEALER,
+                    CacheConfig.CacheNames.ORDERS_MY
+            },
+            allEntries = true
+    )
     public OrderHdr markDelivered(Long orderId) {
+
         OrderHdr o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
+
         if (o.getStatus() != OrderStatus.ALLOCATED) {
             throw new BusinessException("INVALID_STATE", "Only ALLOCATED orders can be delivered");
         }
@@ -164,28 +229,27 @@ public class OrderServiceImpl implements OrderService {
         inventoryService.shipForOrder(orderId);
 
         o.setStatus(OrderStatus.DELIVERED);
-        if (o.getDeliveredAt() == null) {
-            o.setDeliveredAt(LocalDateTime.now());
-        }
+        if (o.getDeliveredAt() == null) o.setDeliveredAt(LocalDateTime.now());
+
         return orderRepo.save(o);
     }
 
-    @Override
-    public List<OrderHdr> findMine(Long staffId) {
-        return orderRepo.findBySalesStaffIdOrderByIdDesc(staffId);
-    }
-
-    @Override
-    public List<OrderHdr> findAllForDealer(Long dealerId) {
-        return orderRepo.findAllForDealer(dealerId);
-    }
-
-    private String generateOrderNo() {
-        return "ODR-" + System.currentTimeMillis();
-    }
+    // ======================================================
+    // ======================= CANCEL ========================
+    // ======================================================
 
     @Transactional
+    @Override
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER
+            },
+            allEntries = true
+    )
     public OrderHdr cancel(Long orderId) {
+
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -199,7 +263,16 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER
+            },
+            allEntries = true
+    )
     public OrderHdr cancelByDealer(Long orderId, Long dealerId, Long actorId) {
+
         var o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
@@ -220,7 +293,16 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER
+            },
+            allEntries = true
+    )
     public OrderHdr deallocateByEvm(Long orderId, Long actorId, String reason) {
+
         var o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
@@ -229,14 +311,23 @@ public class OrderServiceImpl implements OrderService {
         }
 
         inventoryService.releaseForOrder(orderId);
-        o.setStatus(OrderStatus.PENDING_ALLOC);
 
+        o.setStatus(OrderStatus.PENDING_ALLOC);
         return orderRepo.save(o);
     }
 
     @Transactional
     @Override
+    @CacheEvict(
+            value = {
+                    CacheConfig.CacheNames.ORDERS_MANAGER,
+                    CacheConfig.CacheNames.ORDERS_MY,
+                    CacheConfig.CacheNames.ORDERS_DEALER
+            },
+            allEntries = true
+    )
     public OrderHdr cancelByEvm(Long orderId, Long actorId, String reason) {
+
         var o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
@@ -252,5 +343,13 @@ public class OrderServiceImpl implements OrderService {
 
         o.setStatus(OrderStatus.CANCELLED);
         return orderRepo.save(o);
+    }
+
+    // ======================================================
+    // ========================= UTIL =======================
+    // ======================================================
+
+    private String generateOrderNo() {
+        return "ODR-" + System.currentTimeMillis();
     }
 }
