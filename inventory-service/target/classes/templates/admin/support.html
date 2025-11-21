@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="pageTitle=${pageTitle}, active=${active}"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <div class="container mt-4">
+
+        <h2 class="text-center mb-3">Liên hệ hỗ trợ</h2>
+        <p class="text-center text-muted mb-4">
+            Nếu bạn gặp sự cố với hệ thống EV-DMS Dealer, hãy gửi yêu cầu hỗ trợ cho bộ phận quản trị.
+        </p>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+
+                <div class="card bg-dark border-0 shadow-sm">
+                    <div class="card-body">
+
+                        <div th:if="${success}" class="alert alert-success py-2" th:text="${success}"></div>
+                        <div th:if="${error}" class="alert alert-danger py-2" th:text="${error}"></div>
+
+                        <form th:action="@{/support}" method="post">
+
+                            <div class="mb-3">
+                                <label class="form-label">Họ tên</label>
+                                <input type="text" name="name"
+                                       class="form-control form-control-sm"
+                                       placeholder="Nhập họ tên của bạn" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email"
+                                       class="form-control form-control-sm"
+                                       placeholder="you@example.com" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Nội dung cần hỗ trợ</label>
+                                <textarea name="message" rows="4"
+                                          class="form-control form-control-sm"
+                                          placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
+                                          required></textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a th:href="@{/}" class="btn btn-outline-light btn-sm">
+                                    ← Quay lại
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-sm px-3">
+                                    Gửi yêu cầu
+                                </button>
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</main>
+
+</html>

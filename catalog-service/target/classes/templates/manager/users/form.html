@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
+
+    <div class="container py-4">
+
+        <h2 class="text-white mb-4">Tạo tài khoản Staff</h2>
+
+        <div class="card bg-dark text-light p-4" style="border-radius: 16px;
+            background: rgba(30,30,40,0.75);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(6px);">
+
+            <form th:action="@{/manager/users/create}" method="post" th:object="${user}">
+
+                <div class="mb-3">
+                    <label class="form-label">Username (email đăng nhập)</label>
+                    <input th:field="*{username}" class="form-control bg-dark text-light">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mật khẩu</label>
+                    <input type="password" th:field="*{password}" class="form-control bg-dark text-light">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Họ tên</label>
+                    <input th:field="*{fullName}" class="form-control bg-dark text-light">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input th:field="*{email}" class="form-control bg-dark text-light">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
+                <a href="/manager/users" class="btn btn-secondary">Quay lại</a>
+
+            </form>
+        </div>
+    </div>
+
+</main>
+</html>

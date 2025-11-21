@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav class="sidebar" sec:authorize="hasRole('DEALER_MANAGER')" th:fragment="sidebar(active)">
+    <ul>
+        <li th:classappend="${active=='dashboard' ? 'active' : ''}">
+            <a th:href="@{/dealer/home}">Dashboard</a>
+        </li>
+
+        <li th:classappend="${active=='vehicles' ? 'active' : ''}">
+            <a th:href="@{/dealer/vehicles}">Vehicles</a>
+        </li>
+
+        <li th:classappend="${active=='customers' ? 'active' : ''}">
+            <a th:href="@{/manager/customers}">Customers</a>
+        </li>
+
+        <li th:classappend="${active=='testdrive' ? 'active' : ''}">
+            <a th:href="@{/manager/testdrives}">Test Drive</a>
+        </li>
+
+        <li th:classappend="${active=='quotes' ? 'active' : ''}">
+            <a th:href="@{/dealer/quotes/pending}">Quotes (Pending/All)</a>
+        </li>
+
+        <li th:classappend="${active=='orders' ? 'active' : ''}">
+            <a th:href="@{/dealer/orders}">Orders (Pending/All)</a>
+
+        </li>
+
+
+        <li th:classappend="${active=='promotions' ? 'active' : ''}">
+            <a th:href="@{/manager/promotions}">Promotions (Apply)</a>
+        </li>
+
+        <li th:classappend="${active=='reports' ? 'active' : ''}">
+            <a th:href="@{/reports}">Reports (Branch)</a>
+        </li>
+
+        <li th:classappend="${active=='users' ? 'active' : ''}">
+            <a th:href="@{/manager/users}">Users (Dealer)</a>
+        </li>
+
+        <li th:classappend="${active=='settings' ? 'active' : ''}">
+            <a th:href="@{/manager/settings}">Settings (Dealer Profile)</a>
+        </li>
+
+        <li th:classappend="${active=='support' ? 'active' : ''}">
+            <a th:href="@{/support}">Support</a>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>

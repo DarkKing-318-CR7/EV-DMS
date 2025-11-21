@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='orders', pageTitle='Đơn của tôi'"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Đơn của tôi • Dealer</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+        <style>
+
+            /* ===== Fix: Tách màu thanh trên cùng Dealer (navbar) ===== */
+            .navbar, .topbar, header, .dealer-header {
+                background: rgba(0,0,0,0.55) !important;
+                backdrop-filter: blur(12px) !important;
+                border-bottom: 1px solid rgba(255,255,255,0.15) !important;
+            }
+
+            .navbar a, .topbar a, .dealer-header a,
+            .navbar span, .topbar span, .dealer-header span {
+                color: #e5e7eb !important;
+            }
+
+            /* ===== Page-scope only ===== */
+            .wrap {
+                max-width: 1100px;
+                margin: 24px auto 60px;
+                background: rgba(255,255,255,.05);
+                border: 1px solid rgba(255,255,255,.08);
+                border-radius: 18px;
+                box-shadow: 0 10px 30px rgba(0,0,0,.45);
+                backdrop-filter: blur(10px);
+            }
+            .wrap-header {
+                padding: 22px 26px 0;
+            }
+            .eyebrow {
+                display:inline-block; font-size:14px; letter-spacing:.12em; text-transform:uppercase;
+                color:#a3b3ff; background:rgba(99,102,241,.12); border:1px solid rgba(99,102,241,.35);
+                padding:6px 10px; border-radius:8px;
+            }
+            .title {
+                margin: 14px 0 6px; font-weight:700; font-size:28px; color:#e8ecff;
+                text-shadow:0 1px 0 rgba(0,0,0,.35);
+            }
+            .tabs {
+                display:flex; gap:10px; align-items:center; margin-bottom:18px;
+            }
+            .tab {
+                color:#cbd5e1; text-decoration:none; padding:8px 12px; border-radius:10px;
+                border:1px solid rgba(255,255,255,.1);
+                background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+            }
+            .tab.active {
+                color:#0b1220; background:#a5b4fc; border-color:#a5b4fc; font-weight:600;
+            }
+            .pill {
+                font-size:12px; color:#e2e8f0; background:rgba(148,163,184,.25);
+                border:1px solid rgba(148,163,184,.45); padding:4px 8px; border-radius:999px;
+            }
+
+            .table-wrap { padding: 0 16px 18px; }
+            .glass-table {
+                width:100%; border-collapse:separate; border-spacing:0 10px;
+            }
+            .glass-table thead th {
+                font-weight:600; color:#a5b4fc; padding:12px 14px;
+                border-bottom:1px solid rgba(255,255,255,.12);
+                position:sticky; top:0; backdrop-filter: blur(6px);
+                background: rgba(15,23,42,.6);
+            }
+            .glass-table tbody tr { transition: .18s; }
+            .glass-table tbody td {
+                padding:12px 14px; background:rgba(255,255,255,.05);
+                border-top:1px solid rgba(255,255,255,.06);
+                border-bottom:1px solid rgba(255,255,255,.06);
+            }
+            .glass-table tbody tr:hover td { background:rgba(59,130,246,.16); }
+            .glass-table tbody td:first-child { border-left:1px solid rgba(255,255,255,.06); border-radius:10px 0 0 10px; }
+            .glass-table tbody td:last-child  { border-right:1px solid rgba(255,255,255,.06); border-radius:0 10px 10px 0; }
+
+            .badge-pill { border-radius:999px; padding:.38rem .65rem; font-weight:600; font-size:.78rem; }
+            .st-new{    background:#38bdf8; color:#0b1220; }
+            .st-pend{   background:#fbbf24; color:#1f2937; }
+            .st-alloc{  background:#60a5fa; color:#0b1220; }
+            .st-done{   background:#22c55e; color:#072b14; }
+            .st-cancel{ background:#9ca3af; color:#111827; }
+
+            .btn-outline-primary.btn-sm {
+                border-radius:10px; padding:6px 10px; font-weight:600;
+            }
+
+        </style>
+    </head>
+
+    <body>
+    <section class="wrap">
+        <div class="wrap-header">
+            <span class="eyebrow">EV-DMS</span>
+            <div class="d-flex align-items-center justify-content-between">
+                <h2 class="title">Đơn của tôi</h2>
+                <span class="pill" th:text="'Số lượng: ' + (${orders} != null ? ${#lists.size(orders)} : 0)">Số lượng: 0</span>
+            </div>
+            <div class="tabs">
+                <a class="tab active" th:href="@{/dealer/orders/my}">
+                    <i class="bi bi-person-check me-1"></i>Đơn của tôi
+                </a>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <div class="table-responsive">
+                <table class="glass-table align-middle">
+                    <thead>
+                    <tr>
+                        <th style="width:80px">#</th>
+                        <th>Khách hàng</th>
+                        <th style="width:170px">Trạng thái</th>
+                        <th class="text-end" style="width:190px">Tổng tiền</th>
+                        <th style="width:210px">Tạo lúc</th>
+                        <th class="text-end" style="width:120px"></th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="o : ${orders}">
+                        <td th:text="${o.id}">1</td>
+
+                        <td th:text="${(o.customerName != null and !#strings.isEmpty(o.customerName)) ? o.customerName : o.customerId}">
+                            Nguyễn Văn A
+                        </td>
+
+                        <td>
+                            <th:block th:switch="${o.status}">
+                                <span class="badge badge-pill st-new"    th:case="${T(com.uth.ev_dms.domain.OrderStatus).NEW}"            th:text="${o.status}">NEW</span>
+                                <span class="badge badge-pill st-pend"   th:case="${T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}" th:text="${o.status}">PENDING_ALLOC</span>
+                                <span class="badge badge-pill st-alloc"  th:case="${T(com.uth.ev_dms.domain.OrderStatus).ALLOCATED}"     th:text="${o.status}">ALLOCATED</span>
+                                <span class="badge badge-pill st-done"   th:case="${T(com.uth.ev_dms.domain.OrderStatus).DELIVERED}"     th:text="${o.status}">DELIVERED</span>
+                                <span class="badge badge-pill st-cancel" th:case="${T(com.uth.ev_dms.domain.OrderStatus).CANCELLED}"     th:text="${o.status}">CANCELLED</span>
+                                <span class="badge badge-pill bg-dark"   th:case="*" th:text="${o.status != null ? o.status : 'UNKNOWN'}">UNKNOWN</span>
+                            </th:block>
+                        </td>
+
+                        <td class="text-end"
+                            th:text="${#numbers.formatDecimal((o.totalAmount != null ? o.totalAmount : 0), 0, 'POINT', 0, 'COMMA')}">0</td>
+
+                        <td th:text="${o.createdAt != null ? #temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm') : '--'}">--</td>
+
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" th:href="@{|/dealer/orders/${o.id}|}">
+                                <i class="bi bi-box-arrow-up-right"></i> Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${orders == null or #lists.isEmpty(orders)}">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            Chưa có đơn nào
+                        </td>
+                    </tr>
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </section>
+    </body>
+
+</main>
+</html>

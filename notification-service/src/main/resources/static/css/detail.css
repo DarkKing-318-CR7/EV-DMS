@@ -1,0 +1,125 @@
+/* --- Vehicle Detail Page --- */
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.page-header .title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.page-header .subtitle {
+    color: #ccc;
+    margin-bottom: 10px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Card layout */
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    margin-bottom: 25px;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Vehicle info grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px 30px;
+    font-size: 0.95rem;
+}
+
+.info-grid label {
+    font-weight: 600;
+    color: #bbb;
+    margin-right: 6px;
+}
+
+.info-grid span {
+    color: #fff;
+}
+
+/* Empty trims message */
+.empty-state {
+    text-align: center;
+    padding: 25px;
+    color: #ccc;
+}
+
+.empty-state a {
+    color: #a78bfa;
+    font-weight: 600;
+}
+
+/* Table styling */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.table th, .table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-align: left;
+    color: #eee;
+}
+
+.table th {
+    background: rgba(255,255,255,0.05);
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-outline {
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+}
+
+.btn-outline:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.btn-primary {
+    background: #6366f1;
+    color: #fff;
+}
+
+.btn-gradient {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff;
+}
+
+.btn-gradient:hover {
+    opacity: 0.9;
+}

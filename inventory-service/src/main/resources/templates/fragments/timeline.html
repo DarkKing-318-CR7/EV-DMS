@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Scoped để không ảnh hưởng layout cũ */
+        .td-timeline{border-left:3px solid #e5e7eb;margin-left:12px;padding-left:16px}
+        .td-timeline .item{position:relative;margin-bottom:12px}
+        .td-timeline .item::before{content:'';position:absolute;left:-22px;top:4px;width:10px;height:10px;background:#0d6efd;border-radius:50%}
+        .td-timeline .title{font-weight:600}
+        .td-muted{opacity:.7}
+    </style>
+</head>
+<body>
+<!-- order_timeline: truyền vào order, payments (và tùy chọn events nếu sau này có) -->
+<div th:fragment="order_timeline (order, payments, events)">
+    <div class="td-timeline">
+        <!-- 1) Tạo đơn -->
+        <div class="item">
+            <div class="title">Tạo đơn</div>
+            <div class="td-muted" th:text="${#temporals.format(order?.createdAt, 'yyyy-MM-dd HH:mm') ?: '—'}">—</div>
+        </div>
+
+        <!-- 2) Đã submit (suy luận: khác NEW) -->
+        <div class="item" th:if="${order != null and order.status != T(com.uth.ev_dms.domain.OrderStatus).NEW}">
+            <div class="title">Đã submit</div>
+            <div class="td-muted">
+                <!-- Nếu bạn có submittedAt thì đổi sang order.submittedAt -->
+                <!-- Mặc định không có thời gian cụ thể thì để dấu '—' -->
+                <span>—</span>
+            </div>
+        </div>
+
+        <!-- 3) Chờ allocate -->
+        <div class="item" th:if="${order != null and order.status == T(com.uth.ev_dms.domain.OrderStatus).PENDING_ALLOC}">
+            <div class="title">Chờ allocate</div>
+            <div class="td-muted">—</div>
+        </div>
+
+        <!-- 4) Đã allocate -->
+        <div class="item" th:if="${order != null and (order.status == T(com.uth.ev_dms.domain.OrderStatus).ALLOCATED or order.status == T(com.uth.ev_dms.domain.OrderStatus).DELIVERED)}">
+            <div class="title">Đã allocate</div>
+            <div class="td-muted">
+                <!-- Nếu bạn có allocatedAt thì thay bằng order.allocatedAt -->
+                <span>—</span>
+            </div>
+        </div>
+
+        <!-- 5) Đã giao -->
+        <div class="item" th:if="${order != null and order.status == T(com.uth.ev_dms.domain.OrderStatus).DELIVERED}">
+            <div class="title">Đã giao xe</div>
+            <div class="td-muted">
+                <!-- Nếu bạn có deliveredAt thì thay bằng order.deliveredAt -->
+                <span>—</span>
+            </div>
+        </div>
+
+        <!-- 6) Đã hủy -->
+        <div class="item" th:if="${order != null and order.status == T(com.uth.ev_dms.domain.OrderStatus).CANCELLED}">
+            <div class="title">Đã hủy</div>
+            <div class="td-muted">
+                <!-- Nếu bạn có cancelledAt thì thay bằng order.cancelledAt -->
+                <span>—</span>
+            </div>
+        </div>
+
+        <!-- 7) Các lần thanh toán -->
+        <div class="item" th:each="p : ${payments}">
+            <div class="title">Thanh toán</div>
+            <div class="td-muted" th:text="${#temporals.format(p?.paidAt, 'yyyy-MM-dd HH:mm') ?: '—'}">—</div>
+        </div>
+
+        <!-- 8) (Tùy chọn) events từ backend nếu sau này có -->
+        <div class="item" th:each="e : ${events}" th:if="${events != null}">
+            <div class="title" th:text="${e.title}">Sự kiện</div>
+            <div class="td-muted" th:text="${#temporals.format(e.at, 'yyyy-MM-dd HH:mm') ?: '—'}">—</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

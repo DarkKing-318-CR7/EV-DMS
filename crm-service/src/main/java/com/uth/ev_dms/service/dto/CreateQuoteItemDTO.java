@@ -1,0 +1,23 @@
+package com.uth.ev_dms.service.dto;
+
+import java.math.BigDecimal;
+
+public class CreateQuoteItemDTO {
+    private Long vehicleId;
+    private Integer quantity;
+    private BigDecimal unitPrice;
+    private Long trimId;
+
+    public Long getVehicleId() { return vehicleId; }
+    public void setVehicleId(Long vehicleId) { this.vehicleId = vehicleId; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public BigDecimal getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+
+    public Long getTrimId() { return trimId; }
+    public void setTrimId(Long trimId) { this.trimId = trimId; }
+
+}

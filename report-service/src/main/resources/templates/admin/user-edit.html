@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='vehicles', pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${userForm.id} != null ? 'Edit User' : 'New User'">User</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        form { max-width: 720px }
+        label { display:block; margin-top: 12px; font-weight: 600; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .actions { margin-top: 20px; display:flex; gap:10px }
+        .btn { padding: 8px 14px; border: 1px solid #ccc; cursor:pointer }
+        .btn.primary { background:#007bff; color:#fff; border-color:#007bff }
+        .hint { color:#666; font-size: 12px }
+    </style>
+</head>
+<body>
+
+<h1 th:text="${userForm.id} != null ? 'Edit User' : 'New User'">User</h1>
+
+<!-- FORM CREATE -->
+<form th:if="${userForm.id} == null" th:action="@{/admin/user-mgmt}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <label>Username</label>
+    <input name="username" th:value="${userForm.username}"/>
+
+    <div class="row">
+        <div>
+            <label>Full name</label>
+            <input name="fullName" th:value="${userForm.fullName}"/>
+        </div>
+        <div>
+            <label>Email</label>
+            <input name="email" type="email" th:value="${userForm.email}"/>
+        </div>
+    </div>
+
+    <label>Password</label>
+    <input name="password" type="password"/>
+
+    <div class="row">
+        <div>
+            <label>Role</label>
+            <select name="roleName" id="roleName">
+                <option value="ROLE_ADMIN">ROLE_ADMIN</option>
+                <option value="ROLE_DEALER_MANAGER">ROLE_DEALER_MANAGER</option>
+                <option value="ROLE_DEALER_STAFF">ROLE_DEALER_STAFF</option>
+                <option value="ROLE_EVM_STAFF">ROLE_EVM_STAFF</option>
+            </select>
+        </div>
+        <div>
+            <label>Enabled</label>
+            <select name="enabled" id="enabled">
+                <option value="true"  th:selected="${userForm.enabled} == true">true</option>
+                <option value="false" th:selected="${userForm.enabled} == false">false</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div>
+            <label>Dealer</label>
+            <select name="dealerId" id="dealerId">
+                <option value="0" th:selected="${userForm.dealerId} == null">-- None --</option>
+                <option th:each="d : ${dealers}" th:value="${d.id}" th:text="${d.name}"
+                        th:selected="${userForm.dealerId != null and d.id == userForm.dealerId}"></option>
+            </select>
+        </div>
+        <div>
+            <label>Region</label>
+            <select name="regionId" id="regionId">
+                <option value="0" th:selected="${userForm.regionId} == null">-- None --</option>
+                <option th:each="r : ${regions}" th:value="${r.id}" th:text="${r.name}"
+                        th:selected="${userForm.regionId != null and r.id == userForm.regionId}"></option>
+            </select>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn primary" type="submit">Create</button>
+        <a class="btn" th:href="@{/admin/user-mgmt}">Cancel</a>
+    </div>
+</form>
+
+<!-- FORM EDIT -->
+<form th:if="${userForm.id} != null" th:action="@{/admin/user-mgmt/{id}(id=${userForm.id})}" method="post">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden" name="id" th:value="${userForm.id}"/>
+
+    <label>Username</label>
+    <input name="username" th:value="${userForm.username}" readonly/>
+
+    <div class="row">
+        <div>
+            <label>Full name</label>
+            <input name="fullName" th:value="${userForm.fullName}"/>
+        </div>
+        <div>
+            <label>Email</label>
+            <input name="email" type="email" th:value="${userForm.email}"/>
+        </div>
+    </div>
+
+    <label>Password <span class="hint">(để trống nếu không đổi)</span></label>
+    <input name="password" type="password"/>
+
+    <div class="row">
+        <div>
+            <label>Role</label>
+            <select name="roleName" id="roleName_edit">
+                <option value="ROLE_ADMIN"          th:selected="${userForm.roleName} == 'ROLE_ADMIN'">ROLE_ADMIN</option>
+                <option value="ROLE_DEALER_MANAGER" th:selected="${userForm.roleName} == 'ROLE_DEALER_MANAGER'">ROLE_DEALER_MANAGER</option>
+                <option value="ROLE_DEALER_STAFF"   th:selected="${userForm.roleName} == 'ROLE_DEALER_STAFF'">ROLE_DEALER_STAFF</option>
+                <option value="ROLE_EVM_STAFF"      th:selected="${userForm.roleName} == 'ROLE_EVM_STAFF'">ROLE_EVM_STAFF</option>
+            </select>
+        </div>
+        <div>
+            <label>Enabled</label>
+            <select name="enabled" id="enabled_edit">
+                <option value="true"  th:selected="${userForm.enabled} == true">true</option>
+                <option value="false" th:selected="${userForm.enabled} == false">false</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div>
+            <label>Dealer</label>
+            <select name="dealerId" id="dealerId_edit">
+                <option value="0" th:selected="${userForm.dealerId} == null">-- None --</option>
+                <option th:each="d : ${dealers}" th:value="${d.id}" th:text="${d.name}"
+                        th:selected="${userForm.dealerId != null and d.id == userForm.dealerId}"></option>
+            </select>
+        </div>
+        <div>
+            <label>Region</label>
+            <select name="regionId" id="regionId_edit">
+                <option value="0" th:selected="${userForm.regionId} == null">-- None --</option>
+                <option th:each="r : ${regions}" th:value="${r.id}" th:text="${r.name}"
+                        th:selected="${userForm.regionId != null and r.id == userForm.regionId}"></option>
+            </select>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn primary" type="submit">Save</button>
+        <a class="btn" th:href="@{/admin/user-mgmt}">Cancel</a>
+    </div>
+</form>
+
+</body>
+</main>
+</html>

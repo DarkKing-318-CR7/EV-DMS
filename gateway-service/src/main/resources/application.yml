@@ -1,0 +1,87 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      routes:
+
+        # ============================
+        # AUTH SERVICE (PORT 9000)
+        # ============================
+        - id: auth-service
+          uri: http://localhost:9000
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=1
+
+        # ============================
+        # CRM SERVICE (PORT 9001)
+        # ============================
+        - id: crm-service
+          uri: http://localhost:9001
+          predicates:
+            - Path=/crm/**
+          filters:
+            - StripPrefix=1
+
+        # ============================
+        # CATALOG SERVICE (PORT 9002)
+        # ============================
+        - id: catalog-service
+          uri: http://localhost:9002
+          predicates:
+            - Path=/catalog/**
+          filters:
+            - StripPrefix=1
+
+        # ============================
+        # INVENTORY SERVICE (PORT 9003)
+        # ============================
+        - id: inventory-service
+          uri: http://localhost:9003
+          predicates:
+            - Path=/inventory/**
+          filters:
+            - StripPrefix=1
+
+        # ============================
+        # ORDER SERVICE (PORT 9004)
+        # ============================
+        - id: order-service
+          uri: http://localhost:9004
+          predicates:
+            - Path=/orders/**
+          filters:
+            - StripPrefix=1
+
+        # ============================
+        # SALES SERVICE (PORT 9005)
+        # ============================
+        - id: sales-service
+          uri: http://localhost:9005
+          predicates:
+            - Path=/sales/**
+          filters:
+            - StripPrefix=1
+
+        # ============================
+        # REPORT SERVICE (PORT 9006)
+        # ============================
+        - id: report-service
+          uri: http://localhost:9006
+          predicates:
+            - Path=/report/**
+          filters:
+            - StripPrefix=1
+
+# Bật actuator để xem routes
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

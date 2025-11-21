@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:replace="~{layout :: layout(~{::main})}">
+<main th:with="activePage='admin-dealers', pageTitle=${dealer.name}">
+    <link rel="stylesheet" th:href="@{/css/detail.css}">
+    <section class="page-header">
+        <div class="header-left">
+            <h1 th:text="${dealer.name}">Dealer A</h1>
+        </div>
+        <div class="header-right">
+            <a class="btn btn-outline" th:href="@{|/admin/dealers/${dealer.id}/edit|}">Edit</a>
+            <a class="btn" th:href="@{/admin/dealers}">Back</a>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-body">
+            <p><b>Code:</b> <span th:text="${dealer.code}">DLR01</span></p>
+            <p><b>Region:</b> <span th:text="${dealer.region}">South</span></p>
+            <p><b>Status:</b> <span class="badge" th:text="${dealer.status}">ACTIVE</span></p>
+            <p>
+                <b>Contact:</b>
+                <span th:text="${dealer.phone}">090...</span> ·
+                <span th:text="${dealer.email}">a@b.com</span>
+            </p>
+            <p>
+                <b>Address:</b>
+                <span th:text="${dealer.addressLine1}"></span>,
+                <span th:text="${dealer.ward}"></span>,
+                <span th:text="${dealer.district}"></span>,
+                <span th:text="${dealer.province}"></span>
+            </p>
+        </div>
+    </section>
+
+    <section class="mt-4">
+        <h3>Main Branch (auto)</h3>
+        <p>Chi nhánh chính được tạo tự động khi tạo Dealer. (CRUD chi nhánh đang tắt theo scope 1:1)</p>
+    </section>
+
+</main>
+</html>

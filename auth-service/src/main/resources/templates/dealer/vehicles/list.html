@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='vehicles', pageTitle='Vehicles'"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <!-- Header -->
+    <section class="page-header">
+        <div class="left">
+            <h1>Vehicles Available at Your Dealer</h1>
+            <p class="subtitle">
+                Các dòng xe hiện đang được phân phối / chào bán tại đại lý.
+            </p>
+        </div>
+
+        <!-- Dealer KHÔNG được tạo xe mới, nên bỏ nút + New Vehicle -->
+        <div class="right">
+            <!-- Để trống hoặc sau này thêm nút "Request Allocation" nếu muốn -->
+        </div>
+    </section>
+
+    <!-- Danh sách xe -->
+    <section class="card">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Model Code</th>
+                <th>Model Name</th>
+                <th>Brand</th>
+                <th>Body Type</th>
+                <th>Warranty (mo)</th>
+                <th></th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="v : ${vehicles}">
+                <td th:text="${v.modelCode}">EV6</td>
+                <td th:text="${v.modelName}">EV6 GT-Line</td>
+                <td th:text="${v.brand}">EVM</td>
+                <td th:text="${v.bodyType}">SUV</td>
+                <td th:text="${v.warrantyMonths}">36</td>
+
+                <!-- Nút xem chi tiết trims / giá / tồn kho, chỉ đọc -->
+                <td class="text-right">
+                    <a class="btn btn-outline"
+                       th:href="@{'/dealer/vehicles/' + ${v.id}}">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+
+            <!-- Nếu không có xe nào -->
+            <tr th:if="${#lists.isEmpty(vehicles)}">
+                <td colspan="6" style="text-align:center; opacity:0.6;">
+                    No vehicles available for this dealer.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</html>

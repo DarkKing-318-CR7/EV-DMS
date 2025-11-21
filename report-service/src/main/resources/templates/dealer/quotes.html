@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout :: layout(~{::content})">
+<link rel="stylesheet" th:href="@{/css/quotes.css}">
+<body>
+<div th:fragment="content">
+    <div class="container">
+        <h1 th:text="${role == 'MANAGER' ? 'Pending Quotes (Manager Review)' : 'My Quotes'}"></h1>
+
+        <div th:if="${role == 'STAFF'}" class="actions" style="margin-bottom:16px;">
+            <a class="btn btn-primary" href="/dealer/quotes/my/new">+ Create New Quote</a>
+        </div>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Discount</th>
+                <th>Final</th>
+                <th>Status</th>
+                <th>Reject Reason</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="q : ${quotes}">
+                <td th:text="${q.id}"></td>
+                <td th:text="${q.customerId}"></td>
+                <td th:text="${#numbers.formatDecimal(q.totalAmount,1,2)}"></td>
+                <td th:text="${#numbers.formatDecimal(q.appliedDiscount,1,2)}"></td>
+                <td th:text="${#numbers.formatDecimal(q.finalAmount,1,2)}"></td>
+
+
+                <td>
+                    <th:block th:switch="${q.status}">
+                        <span class="badge bg-success"   th:case="'APPROVED'">APPROVED</span>
+                        <span class="badge bg-danger"    th:case="'REJECTED'">REJECTED</span>
+                        <span class="badge bg-warning"   th:case="'PENDING'">PENDING</span>
+                        <span class="badge bg-secondary" th:case="*">[[${q.status}]]</span>
+                    </th:block>
+                </td>
+
+                <td th:text="${q.rejectComment}"></td>
+
+                <td>
+                    <!-- Staff submit -->
+                    <form th:if="${role == 'STAFF' and q.status == 'DRAFT'}"
+                          th:action="@{|/dealer/quotes/submit/${q.id}|}"
+                          method="post" style="display:inline;">
+                        <button class="btn btn-sm btn-success" type="submit">Submit</button>
+                    </form>
+
+                    <!-- Manager approve / reject -->
+                    <div th:if="${role == 'MANAGER'}" style="display:flex;gap:6px;">
+                        <form th:action="@{|/dealer/quotes/approve/${q.id}|}" method="post" style="display:inline;">
+                            <button class="btn btn-sm btn-primary" type="submit">Approve</button>
+                        </form>
+                        <form th:action="@{|/dealer/quotes/reject/${q.id}|}" method="post" style="display:inline;">
+                            <input type="text" name="comment" placeholder="Reason..." required
+                                   style="padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);
+                            background:rgba(255,255,255,0.08);color:#fff;width:120px;">
+                            <button class="btn btn-sm btn-danger" type="submit">Reject</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div style="margin-top:16px;">
+            <a th:if="${role == 'STAFF'}" href="/dealer/dashboard" class="btn btn-secondary">← Back to Dashboard</a>
+            <a th:if="${role == 'MANAGER'}" href="/dealer/dashboard" class="btn btn-secondary">← Back to Manager Dashboard</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

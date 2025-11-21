@@ -1,0 +1,70 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      routes:
+
+        # AUTH SERVICE
+        - id: auth-service
+          uri: http://localhost:9000
+          predicates:
+            - Path=/auth/**
+          filters:
+            - RewritePath=/auth/(?<path>.*), /${path}
+
+        # CRM SERVICE
+        - id: crm-service
+          uri: http://localhost:9001
+          predicates:
+            - Path=/crm/**
+          filters:
+            - StripPrefix=1
+
+        # CATALOG SERVICE
+        - id: catalog-service
+          uri: http://localhost:9002
+          predicates:
+            - Path=/catalog/**
+          filters:
+            - StripPrefix=1
+
+        # INVENTORY SERVICE
+        - id: inventory-service
+          uri: http://localhost:9003
+          predicates:
+            - Path=/inventory/**
+          filters:
+            - StripPrefix=1
+
+        # ORDER SERVICE
+        - id: order-service
+          uri: http://localhost:9004
+          predicates:
+            - Path=/orders/**
+          filters:
+            - StripPrefix=1
+
+        # SALES SERVICE
+        - id: sales-service
+          uri: http://localhost:9005
+          predicates:
+            - Path=/sales/**
+          filters:
+            - StripPrefix=1
+
+        # REPORT SERVICE
+        - id: report-service
+          uri: http://localhost:9006
+          predicates:
+            - Path=/report/**
+          filters:
+            - StripPrefix=1
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

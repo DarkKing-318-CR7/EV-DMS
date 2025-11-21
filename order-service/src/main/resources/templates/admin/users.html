@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active='vehicles', pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
+<head>
+    <meta charset="UTF-8">
+    <title>Users</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+       /* th { background: #f8f8f8; }*/
+        a.button { background:#007bff; color:#fff; padding:6px 12px; border-radius:4px; text-decoration:none; }
+        a.button:hover { background:#0056b3; }
+    </style>
+</head>
+<body>
+
+<h1>Users</h1>
+
+<p>
+    <!-- dùng path mới của controller user-mgmt -->
+    <a th:href="@{/admin/user-mgmt/new}" class="button">+ New User</a>
+</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="u : ${users}">
+        <td th:text="${u.id}">1</td>
+        <td th:text="${u.username}">admin</td>
+        <td th:text="${u.email}">admin@evdms.com</td>
+        <td>
+      <span th:each="r, it : ${u.roles}"
+            th:text="${r.name} + (${it.last} ? '' : ', ')">ROLE_ADMIN</span>
+        </td>
+        <!-- edit cũng về user-mgmt -->
+        <td><a th:href="@{|/admin/user-mgmt/${u.id}/edit|}">Edit</a></td>
+    </tr>
+    </tbody>
+</table>
+
+<p><a th:href="@{/admin/dashboard}">Quay lại</a></p>
+
+</body>
+</main>
+</html>

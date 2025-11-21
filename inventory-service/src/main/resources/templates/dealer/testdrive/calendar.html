@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Calendar Test Drive</title>
+
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js'></script>
+
+  <style>
+    body {
+      background: #0b1220;
+      color: #e5e7eb;
+    }
+    #calendar {
+      background: rgba(18,18,24,.8);
+      padding: 20px;
+      border-radius: 14px;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container py-4">
+  <h2 class="text-center fw-bold">Test Drive Calendar (Manager)</h2>
+
+  <div id="calendar"></div>
+</div>
+
+<script th:inline="javascript">
+  let events = [[${events}]];
+
+  let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    initialView: 'dayGridMonth',
+    events: events
+  });
+
+  calendar.render();
+</script>
+
+</body>
+</html>

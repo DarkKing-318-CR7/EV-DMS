@@ -1,0 +1,236 @@
+/* ==== Test Drive Page (Manager/Staff) ==== */
+:root{
+    --brand:#2a7ade; --ok:#19a974; --warn:#ffb700; --danger:#e6492d;
+    --border:#e5e7eb; --shadow:rgba(0,0,0,.05); --bg:#f9fafc; --text:#1e1e1e;
+}
+
+/* layout nho gọn; tận dụng style.css sẵn có nếu có */
+.container{max-width:1200px;margin:24px auto 40px auto;color:var(--text)}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 2px 5px var(--shadow);padding:16px}
+
+.btn{display:inline-block;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:14px;text-decoration:none}
+.btn:hover{background:#f2f4f8}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn-ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px}
+.filters .field{display:flex;flex-direction:column}
+.filters input,.filters select{width:180px;border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left}
+.table thead th{background:#f3f4f6;font-weight:600}
+.table tbody tr:hover{background:#f9fbff}
+
+.badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.badge.REQUESTED{background:#e7f0ff;color:#1f5fbf}
+.badge.CONFIRMED{background:#e8fff2;color:#0d8a53}
+.badge.COMPLETED{background:#eef6ff;color:#2563eb}
+.badge.CANCELLED{background:#fff0f0;color:#cc2b2b}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+.dot-REQUESTED{background:#1f5fbf}.dot-CONFIRMED{background:#0d8a53}.dot-COMPLETED{background:#2563eb}.dot-CANCELLED{background:#cc2b2b}
+
+.empty{text-align:center;color:#777;padding:32px;font-style:italic}
+/* ===== Palette & base ===== */
+:root{
+    --brand:#3772ff; --ok:#19a974; --danger:#e6492d;
+    --text:#eaeaf0; --muted:#b9bfd6; --glass:#10131a70;
+    --border:#2b3344; --bg:#0b0f14;
+}
+
+/* ==== BACKGROUND THEME (Dark Sunset) ==== */
+body.td-bg {
+    background: url('/image/dark-sunset.jpg') center center / cover no-repeat fixed;
+    background-color: #0b0f14;
+    min-height: 100vh;
+    color: #fff;
+    font-family: "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 40px;
+    overflow-x: hidden;
+}
+
+/* Lớp phủ mờ để dễ đọc chữ */
+body.td-bg::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: -1;
+}
+
+/* ==== GLASS CARD EFFECT ==== */
+.glass {
+    background: rgba(20, 25, 40, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+    color: #f2f2f2;
+}
+
+/* ==== LAYOUT STRUCTURE ==== */
+.td-shell {
+    width: 95%;
+    max-width: 1200px;
+    margin: 0 auto 60px;
+}
+
+.td-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+}
+
+.td-title h1 {
+    font-size: 28px;
+    margin: 0;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+
+.td-sub {
+    font-size: 14px;
+    color: #ccc;
+    margin-left: 8px;
+}
+
+/* ==== FILTER FORM ==== */
+.td-filters {
+    padding: 16px 24px;
+    margin-bottom: 20px;
+}
+
+.td-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    align-items: end;
+}
+
+.td-filters label span {
+    font-size: 13px;
+    color: #ddd;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.td-filters input,
+.td-filters select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+/* ==== BUTTONS ==== */
+.btn {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.15s ease-in-out;
+    text-decoration: none;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+}
+
+.btn-primary {
+    background: #3772ff;
+    color: #fff;
+}
+
+.btn-ok {
+    background: #1fc48d;
+    color: #fff;
+}
+
+.btn-danger {
+    background: #ff4747;
+    color: #fff;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ==== TABLE ==== */
+.td-card {
+    padding: 0;
+}
+
+.td-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.td-table thead th {
+    background: rgba(255, 255, 255, 0.1);
+    color: #eaeaea;
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.td-table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.td-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ==== BADGE ==== */
+.badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.badge.REQUESTED { background: #293a6d; color: #80b2ff; }
+.badge.CONFIRMED { background: #1b473b; color: #5ee8b2; }
+.badge.COMPLETED { background: #204267; color: #a3d0ff; }
+.badge.CANCELLED { background: #562a2a; color: #ff9e9e; }
+
+/* ==== EMPTY STATE ==== */
+.td-empty {
+    text-align: center;
+    padding: 40px;
+}
+
+.td-empty h3 {
+    margin: 0 0 8px;
+    font-size: 22px;
+}
+
+.td-empty p {
+    color: #ccc;
+    margin-bottom: 12px;
+}
+
+/* ==== RESPONSIVE ==== */
+@media (max-width: 768px) {
+    .td-header { flex-direction: column; gap: 10px; text-align: center; }
+    .td-row-actions { flex-direction: column; align-items: stretch; }
+}
+

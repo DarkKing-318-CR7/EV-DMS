@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:fragment="layout(content)">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'EV-DMS Portal'">EV-DMS Portal</title>
+    <!-- ===== Custom CSS ===== -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- ===== Google Fonts ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Spartan:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/promotion-form.css}">
+
+    <!-- ===== Font Awesome LOCAL ===== -->
+    <link rel="stylesheet" th:href="@{/vendor/fontawesome/css/all.min.css}">
+</head>
+
+<body>
+<div class="overlay"></div>
+
+<div class="page-wrapper">
+    <!-- ===== Topbar ===== -->
+    <header th:replace="fragments/topbar :: topbar"></header>
+
+    <!-- ===== Main Layout ===== -->
+    <div class="main-layout">
+        <aside th:replace="fragments/sidebar-router :: sidebar"></aside>
+        <main class="main-content" th:insert="${content}"></main>
+    </div>
+</div>
+
+<!-- ✅ Cho phép kế thừa các script riêng của từng trang (vd: quote-create.js) -->
+<th:block th:insert="~{::script}"></th:block>
+
+<!-- ✅ Script JS chung cho toàn hệ thống -->
+<script th:src="@{/js/main.js}"></script>
+
+</body>
+</html>

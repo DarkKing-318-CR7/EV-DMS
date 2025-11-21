@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch lái thử của tôi</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #0b1220 url('/image/dark-sunset.jpg') center/cover no-repeat fixed;
+            color: #e5e7eb;
+        }
+        .glass {
+            background: rgba(18,18,25,.75);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,.1);
+            padding: 1.5rem;
+        }
+        .title-box {
+            background: rgba(18,18,24,.7);
+            padding: 1rem;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container py-4">
+
+    <div class="title-box">
+        <h3 class="fw-bold m-0">Lịch lái thử của tôi</h3>
+        <div class="text-muted small">Danh sách lịch lái thử được phân công</div>
+    </div>
+
+    <!-- Button tạo lịch -->
+    <div class="mb-3 text-end">
+        <a class="btn btn-primary btn-sm" th:href="@{/staff/testdrives/create}">
+            <i class="bi bi-plus-circle"></i> Tạo lịch
+        </a>
+    </div>
+
+    <div class="glass">
+
+        <table class="table table-dark table-hover align-middle">
+            <thead>
+            <tr>
+                <th>Khách hàng</th>
+                <th>Xe</th>
+                <th>Thời gian</th>
+                <th>Trạng thái</th>
+                <th></th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="t : ${list}">
+                <td th:text="${t.customerName}"></td>
+                <td th:text="${t.vehicleName}"></td>
+                <td th:text="${#temporals.format(t.scheduleAt,'dd/MM/yyyy HH:mm')}"></td>
+
+                <td>
+                    <span class="badge"
+                          th:classappend="${
+                                t.status == 'REQUESTED'  ? 'bg-warning text-dark' :
+                                t.status == 'CONFIRMED' ? 'bg-info' :
+                                t.status == 'COMPLETED' ? 'bg-success' :
+                                                          'bg-danger'
+                          }"
+                          th:text="${t.status}">
+                    </span>
+                </td>
+
+                <td>
+                    <a class="btn btn-secondary btn-sm"
+                       th:href="@{'/staff/testdrives/detail/' + ${t.id}}">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+
+        </table>
+
+        <div class="text-center text-muted mt-3" th:if="${list.empty}">
+            Chưa có lịch nào
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

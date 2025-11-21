@@ -1,0 +1,177 @@
+/* ===== FORM WRAPPER ===== */
+.quote-wrapper {
+    width: 850px;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(16px);
+    border-radius: 18px;
+    padding: 32px 42px;
+    box-shadow: 0 0 18px rgba(0,0,0,0.35);
+}
+
+/* ===== TITLE ===== */
+.quote-wrapper h1 {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #fff;
+}
+
+/* ===== FORM ROW ===== */
+.row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.form-label {
+    width: 28%;
+    color: #ddd;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.input-field, select {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid #666;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    outline: none;
+}
+
+.input-field::placeholder {
+    color: #cfcfcf;
+}
+
+/* ===== ADD BUTTONS ===== */
+.btn-add {
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: none;
+    background: #5b7bfb;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btn-add:hover {
+    background: #4765d3;
+}
+
+/* ===== ITEM ROW ===== */
+.item-row, .promo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0;
+}
+
+.item-row select, .promo-row select {
+    flex: 1;
+}
+
+/* Qty & Price box */
+.qty, .price {
+    width: 90px !important;
+    text-align: center;
+}
+
+/* Remove icon button */
+.remove-item-btn, .remove-promo-btn {
+    background: #e74c3c;
+    border: none;
+    color: white;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.remove-item-btn:hover, .remove-promo-btn:hover {
+    background: #c0392b;
+}
+
+/* ===== TOTAL DISPLAY ===== */
+.total-row span {
+    font-size: 22px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.actions {
+    text-align: center;
+    margin-top: 22px;
+}
+
+.btn-save {
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-save:hover {
+    background: #3e8d41;
+}
+
+.btn-cancel {
+    margin-left: 12px;
+    padding: 9px 18px;
+    background: #7a7a7a;
+    border-radius: 8px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn-cancel:hover {
+    background: #5c5c5c;
+}
+
+
+
+/* ===================== SELECT INPUT STYLE ===================== */
+
+/* Style cho thẻ select */
+.select-field,
+.item-row select,
+.promo-row select,
+.quote-form select {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 8px 10px;
+    border-radius: 6px;
+    outline: none;
+}
+
+/* Khi hover */
+.select-field:hover,
+.item-row select:hover,
+.promo-row select:hover,
+.quote-form select:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Khi focus */
+.select-field:focus,
+.item-row select:focus,
+.promo-row select:focus,
+.quote-form select:focus {
+    border-color: #4ea8ff;
+    background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Style cho dropdown menu (option) */
+.item-row select option,
+.promo-row select option,
+.quote-form select option {
+    background: #2b2e3a !important;
+    color: #fff !important;
+}

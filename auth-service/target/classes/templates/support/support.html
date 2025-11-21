@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Support</title></head>
+<body>
+<h1>Liên hệ hỗ trợ</h1>
+<form th:action="@{/templates/support}" th:object="${ticket}" method="post">
+  <input type="text" th:field="*{name}" placeholder="Họ tên"/><br/>
+  <input type="email" th:field="*{email}" placeholder="Email"/><br/>
+  <textarea th:field="*{message}" placeholder="Nội dung"></textarea><br/>
+  <button type="submit">Gửi</button>
+</form>
+<p th:text="${success}"></p>
+<p><a th:href="@{/}">Quay lại</a></p>
+</body>
+</html>

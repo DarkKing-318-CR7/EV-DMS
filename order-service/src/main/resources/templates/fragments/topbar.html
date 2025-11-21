@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="topbar" class="topbar">
+
+    <!-- Logo / Brand -->
+    <div class="brand">
+        <i class="fa-solid fa-bolt"></i>
+        <span>EV-DMS Dealer</span>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search vehicles, orders, quotes..." />
+    </div>
+
+    <!-- User Info -->
+    <div class="user">
+        <i class="fa-solid fa-user"></i>
+        <span th:text="${user != null ? user.email : 'dealer@example.com'}">dealer@example.com</span>
+        <form th:action="@{/logout}" method="post" style="display:inline;">
+            <button type="submit" class="btn">Logout</button>
+        </form>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='users', pageTitle='Quản lý người dùng'"
+      th:replace="~{layout :: layout(~{::main})}">
+<main>
+    <head>
+        <meta charset="UTF-8">
+        <title>Quản lý người dùng</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+        <style>
+            body {
+                background: linear-gradient(135deg, #0f172a, #1e293b);
+                color: #e2e8f0;
+                font-family: "Segoe UI", sans-serif;
+            }
+            .container {
+                max-width: 1050px;
+                margin-top: 60px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 16px;
+                padding: 30px;
+                box-shadow: 0 8px 32px rgba(0,0,0,.45);
+                backdrop-filter: blur(10px);
+            }
+            h1 {
+                text-align: center;
+                font-weight: 600;
+                margin-bottom: 25px;
+            }
+            .btn-add {
+                background: #3b82f6;
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 18px;
+                font-weight: 500;
+                transition: 0.25s;
+            }
+            .btn-add:hover {
+                background: #2563eb;
+                transform: scale(1.05);
+            }
+            table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0 8px;
+            }
+            thead {
+                background: rgba(148,163,184,0.15);
+                border-radius: 8px;
+            }
+            th {
+                padding: 12px;
+                text-align: left;
+                font-weight: 600;
+                color: #a5b4fc;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            td {
+                padding: 12px;
+                background: rgba(255,255,255,0.05);
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                border-radius: 6px;
+            }
+            tr:hover td {
+                background: rgba(59,130,246,0.15);
+            }
+            a.edit-link {
+                color: #38bdf8;
+                text-decoration: none;
+                font-weight: 500;
+            }
+            a.edit-link:hover {
+                text-decoration: underline;
+            }
+            .back-link {
+                color: #94a3b8;
+                text-decoration: none;
+            }
+            .back-link:hover {
+                color: #38bdf8;
+            }
+        </style>
+    </head>
+    <body>
+    <div class="container">
+        <h1><i class="bi bi-people-fill"></i> Danh sách người dùng</h1>
+        <div class="mb-3 text-end">
+            <a th:href="@{/admin/user-mgmt/new}" class="btn-add">
+                <i class="bi bi-person-plus-fill"></i> Thêm người dùng
+            </a>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tên đăng nhập</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Hành động</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${users}">
+                <td th:text="${u.id}">1</td>
+                <td th:text="${u.username}">admin</td>
+                <td th:text="${u.email}">admin@evdms.com</td>
+                <td>
+                    <span th:each="r, i : ${u.roles}" th:text="${r.name} + (${i.last} ? '' : ', ')">ROLE_ADMIN</span>
+                </td>
+                <td><a th:href="@{|/admin/user-mgmt/${u.id}/edit|}" class="edit-link">Chỉnh sửa</a></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="mt-4 text-center">
+            <a th:href="@{/admin/dashboard}" class="back-link"><i class="bi bi-arrow-left-circle"></i> Quay lại</a>
+        </div>
+    </div>
+    </body>
+</main>
+</html>

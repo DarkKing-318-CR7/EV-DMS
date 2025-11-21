@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:with="active=${active}, pageTitle=${pageTitle}"
+      th:replace="~{layout :: layout(~{::main})}">
+
+<main>
+    <link rel="stylesheet" th:href="@{/css/forms.css}">
+    <section class="page-header">
+        <div class="left">
+            <h1 th:text="${pageTitle}">Update Price</h1>
+            <p class="subtitle">Cập nhật giá bán lẻ đề nghị (MSRP) cho trim này trong phạm vi EVM</p>
+        </div>
+    </section>
+
+    <section class="card form-card">
+        <form th:action="@{'/evm/products/trim/' + ${form.trimId} + '/price'}"
+              th:object="${form}"
+              method="post">
+
+            <input type="hidden" th:field="*{trimId}"/>
+
+            <div class="field">
+                <label>Trim</label>
+                <input th:value="*{trimName}" readonly/>
+            </div>
+
+            <div class="field">
+                <label>Base Price (VND)</label>
+                <input type="number"
+                       th:field="*{basePriceVnd}"
+                       min="0"
+                       placeholder="ví dụ: 1290000000"/>
+                <p class="help-text">Giá bán lẻ đề nghị khu vực (MSRP). Đây là giá cơ sở trước khuyến mãi.</p>
+            </div>
+
+            <div class="field">
+                <label>Currency</label>
+                <input th:field="*{currency}" placeholder="VND"/>
+            </div>
+
+            <div class="actions">
+                <a class="btn btn-outline" th:href="@{'/evm/products'}">Cancel</a>
+                <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+
+        </form>
+    </section>
+</main>
+</html>

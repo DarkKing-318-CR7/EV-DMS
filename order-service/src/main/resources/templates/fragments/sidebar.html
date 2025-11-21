@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+
+<body>
+<aside th:fragment="sidebar" class="sidebar">
+    <nav class="menu">
+
+        <!-- Dealer MANAGER -->
+        <section class="menu-group" sec:authorize="hasRole('DEALER_MANAGER')">
+            <h4>Dealer</h4>
+            <a href="/dealer/dashboard">Dashboard</a>
+            <a href="/dealer/vehicles">Vehicles</a>
+            <a href="/dealer/customers">Customers</a>
+            <a href="/dealer/test-drive">Test Drive</a>
+            <a href="/dealer/quotes">Quotes</a>
+            <a href="/dealer/orders">Orders</a>
+            <a href="/dealer/promotions">Promotions</a>
+            <a href="/dealer/reports">Reports</a> <!-- manager có báo cáo -->
+        </section>
+
+        <!-- Dealer STAFF -->
+        <section class="menu-group" sec:authorize="hasRole('DEALER_STAFF')">
+            <h4>Dealer</h4>
+            <a href="/dealer/dashboard">Dashboard</a>
+            <a href="/dealer/vehicles">Vehicles</a>
+            <a href="/dealer/customers">Customers</a>
+            <a href="/dealer/test-drive">Test Drive</a>
+            <a href="/dealer/quotes">Quotes</a>
+            <a href="/dealer/orders">Orders</a>
+            <!-- KHÔNG hiện Reports/Promotions nếu bạn muốn hạn chế -->
+        </section>
+
+        <!-- EVM STAFF (nhân sự hãng làm việc với đại lý) -->
+        <section class="menu-group" sec:authorize="hasRole('EVM_STAFF')">
+            <h4>Dealer</h4>
+            <a href="/dealer/dashboard">Dashboard</a>
+            <a href="/dealer/vehicles">Vehicles</a>
+            <a href="/dealer/promotions">Promotions</a>
+            <a href="/dealer/reports">Reports</a>
+            <!-- Tuỳ nghiệp vụ, có thể không cho sửa Customers/Orders -->
+        </section>
+
+        <!-- ADMIN -->
+        <section class="menu-group" sec:authorize="hasRole('ADMIN')">
+            <h4>Admin</h4>
+            <a href="/admin/dashboard">Dashboard</a>
+            <a href="/admin/dealers">Dealers</a>
+            <a href="/admin/users">Users</a>
+            <a href="/admin/settings">Settings</a>
+            <a href="/admin/reports">Reports</a>
+            <a href="/admin/support">Support</a>
+        </section>
+
+    </nav>
+</aside>
+
+</body>
+</html>
