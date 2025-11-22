@@ -10,6 +10,8 @@ import com.uth.ev_dms.messaging.OrderApprovedEvent;
 import com.uth.ev_dms.repo.*;
 import com.uth.ev_dms.service.InventoryService;
 import com.uth.ev_dms.service.OrderService;
+import com.uth.ev_dms.service.vm.NifiService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -35,6 +37,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepo userRepo;
 
     private final RabbitTemplate rabbitTemplate;
+    private final NifiService nifiService;  // ⬅️ TÍCH HỢP NIFI
 
     // ======================================================
     // ========================== GET ======================
@@ -103,6 +106,7 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal total = quote.getFinalAmount() != null
                 ? quote.getFinalAmount()
                 : quote.getTotalAmount();
+
         if (total == null) total = BigDecimal.ZERO;
 
         o.setTotalAmount(total);
@@ -110,7 +114,12 @@ public class OrderServiceImpl implements OrderService {
         o.setPaidAmount(BigDecimal.ZERO);
         o.setBalanceAmount(total);
 
-        return orderRepo.save(o);
+        OrderHdr saved = orderRepo.save(o);
+
+        // ➤ Gửi NI-FI EVENT khi tạo Order
+        nifiService.sendToNifi(saved);
+
+        return saved;
     }
 
     // ======================================================
@@ -142,7 +151,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         o.setStatus(OrderStatus.PENDING_ALLOC);
-        return orderRepo.save(o);
+        OrderHdr saved = orderRepo.save(o);
+
+        // ➤ Gửi NI-FI EVENT khi submit
+        nifiService.sendToNifi(saved);
+
+        return saved;
     }
 
     // ======================================================
@@ -189,8 +203,10 @@ public class OrderServiceImpl implements OrderService {
                 new OrderApprovedEvent(saved.getId(), userId)
         );
 
-        System.out.println("📤 MQ Event Sent: ORDER_APPROVED for orderId="
-                + saved.getId() + ", userId=" + userId);
+        System.out.println("📤 MQ Event Sent: ORDER_APPROVED for orderId=" + saved.getId());
+
+        // ➤ Gửi NI-FI EVENT sau allocate
+        nifiService.sendToNifi(saved);
 
         return saved;
     }
@@ -231,7 +247,12 @@ public class OrderServiceImpl implements OrderService {
         o.setStatus(OrderStatus.DELIVERED);
         if (o.getDeliveredAt() == null) o.setDeliveredAt(LocalDateTime.now());
 
-        return orderRepo.save(o);
+        OrderHdr saved = orderRepo.save(o);
+
+        // ➤ Gửi NI-FI EVENT khi giao hàng
+        nifiService.sendToNifi(saved);
+
+        return saved;
     }
 
     // ======================================================
@@ -258,7 +279,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
-        return orderRepo.save(order);
+        OrderHdr saved = orderRepo.save(order);
+
+        // ➤ Gửi NI-FI EVENT khi cancel
+        nifiService.sendToNifi(saved);
+
+        return saved;
     }
 
     @Transactional
@@ -288,7 +314,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         o.setStatus(OrderStatus.CANCELLED);
-        return orderRepo.save(o);
+        OrderHdr saved = orderRepo.save(o);
+
+        // ➤ NiFi sync
+        nifiService.sendToNifi(saved);
+
+        return saved;
     }
 
     @Transactional
@@ -313,7 +344,12 @@ public class OrderServiceImpl implements OrderService {
         inventoryService.releaseForOrder(orderId);
 
         o.setStatus(OrderStatus.PENDING_ALLOC);
-        return orderRepo.save(o);
+        OrderHdr saved = orderRepo.save(o);
+
+        // ➤ NiFi sync
+        nifiService.sendToNifi(saved);
+
+        return saved;
     }
 
     @Transactional
@@ -342,7 +378,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         o.setStatus(OrderStatus.CANCELLED);
-        return orderRepo.save(o);
+        OrderHdr saved = orderRepo.save(o);
+
+        // ➤ NiFi sync
+        nifiService.sendToNifi(saved);
+
+        return saved;
     }
 
     // ======================================================

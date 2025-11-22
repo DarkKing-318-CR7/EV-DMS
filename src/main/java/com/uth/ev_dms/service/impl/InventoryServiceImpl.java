@@ -5,9 +5,12 @@ import com.uth.ev_dms.domain.*;
 import com.uth.ev_dms.repo.*;
 import com.uth.ev_dms.service.InventoryService;
 import com.uth.ev_dms.service.dto.InventoryUpdateRequest;
+import com.uth.ev_dms.service.vm.NifiService;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -16,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Primary
 @Service
@@ -31,8 +31,9 @@ public class InventoryServiceImpl implements InventoryService {
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
     private final DealerBranchRepo dealerBranchRepo;
-
     private final InventoryAdjustmentRepo inventoryAdjustmentRepo;
+
+    private final NifiService nifiService;   // ⬅️ NiFi ADDED
 
     @PersistenceContext
     private EntityManager em;
@@ -56,8 +57,8 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         final Long dealerId = order.getDealerId();
-        final Long trimId   = resolveTrimId(item);
-        final int qty       = item.getQty() != null ? item.getQty() : 0;
+        final Long trimId = resolveTrimId(item);
+        final int qty = item.getQty() != null ? item.getQty() : 0;
         if (qty <= 0) return true;
 
         final Long branchId = dealerBranchRepo.findByDealerId(dealerId)
@@ -75,9 +76,9 @@ public class InventoryServiceImpl implements InventoryService {
                                 .build()
                 );
 
-        int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
-        int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
-        int avail   = onHand - reserved;
+        int onHand = Optional.ofNullable(inv.getQtyOnHand()).orElse(0);
+        int reserved = Optional.ofNullable(inv.getReserved()).orElse(0);
+        int avail = onHand - reserved;
 
         if (avail < qty) return false;
 
@@ -93,6 +94,9 @@ public class InventoryServiceImpl implements InventoryService {
                 .refId(item.getId())
                 .note("Reserve for orderItem " + item.getId())
                 .build());
+
+        // ⬅️ Push NiFi event
+        nifiService.sendToNifi(inv);
 
         return true;
     }
@@ -120,8 +124,9 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
                 .getId();
 
-        // CHECK toàn bộ item
+        // CHECK trước
         for (OrderItem it : items) {
+
             Long trimId = resolveTrimId(it);
             int need = it.getQty() != null ? it.getQty() : 0;
 
@@ -136,9 +141,9 @@ public class InventoryServiceImpl implements InventoryService {
                                     .build()
                     );
 
-            int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
-            int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
-            int avail   = onHand - reserved;
+            int onHand = Optional.ofNullable(inv.getQtyOnHand()).orElse(0);
+            int reserved = Optional.ofNullable(inv.getReserved()).orElse(0);
+            int avail = onHand - reserved;
 
             if (avail < need) {
                 throw new IllegalStateException("Out of stock for trim=" + trimId);
@@ -175,17 +180,16 @@ public class InventoryServiceImpl implements InventoryService {
         for (OrderItem it : items) {
 
             Long trimId = resolveTrimId(it);
-            int qty = it.getQty() != null ? it.getQty() : 0;
+            int qty = Optional.ofNullable(it.getQty()).orElse(0);
             if (qty <= 0) continue;
 
             Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
                     .orElseThrow(() ->
-                            new IllegalStateException("Inventory not found (branch="
-                                    + branchId + ", trim=" + trimId + ")")
+                            new IllegalStateException("Inventory not found (branch=" + branchId + ", trim=" + trimId + ")")
                     );
 
-            int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
-            int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
+            int reserved = Optional.ofNullable(inv.getReserved()).orElse(0);
+            int onHand = Optional.ofNullable(inv.getQtyOnHand()).orElse(0);
 
             if (reserved < qty || onHand < qty) {
                 throw new IllegalStateException("Invalid inventory to ship for trim=" + trimId);
@@ -205,6 +209,9 @@ public class InventoryServiceImpl implements InventoryService {
                     .refId(it.getId())
                     .note("Ship for orderItem " + it.getId())
                     .build());
+
+            // ⬅️ Push NiFi event
+            nifiService.sendToNifi(inv);
         }
     }
 
@@ -230,17 +237,15 @@ public class InventoryServiceImpl implements InventoryService {
         for (OrderItem it : items) {
 
             Long trimId = resolveTrimId(it);
-
-            int qty = (it.getQty() == null) ? 0 : it.getQty();
+            int qty = Optional.ofNullable(it.getQty()).orElse(0);
             if (qty <= 0) continue;
 
             Inventory inv = inventoryRepo.lockByBranchAndTrim(branchId, trimId)
                     .orElseThrow(() ->
-                            new IllegalStateException("Inventory not found (branch="
-                                    + branchId + ", trim=" + trimId + ")")
+                            new IllegalStateException("Inventory not found (branch=" + branchId + ", trim=" + trimId + ")")
                     );
 
-            int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
+            int reserved = Optional.ofNullable(inv.getReserved()).orElse(0);
 
             inv.setReserved(Math.max(0, reserved - qty));
             inventoryRepo.save(inv);
@@ -254,9 +259,11 @@ public class InventoryServiceImpl implements InventoryService {
                     .refId(it.getId())
                     .note("Release reserved for orderItem " + it.getId())
                     .build());
+
+            // ⬅️ Push NiFi event
+            nifiService.sendToNifi(inv);
         }
     }
-
 
     // ============================================================
     // ======================= ADMIN INVENTORY =====================
@@ -305,44 +312,9 @@ public class InventoryServiceImpl implements InventoryService {
     }, allEntries = true)
     public Inventory createInventory(Inventory inv, String createdBy) {
 
-        if ("HQ".equalsIgnoreCase(inv.getLocationType())) {
-            inv.setDealer(null);
-            inv.setBranch(null);
-
-            Inventory saved = inventoryRepo.save(inv);
-
-            Integer onHand = saved.getQtyOnHand() == null ? 0 : saved.getQtyOnHand();
-            if (onHand > 0) {
-                LocalDateTime now = LocalDateTime.now();
-                InventoryAdjustment adj = new InventoryAdjustment();
-                adj.setInventory(saved);
-                adj.setDeltaQty(onHand);
-                adj.setReason("Initial stock (HQ)");
-                adj.setCreatedAtEvent(now);
-                adj.setCreatedAt(now);
-                adj.setUpdatedAt(now);
-                adj.setCreatedBy(createdBy);
-                adj.setUpdatedBy(createdBy);
-                inventoryAdjustmentRepo.save(adj);
-            }
-
-            return saved;
-        }
-
-        if (inv.getDealer() == null || inv.getDealer().getId() == null) {
-            throw new IllegalStateException("Dealer is required for BRANCH inventory");
-        }
-
-        if (inv.getBranch() == null || inv.getBranch().getId() == null) {
-            Long dealerId = inv.getDealer().getId();
-            DealerBranch main = dealerBranchRepo.findByDealerId(dealerId)
-                    .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"));
-            inv.setBranch(main);
-        }
-
         Inventory saved = inventoryRepo.save(inv);
 
-        Integer onHand = saved.getQtyOnHand() == null ? 0 : saved.getQtyOnHand();
+        Integer onHand = Optional.ofNullable(saved.getQtyOnHand()).orElse(0);
         if (onHand > 0) {
             LocalDateTime now = LocalDateTime.now();
             InventoryAdjustment adj = new InventoryAdjustment();
@@ -354,7 +326,11 @@ public class InventoryServiceImpl implements InventoryService {
             adj.setUpdatedAt(now);
             adj.setCreatedBy(createdBy);
             adj.setUpdatedBy(createdBy);
+
             inventoryAdjustmentRepo.save(adj);
+
+            // ⬅️ NiFi notify
+            nifiService.sendToNifi(saved);
         }
 
         return saved;
@@ -370,12 +346,10 @@ public class InventoryServiceImpl implements InventoryService {
     public Inventory updateInventory(InventoryUpdateRequest req, String updatedBy) {
 
         Inventory current = inventoryRepo.findById(req.getId())
-                .orElseThrow(() ->
-                        new EntityNotFoundException("Inventory not found: " + req.getId())
-                );
+                .orElseThrow(() -> new EntityNotFoundException("Inventory not found: " + req.getId()));
 
-        Integer oldQty = current.getQtyOnHand() == null ? 0 : current.getQtyOnHand();
-        Integer newQty = req.getQtyOnHand() == null ? 0 : req.getQtyOnHand();
+        Integer oldQty = Optional.ofNullable(current.getQtyOnHand()).orElse(0);
+        Integer newQty = Optional.ofNullable(req.getQtyOnHand()).orElse(0);
 
         current.setQtyOnHand(newQty);
 
@@ -393,8 +367,13 @@ public class InventoryServiceImpl implements InventoryService {
             adj.setUpdatedAt(now);
             adj.setCreatedBy(updatedBy);
             adj.setUpdatedBy(updatedBy);
+
             inventoryAdjustmentRepo.save(adj);
         }
+
+        // ⬅️ NiFi sync
+        nifiService.sendToNifi(saved);
+
         return saved;
     }
 
@@ -403,7 +382,6 @@ public class InventoryServiceImpl implements InventoryService {
     public List<InventoryAdjustment> getAdjustmentsForInventory(Long inventoryId) {
         return inventoryAdjustmentRepo.findByInventoryIdOrderByCreatedAtEventDesc(inventoryId);
     }
-
 
     @Override
     @Cacheable(value = CacheConfig.CacheNames.INVENTORY_BY_DEALER, key = "#dealerId")
@@ -414,20 +392,23 @@ public class InventoryServiceImpl implements InventoryService {
 
         for (var inv : invList) {
             if (inv.getTrim() == null) continue;
+
             Long trimId = inv.getTrim().getId();
-            Integer qty = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
+            Integer qty = Optional.ofNullable(inv.getQtyOnHand()).orElse(0);
+
             stockMap.merge(trimId, qty, Integer::sum);
         }
+
         return stockMap;
     }
 
     @Override
     @Cacheable(value = CacheConfig.CacheNames.INVENTORY_BY_BRANCH, key = "#branchId")
-    public Map<Long,Integer> getStockByTrimForBranch(Long branchId) {
+    public Map<Long, Integer> getStockByTrimForBranch(Long branchId) {
 
         var rows = inventoryRepo.sumAvailableByTrimAtBranch(branchId);
+        Map<Long, Integer> map = new HashMap<>();
 
-        Map<Long,Integer> map = new HashMap<>();
         for (Object[] r : rows) {
             Long trimId = ((Number) r[0]).longValue();
             Integer qty = ((Number) r[1]).intValue();
@@ -438,14 +419,10 @@ public class InventoryServiceImpl implements InventoryService {
 
     public int getAvailableForTrimAtCurrentBranch(Long trimId, Long branchId) {
         return inventoryRepo.findByTrim_IdAndBranch_Id(trimId, branchId)
-                .map(i -> {
-                    int onHand  = i.getQtyOnHand() == null ? 0 : i.getQtyOnHand();
-                    int reserved = i.getReserved() == null ? 0 : i.getReserved();
-                    return onHand - reserved;
-                })
+                .map(i -> Optional.ofNullable(i.getQtyOnHand()).orElse(0)
+                        - Optional.ofNullable(i.getReserved()).orElse(0))
                 .orElse(0);
     }
-
 
     // ============================================================
     // ========================= HELPERS ===========================
