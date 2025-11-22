@@ -2,28 +2,37 @@ package com.uth.ev_dms.service;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
+import com.uth.ev_dms.dto.FcmTokenResponse;
 import com.uth.ev_dms.notification.NotificationTemplate;
-import com.uth.ev_dms.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
 public class FirebaseNotificationService {
 
-    private final UserRepo userRepo;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public void sendOrderApproved(Long orderId, Long staffId) {
 
-        String token = userRepo.findFcmTokenByUserId(staffId);
+        String url = "http://auth-service/internal/users/" + staffId + "/fcm";
 
-        if (token == null || token.isBlank()) {
-            System.out.println("⚠️ User " + staffId + " chưa có FCM token → bỏ qua gửi thông báo.");
+        FcmTokenResponse resp = null;
+
+        try {
+            resp = restTemplate.getForObject(url, FcmTokenResponse.class);
+        } catch (Exception e) {
+            System.out.println("⚠️ Không gọi được auth-service để lấy FCM token.");
             return;
         }
 
-        // 🔥 Quan trọng: KHÔNG được dùng .setNotification() cho Web + ServiceWorker
-        // Chỉ dùng DATA message để SW đọc payload.data
+        if (resp == null || resp.getFcmToken() == null || resp.getFcmToken().isBlank()) {
+            System.out.println("⚠️ User " + staffId + " chưa có FCM token → bỏ qua.");
+            return;
+        }
+
+        String token = resp.getFcmToken();
 
         Message message = Message.builder()
                 .setToken(token)
@@ -31,15 +40,14 @@ public class FirebaseNotificationService {
                 .putData("body", NotificationTemplate.orderApprovedBody())
                 .putData("orderId", String.valueOf(orderId))
                 .putData("type", "ORDER_APPROVED")
-                .putData("icon", "/image/icon.png")      // << MUST HAVE
+                .putData("icon", "/image/icon.png")
                 .build();
-
 
         try {
             String response = FirebaseMessaging.getInstance().send(message);
-            System.out.println("📲 FCM gửi thành công cho user " + staffId + " → " + response);
+            System.out.println("📲 FCM gửi OK → " + response);
         } catch (Exception e) {
-            System.out.println("❌ Lỗi gửi FCM cho user " + staffId + ", order " + orderId);
+            System.out.println("❌ Lỗi gửi FCM cho user " + staffId);
             e.printStackTrace();
         }
     }

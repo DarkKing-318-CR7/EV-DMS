@@ -2,26 +2,17 @@ server:
   port: 8081
 
 spring:
-  application:
-    name: gateway-service
-
   cloud:
     gateway:
       routes:
 
-        # ============================
-        # AUTH SERVICE (PORT 9000)
-        # ============================
         - id: auth-service
           uri: http://localhost:9000
           predicates:
-            - Path=/auth/**
+            - Path=/login,/logout,/post-login,/admin/**,/dealer/**,/evm/**,/manager/**,/staff/**,/css/**,/js/**,/image/**,/webjars/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
-        # ============================
-        # CRM SERVICE (PORT 9001)
-        # ============================
         - id: crm-service
           uri: http://localhost:9001
           predicates:
@@ -29,9 +20,6 @@ spring:
           filters:
             - StripPrefix=1
 
-        # ============================
-        # CATALOG SERVICE (PORT 9002)
-        # ============================
         - id: catalog-service
           uri: http://localhost:9002
           predicates:
@@ -39,19 +27,14 @@ spring:
           filters:
             - StripPrefix=1
 
-        # ============================
-        # INVENTORY SERVICE (PORT 9003)
-        # ============================
-        - id: inventory-service
+        # Route tới inventory-service (REST API)
+        - id: inventory-service-api
           uri: http://localhost:9003
           predicates:
-            - Path=/inventory/**
+            - Path=/api/inventory/**
           filters:
             - StripPrefix=1
 
-        # ============================
-        # ORDER SERVICE (PORT 9004)
-        # ============================
         - id: order-service
           uri: http://localhost:9004
           predicates:
@@ -59,9 +42,6 @@ spring:
           filters:
             - StripPrefix=1
 
-        # ============================
-        # SALES SERVICE (PORT 9005)
-        # ============================
         - id: sales-service
           uri: http://localhost:9005
           predicates:
@@ -69,9 +49,6 @@ spring:
           filters:
             - StripPrefix=1
 
-        # ============================
-        # REPORT SERVICE (PORT 9006)
-        # ============================
         - id: report-service
           uri: http://localhost:9006
           predicates:
@@ -79,7 +56,6 @@ spring:
           filters:
             - StripPrefix=1
 
-# Bật actuator để xem routes
 management:
   endpoints:
     web:

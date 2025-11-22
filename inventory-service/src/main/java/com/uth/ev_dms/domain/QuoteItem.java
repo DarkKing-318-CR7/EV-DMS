@@ -1,6 +1,7 @@
 package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 
 @Entity

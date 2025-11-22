@@ -1,14 +1,9 @@
 package com.uth.ev_dms.domain;
 
 
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
-import lombok.*;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;

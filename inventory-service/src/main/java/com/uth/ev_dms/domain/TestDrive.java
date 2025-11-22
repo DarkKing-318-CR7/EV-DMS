@@ -1,10 +1,11 @@
 package com.uth.ev_dms.domain;
 
-import com.uth.ev_dms.auth.User;
+import com.uth.ev_dms.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
-import jakarta.persistence.PrePersist;
+
 
 @Entity @Table(name="test_drives")
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
@@ -18,15 +19,6 @@ public class TestDrive {
     private String location;
 
     private LocalDateTime scheduleAt;
-
-    // ⭐ THÊM MỚI — KHÔNG ĐỤNG scheduleAt
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-
-    // ⭐ THÊM (nếu dùng xe thật)
-    private Long vehicleId;
-    private Long trimId;
-
     private String notes;
 
     @Enumerated(EnumType.STRING)
@@ -44,6 +36,7 @@ public class TestDrive {
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
 
+    // ⭐ THÊM ĐÚNG ĐOẠN NÀY — KHÔNG SỬA CODE KHÁC
     @PrePersist
     public void prePersist() {
         if (status == null) {

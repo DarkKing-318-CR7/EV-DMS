@@ -12,6 +12,7 @@ import java.util.List;
 @Entity
 @Table(name = "trims")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Setter @Getter
 public class Trim {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

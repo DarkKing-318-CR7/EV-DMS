@@ -22,8 +22,9 @@ public interface InventoryService {
     void delete(Long id);
 
     /**
-     * Cập nhật tồn kho và ghi log điều chỉnha
-     * @param req dữ liệu người dùng nhập trên form
+     * Cập nhật tồn kho và ghi log điều chỉnh
+     *
+     * @param req       dữ liệu người dùng nhập trên form
      * @param updatedBy username người thao tác
      */
     Inventory updateInventory(InventoryUpdateRequest req, String updatedBy);
@@ -40,6 +41,7 @@ public interface InventoryService {
 
     /**
      * Lấy map số lượng tồn của từng Trim theo Dealer
+     * key: trimId, value: tổng qtyOnHand
      */
     Map<Long, Integer> getStockByTrimForDealer(Long dealerId);
 
@@ -66,6 +68,10 @@ public interface InventoryService {
      * Hủy đơn hàng → giải phóng tồn kho đã reserve
      */
     void releaseForOrder(Long orderId);
-    public Map<Long,Integer> getStockByTrimForBranch(Long branchId);
 
+    /**
+     * Lấy map số lượng tồn theo trim tại 1 chi nhánh
+     * key: trimId, value: qtyAvailable hoặc qtyOnHand (tùy logic sumAvailableByTrimAtBranch)
+     */
+    Map<Long, Integer> getStockByTrimForBranch(Long branchId);
 }

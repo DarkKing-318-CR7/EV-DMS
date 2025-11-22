@@ -46,12 +46,25 @@
                 </thead>
                 <tbody>
                 <tr th:each="inv : ${hqInventories}">
-                    <td th:text="${inv.trim != null ? inv.trim.trimName : '-'}"></td>
-                    <td th:text="${inv.trim != null && inv.trim.vehicle != null
-                                  ? inv.trim.vehicle.modelName : '-'}"></td>
-                    <td th:text="${inv.locationType}">HQ</td>
-                    <td class="text-right" th:text="${inv.qtyOnHand}">0</td>
-                    <td th:text="${#temporals.format(inv.updatedAt, 'dd/MM/yyyy HH:mm')}">-</td>
+                    <!-- Trim -->
+                    <td th:text="${inv.trimName != null ? inv.trimName : '-'}">-</td>
+
+                    <!-- Vehicle / Model -->
+                    <td th:text="${inv.modelName != null ? inv.modelName : '-'}">-</td>
+
+                    <!-- Location: HQ cố định -->
+                    <td th:text="'HQ'">HQ</td>
+
+                    <!-- Qty On Hand -->
+                    <td class="text-right"
+                        th:text="${inv.qtyOnHand != null ? inv.qtyOnHand : 0}">0</td>
+
+
+                    <!-- Last Update -->
+                    <td th:text="${inv.updatedAt != null
+                 ? #temporals.format(inv.updatedAt, 'dd/MM/yyyy HH:mm')
+                 : '-'}">-</td>
+
                     <td class="text-center">
                         <a th:href="@{'/admin/inventory/' + ${inv.id} + '/edit'}"
                            class="link-action">Edit</a>
@@ -60,6 +73,7 @@
                            class="link-action">History</a>
                     </td>
                 </tr>
+
                 </tbody>
             </table>
         </div>
@@ -91,13 +105,28 @@
                 </thead>
                 <tbody>
                 <tr th:each="inv : ${branchInventories}">
-                    <td th:text="${inv.branch != null ? inv.branch.name : '-'}"></td>
-                    <td th:text="${inv.dealer != null ? inv.dealer.name : '-'}"></td>
-                    <td th:text="${inv.trim != null ? inv.trim.trimName : '-'}"></td>
-                    <td th:text="${inv.trim != null && inv.trim.vehicle != null
-                                  ? inv.trim.vehicle.modelName : '-'}"></td>
-                    <td class="text-right" th:text="${inv.qtyOnHand}">0</td>
-                    <td th:text="${#temporals.format(inv.updatedAt, 'dd/MM/yyyy HH:mm')}">-</td>
+                    <!-- Branch: tạm hiển thị ID -->
+                    <td th:text="${inv.branchId != null ? inv.branchId : '-'}">-</td>
+
+                    <!-- Dealer: tạm hiển thị ID -->
+                    <td th:text="${inv.dealerId != null ? inv.dealerId : '-'}">-</td>
+
+                    <!-- Trim -->
+                    <td th:text="${inv.trimName != null ? inv.trimName : '-'}">-</td>
+
+                    <!-- Vehicle / Model -->
+                    <td th:text="${inv.modelName != null ? inv.modelName : '-'}">-</td>
+
+                    <!-- Qty On Hand -->
+                    <td class="text-right"
+                        th:text="${inv.qtyOnHand != null ? inv.qtyOnHand : 0}">0</td>
+
+
+                    <!-- Last Update -->
+                    <td th:text="${inv.updatedAt != null
+                 ? #temporals.format(inv.updatedAt, 'dd/MM/yyyy HH:mm')
+                 : '-'}">-</td>
+
                     <td class="text-center">
                         <a th:href="@{'/admin/inventory/' + ${inv.id} + '/edit'}"
                            class="link-action">Edit</a>
@@ -106,6 +135,7 @@
                            class="link-action">History</a>
                     </td>
                 </tr>
+
                 </tbody>
             </table>
         </div>

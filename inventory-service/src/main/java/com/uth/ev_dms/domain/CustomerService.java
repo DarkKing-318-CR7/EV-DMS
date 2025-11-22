@@ -1,7 +1,5 @@
 package com.uth.ev_dms.domain;
 
-import com.uth.ev_dms.domain.Customer;
-
 import java.util.List;
 
 public interface CustomerService {

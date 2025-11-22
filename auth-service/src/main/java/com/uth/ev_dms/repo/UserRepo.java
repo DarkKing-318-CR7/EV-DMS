@@ -22,4 +22,5 @@ public interface UserRepo extends JpaRepository<User, Long> {
     // ⭐ LẤY USER CÓ FCM TOKEN (nếu muốn gửi nhiều user sau này)
     @Query("select u from User u where u.fcmToken is not null")
     List<User> findAllWithFcmToken();
+
 }

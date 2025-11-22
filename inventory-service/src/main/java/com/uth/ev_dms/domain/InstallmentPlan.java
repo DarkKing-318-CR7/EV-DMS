@@ -1,6 +1,7 @@
 package com.uth.ev_dms.domain;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -14,7 +15,7 @@ public class InstallmentPlan {
 
     @OneToOne
     @JoinColumn(name = "order_id", unique = true)
-    private OrderHdr order;
+    private com.uth.ev_dms.domain.OrderHdr order;
 
     private String bank;
     private Integer tenorMonths;        // số tháng trả góp
@@ -33,7 +34,7 @@ public class InstallmentPlan {
         return id;
     }
 
-    public OrderHdr getOrder() {
+    public com.uth.ev_dms.domain.OrderHdr getOrder() {
         return order;
     }
 

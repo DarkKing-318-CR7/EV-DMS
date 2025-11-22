@@ -31,14 +31,13 @@ public class InventoryServiceImpl implements InventoryService {
     private final OrderRepo orderRepo;
     private final OrderItemRepo orderItemRepo;
     private final DealerBranchRepo dealerBranchRepo;
-
     private final InventoryAdjustmentRepo inventoryAdjustmentRepo;
 
     @PersistenceContext
     private EntityManager em;
 
     // ============================================================
-    // =============== ORDER FLOW FUNCTIONS (WRITE) ================
+    // =============== ORDER FLOW FUNCTIONS (WRITE) ===============
     // ============================================================
 
     @Override
@@ -56,8 +55,8 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         final Long dealerId = order.getDealerId();
-        final Long trimId   = resolveTrimId(item);
-        final int qty       = item.getQty() != null ? item.getQty() : 0;
+        final Long trimId = resolveTrimId(item);
+        final int qty = item.getQty() != null ? item.getQty() : 0;
         if (qty <= 0) return true;
 
         final Long branchId = dealerBranchRepo.findByDealerId(dealerId)
@@ -75,9 +74,9 @@ public class InventoryServiceImpl implements InventoryService {
                                 .build()
                 );
 
-        int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
+        int onHand = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
         int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
-        int avail   = onHand - reserved;
+        int avail = onHand - reserved;
 
         if (avail < qty) return false;
 
@@ -96,7 +95,6 @@ public class InventoryServiceImpl implements InventoryService {
 
         return true;
     }
-
 
     @Override
     @Transactional
@@ -120,7 +118,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new IllegalStateException("Dealer has no MAIN branch"))
                 .getId();
 
-        // CHECK toàn bộ item
+        // CHECK toàn bộ item trước
         for (OrderItem it : items) {
             Long trimId = resolveTrimId(it);
             int need = it.getQty() != null ? it.getQty() : 0;
@@ -136,23 +134,22 @@ public class InventoryServiceImpl implements InventoryService {
                                     .build()
                     );
 
-            int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
+            int onHand = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
             int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
-            int avail   = onHand - reserved;
+            int avail = onHand - reserved;
 
             if (avail < need) {
                 throw new IllegalStateException("Out of stock for trim=" + trimId);
             }
         }
 
-        // RESERVE
+        // RESERVE nếu đủ hết
         for (OrderItem it : items) {
             if (!allocateForOrder(it)) {
                 throw new IllegalStateException("Allocation failed for item " + it.getId());
             }
         }
     }
-
 
     @Override
     @Transactional
@@ -185,7 +182,7 @@ public class InventoryServiceImpl implements InventoryService {
                     );
 
             int reserved = inv.getReserved() == null ? 0 : inv.getReserved();
-            int onHand  = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
+            int onHand = inv.getQtyOnHand() == null ? 0 : inv.getQtyOnHand();
 
             if (reserved < qty || onHand < qty) {
                 throw new IllegalStateException("Invalid inventory to ship for trim=" + trimId);
@@ -208,7 +205,6 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
-
     @Override
     @Transactional
     @CacheEvict(value = {
@@ -230,7 +226,6 @@ public class InventoryServiceImpl implements InventoryService {
         for (OrderItem it : items) {
 
             Long trimId = resolveTrimId(it);
-
             int qty = (it.getQty() == null) ? 0 : it.getQty();
             if (qty <= 0) continue;
 
@@ -257,7 +252,6 @@ public class InventoryServiceImpl implements InventoryService {
         }
     }
 
-
     // ============================================================
     // ======================= ADMIN INVENTORY =====================
     // ============================================================
@@ -269,7 +263,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_ONE, key = "#id")
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_ONE)
     public Optional<Inventory> findById(Long id) {
         return inventoryRepo.findById(id);
     }
@@ -305,6 +299,7 @@ public class InventoryServiceImpl implements InventoryService {
     }, allEntries = true)
     public Inventory createInventory(Inventory inv, String createdBy) {
 
+        // Tồn kho tại HQ
         if ("HQ".equalsIgnoreCase(inv.getLocationType())) {
             inv.setDealer(null);
             inv.setBranch(null);
@@ -329,6 +324,7 @@ public class InventoryServiceImpl implements InventoryService {
             return saved;
         }
 
+        // Tồn kho tại đại lý/chi nhánh
         if (inv.getDealer() == null || inv.getDealer().getId() == null) {
             throw new IllegalStateException("Dealer is required for BRANCH inventory");
         }
@@ -399,14 +395,13 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_ADJUSTMENTS, key = "#inventoryId")
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_ADJUSTMENTS)
     public List<InventoryAdjustment> getAdjustmentsForInventory(Long inventoryId) {
         return inventoryAdjustmentRepo.findByInventoryIdOrderByCreatedAtEventDesc(inventoryId);
     }
 
-
     @Override
-    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_BY_DEALER, key = "#dealerId")
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_BY_DEALER)
     public Map<Long, Integer> getStockByTrimForDealer(Long dealerId) {
 
         var invList = inventoryRepo.findByDealer_Id(dealerId);
@@ -422,12 +417,12 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_BY_BRANCH, key = "#branchId")
-    public Map<Long,Integer> getStockByTrimForBranch(Long branchId) {
+    @Cacheable(value = CacheConfig.CacheNames.INVENTORY_BY_BRANCH)
+    public Map<Long, Integer> getStockByTrimForBranch(Long branchId) {
 
         var rows = inventoryRepo.sumAvailableByTrimAtBranch(branchId);
 
-        Map<Long,Integer> map = new HashMap<>();
+        Map<Long, Integer> map = new HashMap<>();
         for (Object[] r : rows) {
             Long trimId = ((Number) r[0]).longValue();
             Integer qty = ((Number) r[1]).intValue();
@@ -436,19 +431,21 @@ public class InventoryServiceImpl implements InventoryService {
         return map;
     }
 
+    /**
+     * Helper: trả về available = onHand - reserved cho một trim tại branch
+     */
     public int getAvailableForTrimAtCurrentBranch(Long trimId, Long branchId) {
         return inventoryRepo.findByTrim_IdAndBranch_Id(trimId, branchId)
                 .map(i -> {
-                    int onHand  = i.getQtyOnHand() == null ? 0 : i.getQtyOnHand();
+                    int onHand = i.getQtyOnHand() == null ? 0 : i.getQtyOnHand();
                     int reserved = i.getReserved() == null ? 0 : i.getReserved();
                     return onHand - reserved;
                 })
                 .orElse(0);
     }
 
-
     // ============================================================
-    // ========================= HELPERS ===========================
+    // ========================= HELPERS ==========================
     // ============================================================
 
     private Long resolveTrimId(OrderItem item) {

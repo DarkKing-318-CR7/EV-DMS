@@ -1,173 +1,173 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi"
-th:replace="~{layout :: layout(~{::main})}">
+      th:replace="~{layout :: layout(~{::main})}">
 <main>
-<head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
+    <head>
+        <meta charset="UTF-8">
+        <title>Admin Dashboard</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-    <style>
-        body {
-            background: #0b1220 url('/image/dark-sunset.jpg') center/cover fixed no-repeat;
-            color: #e5e7eb;
-        }
+        <style>
+            body {
+                background: #0b1220 url('/image/dark-sunset.jpg') center/cover fixed no-repeat;
+                color: #e5e7eb;
+            }
 
-        .dashboard-wrapper {
-            max-width: 1200px;
-            margin: 40px auto;
-            background: rgba(18, 18, 24, .55);
-            border: 1px solid rgba(255, 255, 255, .12);
-            border-radius: 22px;
-            padding: 40px 50px;
-            box-shadow: 0 10px 40px rgba(0,0,0,.4);
-            backdrop-filter: blur(10px);
-        }
+            .dashboard-wrapper {
+                max-width: 1200px;
+                margin: 40px auto;
+                background: rgba(18, 18, 24, .55);
+                border: 1px solid rgba(255, 255, 255, .12);
+                border-radius: 22px;
+                padding: 40px 50px;
+                box-shadow: 0 10px 40px rgba(0,0,0,.4);
+                backdrop-filter: blur(10px);
+            }
 
-        .title {
-            text-align: center;
-            font-size: 38px;
-            font-weight: 800;
-            margin-bottom: 30px;
-        }
+            .title {
+                text-align: center;
+                font-size: 38px;
+                font-weight: 800;
+                margin-bottom: 30px;
+            }
 
-        .card-box {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 18px;
-            padding: 25px;
-            text-align: center;
-            transition: .25s;
-            backdrop-filter: blur(6px);
-        }
+            .card-box {
+                background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 18px;
+                padding: 25px;
+                text-align: center;
+                transition: .25s;
+                backdrop-filter: blur(6px);
+            }
 
-        .card-box:hover {
-            background: rgba(255,255,255,0.15);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,0,0,.25);
-        }
+            .card-box:hover {
+                background: rgba(255,255,255,0.15);
+                transform: translateY(-4px);
+                box-shadow: 0 8px 25px rgba(0,0,0,.25);
+            }
 
-        .card-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
+            .card-icon {
+                font-size: 32px;
+                margin-bottom: 10px;
+            }
 
-        .card-value {
-            font-size: 36px;
-            font-weight: 700;
-        }
+            .card-value {
+                font-size: 36px;
+                font-weight: 700;
+            }
 
-        .card-label {
-            margin-top: 5px;
-            opacity: .8;
-            font-size: 17px;
-        }
-    </style>
-</head>
+            .card-label {
+                margin-top: 5px;
+                opacity: .8;
+                font-size: 17px;
+            }
+        </style>
+    </head>
 
-<body>
+    <body>
 
-<div class="dashboard-wrapper">
+    <div class="dashboard-wrapper">
 
-    <div class="title">Admin Dashboard</div>
+        <div class="title">Admin Dashboard</div>
 
-    <div class="row g-4">
+        <div class="row g-4">
 
-        <!-- Dealers -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-shop"></i></div>
-                <div class="card-value" th:text="${dealers}">0</div>
-                <div class="card-label">Đại lý</div>
+            <!-- Dealers -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-shop"></i></div>
+                    <div class="card-value" th:text="${dealers}">0</div>
+                    <div class="card-label">Đại lý</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Vehicles -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-car-front"></i></div>
-                <div class="card-value" th:text="${vehicles}">0</div>
-                <div class="card-label">Dòng xe</div>
+            <!-- Vehicles -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-car-front"></i></div>
+                    <div class="card-value" th:text="${vehicles}">0</div>
+                    <div class="card-label">Dòng xe</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Trims -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-sliders"></i></div>
-                <div class="card-value" th:text="${trims}">0</div>
-                <div class="card-label">Trims</div>
+            <!-- Trims -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-sliders"></i></div>
+                    <div class="card-value" th:text="${trims}">0</div>
+                    <div class="card-label">Trims</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Promotions -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-stars"></i></div>
-                <div class="card-value" th:text="${promotions}">0</div>
-                <div class="card-label">Promotions</div>
+            <!-- Promotions -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-stars"></i></div>
+                    <div class="card-value" th:text="${promotions}">0</div>
+                    <div class="card-label">Promotions</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Orders -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-bag-check"></i></div>
-                <div class="card-value" th:text="${orders}">0</div>
-                <div class="card-label">Orders</div>
+            <!-- Orders -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-bag-check"></i></div>
+                    <div class="card-value" th:text="${orders}">0</div>
+                    <div class="card-label">Orders</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Inventory -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-box-seam"></i></div>
-                <div class="card-value" th:text="${inventory}">0</div>
-                <div class="card-label">Tồn kho</div>
+            <!-- Inventory -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-box-seam"></i></div>
+                    <div class="card-value" th:text="${inventory}">0</div>
+                    <div class="card-label">Tồn kho</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Users -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-people"></i></div>
-                <div class="card-value" th:text="${users}">0</div>
-                <div class="card-label">Users</div>
+            <!-- Users -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-people"></i></div>
+                    <div class="card-value" th:text="${users}">0</div>
+                    <div class="card-label">Users</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Customers -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-person-lines-fill"></i></div>
-                <div class="card-value" th:text="${customers}">0</div>
-                <div class="card-label">Customers</div>
+            <!-- Customers -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-person-lines-fill"></i></div>
+                    <div class="card-value" th:text="${customers}">0</div>
+                    <div class="card-label">Customers</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Quotes -->
-        <div class="col-md-4">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-file-earmark-text"></i></div>
-                <div class="card-value" th:text="${quotes}">0</div>
-                <div class="card-label">Quotes</div>
+            <!-- Quotes -->
+            <div class="col-md-4">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-file-earmark-text"></i></div>
+                    <div class="card-value" th:text="${quotes}">0</div>
+                    <div class="card-label">Quotes</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Revenue -->
-        <div class="col-md-12">
-            <div class="card-box">
-                <div class="card-icon"><i class="bi bi-currency-dollar"></i></div>
-                <div class="card-value" th:text="${revenue}">0</div>
-                <div class="card-label">Doanh thu (VND)</div>
+            <!-- Revenue -->
+            <div class="col-md-12">
+                <div class="card-box">
+                    <div class="card-icon"><i class="bi bi-currency-dollar"></i></div>
+                    <div class="card-value" th:text="${revenue}">0</div>
+                    <div class="card-label">Doanh thu (VND)</div>
+                </div>
             </div>
-        </div>
 
+        </div>
     </div>
-</div>
 
-</body>
+    </body>
 </main>
 </html>

@@ -1,4 +1,4 @@
-package com.uth.ev_dms.controllers.admin;
+package com.uth.ev_dms.controllers;
 
 import com.uth.ev_dms.auth.User;
 import com.uth.ev_dms.repo.DealerRepo;

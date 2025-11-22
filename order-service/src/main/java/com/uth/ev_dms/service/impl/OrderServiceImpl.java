@@ -1,22 +1,23 @@
 package com.uth.ev_dms.service.impl;
 
+import com.uth.ev_dms.client.InventoryClient;
 import com.uth.ev_dms.config.CacheConfig;
-import com.uth.ev_dms.config.RabbitConfig;
+import com.uth.ev_dms.config.RabbitMQConfig;
 import com.uth.ev_dms.domain.OrderHdr;
 import com.uth.ev_dms.domain.OrderItem;
 import com.uth.ev_dms.domain.OrderStatus;
 import com.uth.ev_dms.exception.BusinessException;
 import com.uth.ev_dms.messaging.OrderApprovedEvent;
-import com.uth.ev_dms.repo.*;
-import com.uth.ev_dms.service.InventoryService;
+import com.uth.ev_dms.repo.OrderItemRepo;
+import com.uth.ev_dms.repo.OrderRepo;
+import com.uth.ev_dms.repo.PaymentRepo;
+import com.uth.ev_dms.repo.QuoteRepo;
 import com.uth.ev_dms.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -29,11 +30,10 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepo orderRepo;
     private final PaymentRepo paymentRepo;
-    private final InventoryService inventoryService;
     private final OrderItemRepo orderItemRepo;
     private final QuoteRepo quoteRepo;
-    private final UserRepo userRepo;
 
+    private final InventoryClient inventoryClient;   // <-- thay InventoryService bằng REST client
     private final RabbitTemplate rabbitTemplate;
 
     // ======================================================
@@ -80,7 +80,7 @@ public class OrderServiceImpl implements OrderService {
             },
             allEntries = true
     )
-    public OrderHdr createFromQuote(Long quoteId, Long dealerIdIgnored, Long customerIdIgnored, Long staffIdIgnored) {
+    public OrderHdr createFromQuote(Long quoteId, Long dealerIdIgnore, Long customerIdIgnore, Long staffIdIgnore) {
 
         var quote = quoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
@@ -89,13 +89,6 @@ public class OrderServiceImpl implements OrderService {
         o.setQuoteId(quote.getId());
         o.setDealerId(quote.getDealerId());
         o.setCustomerId(quote.getCustomerId());
-
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getName() != null) {
-                userRepo.findByUsername(auth.getName()).ifPresent(u -> o.setSalesStaffId(u.getId()));
-            }
-        } catch (Exception ignore) {}
 
         o.setOrderNo(generateOrderNo());
         o.setStatus(OrderStatus.NEW);
@@ -114,7 +107,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // ======================================================
-    // ================ SUBMIT FOR ALLOC ====================
+    // ==================== SUBMIT FOR ALLOC ================
     // ======================================================
 
     @Override
@@ -136,8 +129,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("INVALID_STATE", "Only NEW orders can be submitted");
         }
 
-        List<OrderItem> items = o.getItems();
-        if (items == null || items.isEmpty()) {
+        if (o.getItems() == null || o.getItems().isEmpty()) {
             throw new BusinessException("NO_ITEMS", "Order has no items");
         }
 
@@ -146,7 +138,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // ======================================================
-    // ====================== ALLOCATE ======================
+    // ======================== ALLOCATE ====================
     // ======================================================
 
     @Override
@@ -166,37 +158,38 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
 
         if (o.getStatus() != OrderStatus.PENDING_ALLOC) {
-            throw new BusinessException("INVALID_STATE", "Order must be PENDING_ALLOC to allocate");
+            throw new BusinessException("INVALID_STATE", "Order must be PENDING_ALLOC");
         }
 
-        List<OrderItem> items = o.getItems();
-        if (items == null || items.isEmpty()) {
+        if (o.getItems() == null || o.getItems().isEmpty()) {
             throw new BusinessException("NO_ITEMS", "Order has no items");
         }
 
-        inventoryService.allocateForOrder(orderId);
+        // REST call sang inventory-service
+        inventoryClient.allocate(orderId);
 
         o.setStatus(OrderStatus.ALLOCATED);
         if (o.getAllocatedAt() == null) o.setAllocatedAt(LocalDateTime.now());
 
         OrderHdr saved = orderRepo.save(o);
 
-        Long userId = saved.getSalesStaffId();
+        // gửi event MQ
+        OrderApprovedEvent event = new OrderApprovedEvent(saved.getId(), saved.getSalesStaffId());
 
         rabbitTemplate.convertAndSend(
-                RabbitConfig.EXCHANGE_ORDER,
-                RabbitConfig.ROUTING_ORDER_APPROVED,
-                new OrderApprovedEvent(saved.getId(), userId)
+                RabbitMQConfig.ORDER_EXCHANGE,
+                RabbitMQConfig.ROUTING_ORDER_APPROVED,
+                event
         );
 
-        System.out.println("📤 MQ Event Sent: ORDER_APPROVED for orderId="
-                + saved.getId() + ", userId=" + userId);
+        System.out.println("📤 Event ORDER_APPROVED sent: orderId="
+                + saved.getId() + ", staff=" + saved.getSalesStaffId());
 
         return saved;
     }
 
     // ======================================================
-    // ==================== DELIVER =========================
+    // ======================== DELIVER ======================
     // ======================================================
 
     @Override
@@ -215,18 +208,17 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new BusinessException("ORDER_NOT_FOUND", "Order not found"));
 
         if (o.getStatus() != OrderStatus.ALLOCATED) {
-            throw new BusinessException("INVALID_STATE", "Only ALLOCATED orders can be delivered");
+            throw new BusinessException("INVALID_STATE", "Must be ALLOCATED");
         }
 
-        BigDecimal total = o.getTotalAmount() == null ? BigDecimal.ZERO : o.getTotalAmount();
-        BigDecimal paid  = o.getPaidAmount()  == null ? BigDecimal.ZERO : o.getPaidAmount();
+        BigDecimal total = o.getTotalAmount() != null ? o.getTotalAmount() : BigDecimal.ZERO;
+        BigDecimal paid  = o.getPaidAmount()  != null ? o.getPaidAmount() : BigDecimal.ZERO;
 
         if (paid.compareTo(total) < 0) {
-            throw new BusinessException("UNPAID",
-                    "Không thể giao hàng: đơn chưa thanh toán đủ (" + paid + " / " + total + ")");
+            throw new BusinessException("UNPAID", "Chưa thanh toán đủ");
         }
 
-        inventoryService.shipForOrder(orderId);
+        inventoryClient.ship(orderId);
 
         o.setStatus(OrderStatus.DELIVERED);
         if (o.getDeliveredAt() == null) o.setDeliveredAt(LocalDateTime.now());
@@ -235,11 +227,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // ======================================================
-    // ======================= CANCEL ========================
+    // ========================= CANCEL ======================
     // ======================================================
 
-    @Transactional
     @Override
+    @Transactional
     @CacheEvict(
             value = {
                     CacheConfig.CacheNames.ORDERS_MANAGER,
@@ -253,16 +245,17 @@ public class OrderServiceImpl implements OrderService {
         OrderHdr order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (order.getStatus() == OrderStatus.ALLOCATED || order.getStatus() == OrderStatus.DELIVERED) {
-            throw new IllegalStateException("Cannot cancel allocated or delivered order");
+        if (order.getStatus() == OrderStatus.ALLOCATED ||
+                order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Không thể hủy đơn đã cấp hoặc đã giao");
         }
 
         order.setStatus(OrderStatus.CANCELLED);
         return orderRepo.save(order);
     }
 
-    @Transactional
     @Override
+    @Transactional
     @CacheEvict(
             value = {
                     CacheConfig.CacheNames.ORDERS_MANAGER,
@@ -273,26 +266,25 @@ public class OrderServiceImpl implements OrderService {
     )
     public OrderHdr cancelByDealer(Long orderId, Long dealerId, Long actorId) {
 
-        var o = orderRepo.findById(orderId)
+        OrderHdr o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
         if (!o.getDealerId().equals(dealerId)) {
-            throw new SecurityException("FORBIDDEN_DEALER");
+            throw new SecurityException("FORBIDDEN");
         }
 
-        if (o.getStatus() == OrderStatus.ALLOCATED) {
+        if (o.getStatus() == OrderStatus.ALLOCATED)
             throw new IllegalStateException("DEALLOCATE_FIRST");
-        }
-        if (o.getStatus() == OrderStatus.DELIVERED) {
+
+        if (o.getStatus() == OrderStatus.DELIVERED)
             throw new IllegalStateException("DELIVERED_CANNOT_CANCEL");
-        }
 
         o.setStatus(OrderStatus.CANCELLED);
         return orderRepo.save(o);
     }
 
-    @Transactional
     @Override
+    @Transactional
     @CacheEvict(
             value = {
                     CacheConfig.CacheNames.ORDERS_MANAGER,
@@ -303,21 +295,21 @@ public class OrderServiceImpl implements OrderService {
     )
     public OrderHdr deallocateByEvm(Long orderId, Long actorId, String reason) {
 
-        var o = orderRepo.findById(orderId)
+        OrderHdr o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
         if (o.getStatus() != OrderStatus.ALLOCATED) {
-            throw new IllegalStateException("ONLY_ALLOCATED_CAN_BE_DEALLOCATED");
+            throw new IllegalStateException("ONLY_ALLOCATED");
         }
 
-        inventoryService.releaseForOrder(orderId);
+        inventoryClient.release(orderId);
 
         o.setStatus(OrderStatus.PENDING_ALLOC);
         return orderRepo.save(o);
     }
 
-    @Transactional
     @Override
+    @Transactional
     @CacheEvict(
             value = {
                     CacheConfig.CacheNames.ORDERS_MANAGER,
@@ -328,18 +320,17 @@ public class OrderServiceImpl implements OrderService {
     )
     public OrderHdr cancelByEvm(Long orderId, Long actorId, String reason) {
 
-        var o = orderRepo.findById(orderId)
+        OrderHdr o = orderRepo.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("ORDER_NOT_FOUND"));
 
-        if (o.getStatus() == OrderStatus.DELIVERED) {
+        if (o.getStatus() == OrderStatus.DELIVERED)
             throw new IllegalStateException("DELIVERED_CANNOT_CANCEL");
-        }
-        if (o.getStatus() == OrderStatus.ALLOCATED) {
+
+        if (o.getStatus() == OrderStatus.ALLOCATED)
             throw new IllegalStateException("DEALLOCATE_FIRST");
-        }
-        if (o.getStatus() == OrderStatus.PENDING_ALLOC) {
-            inventoryService.releaseForOrder(orderId);
-        }
+
+        if (o.getStatus() == OrderStatus.PENDING_ALLOC)
+            inventoryClient.release(orderId);
 
         o.setStatus(OrderStatus.CANCELLED);
         return orderRepo.save(o);

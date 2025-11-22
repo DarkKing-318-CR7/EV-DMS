@@ -6,8 +6,7 @@ import com.uth.ev_dms.service.PromotionService;
 import com.uth.ev_dms.service.SalesService;
 import com.uth.ev_dms.service.dto.CreateQuoteDTO;
 import com.uth.ev_dms.service.dto.CreateQuoteItemDTO;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,9 +24,11 @@ public class SalesServiceImpl implements SalesService {
     private final PaymentRepo paymentRepo;
     private final PromotionService promotionService;
     private final CustomerRepo customerRepo;
-    private final UserRepo userRepo;
+
     private final TrimRepo trimRepo;
     private final InventoryRepo inventoryRepo;
+
+    private final HttpServletRequest request;   // <-- THAY userRepo bằng request header
 
     // FULL Constructor
     public SalesServiceImpl(
@@ -38,9 +39,9 @@ public class SalesServiceImpl implements SalesService {
             PaymentRepo paymentRepo,
             PromotionService promotionService,
             CustomerRepo customerRepo,
-            UserRepo userRepo,
             TrimRepo trimRepo,
-            InventoryRepo inventoryRepo
+            InventoryRepo inventoryRepo,
+            HttpServletRequest request
     ) {
         this.quoteRepo = quoteRepo;
         this.quoteItemRepo = quoteItemRepo;
@@ -49,9 +50,20 @@ public class SalesServiceImpl implements SalesService {
         this.paymentRepo = paymentRepo;
         this.promotionService = promotionService;
         this.customerRepo = customerRepo;
-        this.userRepo = userRepo;
+
         this.trimRepo = trimRepo;
         this.inventoryRepo = inventoryRepo;
+
+        this.request = request;
+    }
+
+    // =============== HELPER: GET USER FROM GATEWAY =============
+    private Long getUserId() {
+        return Long.valueOf(request.getHeader("X-User-Id"));
+    }
+
+    private Long getDealerId() {
+        return Long.valueOf(request.getHeader("X-Dealer-Id"));
     }
 
     // ==============================
@@ -64,29 +76,24 @@ public class SalesServiceImpl implements SalesService {
         q.setCustomerId(dto.getCustomerId());
         q.setStatus(dto.getStatus() != null ? dto.getStatus() : "DRAFT");
 
-        // ====== GET CURRENT USER & DEALER ======
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null) {
-            userRepo.findByUsername(auth.getName()).ifPresent(u -> {
-                if (u.getDealer() == null) {
-                    throw new IllegalStateException("User không thuộc dealer nào → Không thể tạo quote");
-                }
+        // ========== LẤY USER & DEALER TỪ HEADER ==========
+        Long staffId = getUserId();
+        Long dealerId = getDealerId();
 
-                // dealer hiện tại
-                q.setDealerId(u.getDealer().getId());
+        if (dealerId == null) {
+            throw new IllegalStateException("User không thuộc dealer nào → Không thể tạo quote");
+        }
 
-                // 👇 GHI NHẬN STAFF TẠO BÁO GIÁ
-                q.setSalesStaffId(u.getId());
-                q.setCreatedBy(u.getId());
+        q.setDealerId(dealerId);
+        q.setSalesStaffId(staffId);
+        q.setCreatedBy(staffId);
 
-                // nếu customer chưa có owner thì gán luôn
-                if (dto.getCustomerId() != null) {
-                    customerRepo.findById(dto.getCustomerId()).ifPresent(c -> {
-                        if (c.getOwnerId() == null) {
-                            c.setOwnerId(u.getId());
-                            customerRepo.save(c);
-                        }
-                    });
+        // nếu customer chưa có owner thì gán
+        if (dto.getCustomerId() != null) {
+            customerRepo.findById(dto.getCustomerId()).ifPresent(c -> {
+                if (c.getOwnerId() == null) {
+                    c.setOwnerId(staffId);
+                    customerRepo.save(c);
                 }
             });
         }
@@ -99,12 +106,14 @@ public class SalesServiceImpl implements SalesService {
 
         BigDecimal total = BigDecimal.ZERO;
 
-        // ====== LOOP OVER ITEMS ======
+        // ====== LOOP ITEMS ======
         for (CreateQuoteItemDTO item : dto.getItems()) {
-            if (item.getTrimId() == null || item.getQuantity() == null) continue;
 
-            // ====== INVENTORY CHECK ======
-            Integer available = inventoryRepo.sumQtyByTrimAndDealer(item.getTrimId(), q.getDealerId());
+            if (item.getTrimId() == null || item.getQuantity() == null)
+                continue;
+
+            // ====== CHECK EXISTING STOCK ======
+            Integer available = inventoryRepo.sumQtyByTrimAndDealer(item.getTrimId(), dealerId);
             if (available == null) available = 0;
 
             if (item.getQuantity() > available) {
@@ -119,7 +128,10 @@ public class SalesServiceImpl implements SalesService {
             Trim trim = trimRepo.findById(item.getTrimId())
                     .orElseThrow(() -> new IllegalArgumentException("Trim not found: " + item.getTrimId()));
 
-            BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : trim.getCurrentPrice();
+            BigDecimal unitPrice = item.getUnitPrice() != null
+                    ? item.getUnitPrice()
+                    : trim.getCurrentPrice();
+
             BigDecimal amount = unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
 
             // ====== SAVE QUOTE ITEM ======
@@ -131,7 +143,6 @@ public class SalesServiceImpl implements SalesService {
             qi.setLineAmount(amount);
 
             quoteItemRepo.save(qi);
-
             total = total.add(amount);
         }
 
@@ -146,8 +157,7 @@ public class SalesServiceImpl implements SalesService {
     @Override
     @Transactional
     public Quote applyPromotions(Long quoteId, List<Long> promotionIds) {
-        Quote q = quoteRepo.findById(quoteId).orElseThrow(() ->
-                new RuntimeException("Quote not found: " + quoteId));
+        Quote q = quoteRepo.findById(quoteId).orElseThrow();
 
         if (q.getTotalAmount() == null)
             throw new RuntimeException("Quote totalAmount missing");
@@ -191,15 +201,18 @@ public class SalesServiceImpl implements SalesService {
         order.setDealerId(quote.getDealerId());
         order.setCreatedAt(java.time.LocalDateTime.now());
 
-        BigDecimal total = quote.getFinalAmount() != null ? quote.getFinalAmount() : quote.getTotalAmount();
-        total = total != null ? total : BigDecimal.ZERO;
+        BigDecimal total = quote.getFinalAmount() != null
+                ? quote.getFinalAmount()
+                : quote.getTotalAmount();
+
+        if (total == null) total = BigDecimal.ZERO;
 
         order.setTotalAmount(total);
         order.setDepositAmount(BigDecimal.ZERO);
         order.setPaidAmount(BigDecimal.ZERO);
         order.setBalanceAmount(total);
 
-        // 👇 GÁN LẠI ĐÚNG STAFF TẠO BÁO GIÁ
+        // staff của quote chính là staff tạo order
         order.setSalesStaffId(quote.getSalesStaffId());
         order.setCreatedBy(quote.getCreatedBy());
 
