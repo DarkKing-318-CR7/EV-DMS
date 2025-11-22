@@ -48,10 +48,11 @@ public class SecurityConfig {
                 // CSRF: nới lỏng cho các tuyến đang test
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/evm/**", "/dealer/**"))
 
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/css/**","/js/**","/image/**","/images/**","/fonts/**","/webjars/**",
-                                "/favicon.ico","/login","/error","/error/**"
+                                "/favicon.ico","/login","/error","/error/**","/api/dealers/**"
                         ).permitAll()
 
                         // ===== Admin
