@@ -25,7 +25,7 @@
         <th>ID</th>
         <th>Tên chương trình</th>
         <th>Giảm (%)</th>
-        <th>Vùng áp dụng</th>
+        <th>Chi nhánh áp dụng</th>
         <th>Ngày bắt đầu</th>
         <th>Ngày kết thúc</th>
         <th>Kích hoạt</th>
@@ -39,13 +39,25 @@
         <td th:text="${p.name}"></td>
         <td th:text="${p.discountPercent}"></td>
 
-        <!-- ⭐ Hiển thị vùng giống EVM -->
+        <!-- ⭐ HIỂN THỊ CHI NHÁNH KHÔNG DÙNG LAMBDA ⭐ -->
         <td>
-            <span th:text="${
-                p.regions == null || #lists.isEmpty(p.regions)
-                ? 'Không xác định'
-                : (#lists.contains(p.regions,'ALL') ? 'Tất cả vùng' : #strings.arrayJoin(p.regions.toArray(), ', '))
-            }"></span>
+            <!-- Không có branch -->
+            <span th:if="${p.branchIds == null || p.branchIds.isEmpty()}">
+                Không xác định
+            </span>
+
+            <!-- Có branch -->
+            <span th:if="${p.branchIds != null && !p.branchIds.isEmpty()}">
+
+                <span th:each="br : ${branchesList}">
+                    <span th:if="${p.branchIds.contains(br.id)}"
+                          th:text="${br.name}"></span>
+
+                    <!-- In dấu phẩy -->
+                    <span th:if="${p.branchIds.contains(br.id)}">, </span>
+                </span>
+
+            </span>
         </td>
 
         <td th:text="${p.startDate}"></td>

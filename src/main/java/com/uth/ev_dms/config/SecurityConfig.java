@@ -83,6 +83,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate").hasAnyRole("EVM_STAFF","ADMIN")
                         .requestMatchers("/evm/orders/**").hasAnyRole("EVM_STAFF","ADMIN")
 
+                        .requestMatchers("/dealer/dashboard-manager").hasRole("DEALER_MANAGER")
+                        .requestMatchers("/dealer/dashboard").hasRole("DEALER_STAFF")
+
+
                         .anyRequest().authenticated()
                 )
 

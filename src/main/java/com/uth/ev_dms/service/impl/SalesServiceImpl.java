@@ -74,6 +74,10 @@ public class SalesServiceImpl implements SalesService {
 
                 // dealer hiện tại
                 q.setDealerId(u.getDealer().getId());
+                q.setDealerBranchId(
+                        u.getDealerBranch() != null ? u.getDealerBranch().getId() : null
+                );
+
 
                 // 👇 GHI NHẬN STAFF TẠO BÁO GIÁ
                 q.setSalesStaffId(u.getId());
@@ -157,7 +161,7 @@ public class SalesServiceImpl implements SalesService {
                 promotionIds,
                 q.getDealerId(),
                 q.getVehicleTrimId(),
-                q.getRegion(),
+                q.getDealerBranchId(),
                 LocalDate.now()
         );
 

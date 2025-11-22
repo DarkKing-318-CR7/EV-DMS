@@ -90,3 +90,17 @@
     background: white;
     color: black;
 }
+
+
+/* Style cho select giống input */
+.promotion-form-page.custom-style select.form-select,
+.promotion-form-page.custom-style select.modern-select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 3px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255,255,255,0.9);
+    color: #000;
+    height: 100px; /* multidropdown đẹp */
+}
