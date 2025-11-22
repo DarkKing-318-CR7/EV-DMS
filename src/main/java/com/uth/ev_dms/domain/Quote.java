@@ -50,6 +50,15 @@ public class Quote {
     private List<QuoteItem> items = new ArrayList<>();
 
 
+    @Column(name = "dealer_branch_id")
+    private Long dealerBranchId;
+
+    private Long salesStaffId;
+    private Long createdBy;
+
+    public Long getDealerBranchId() { return dealerBranchId; }
+    public void setDealerBranchId(Long dealerBranchId) { this.dealerBranchId = dealerBranchId; }
+
 
 
     // ==========================
@@ -151,10 +160,7 @@ public class Quote {
     public void setItems(List<QuoteItem> items) {
         this.items = items;
     }
-    @Column(name = "sales_staff_id")
-    private Long salesStaffId;
 
-    // getters/setters
     public Long getSalesStaffId() {
         return salesStaffId;
     }
@@ -163,5 +169,11 @@ public class Quote {
         this.salesStaffId = salesStaffId;
     }
 
+    public Long getCreatedBy() {
+        return createdBy;
+    }
 
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
 }

@@ -82,5 +82,16 @@ public interface OrderRepo extends JpaRepository<OrderHdr, Long> {
     @Query("select sum(o.totalAmount) from OrderHdr o where o.status = 'COMPLETED'")
     Long sumRevenue();
 
+    @Query("""
+    select count(o)
+    from OrderHdr o
+    where o.dealerId = :dealerId
+      and o.status = 'COMPLETED'
+    """)
+    Integer countSoldByDealer(@Param("dealerId") Long dealerId);
+
+
+
+
 }
 

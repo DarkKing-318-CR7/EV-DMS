@@ -1,46 +1,69 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en"
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
       th:replace="layout :: layout (~{::body})">
-<head>
-    <title th:text="${promotion.id == null} ? 'Create Promotion' : 'Edit Promotion'">
-        Create Promotion
-    </title>
-</head>
+
 <body>
-<h1 th:text="${promotion.id == null ? 'Create New Promotion' : 'Edit Promotion'}"></h1>
 
-<form th:action="@{/admin/promotions/save}"
-      th:object="${promotion}" method="post" class="form">
-    <input type="hidden" th:field="*{id}"/>
+<div class="promotion-form-page custom-style">
+    <div class="form-container">
 
-    <div class="mb-3">
-        <label class="form-label">Name</label>
-        <input type="text" class="form-control" th:field="*{name}" required/>
+        <h1 class="title"
+            th:text="${promotion.id == null ? 'Tạo Khuyến Mãi Mới' : 'Chỉnh Sửa Khuyến Mãi'}"></h1>
+
+        <form th:action="@{/admin/promotions/save}" th:object="${promotion}" method="post">
+            <input type="hidden" th:field="*{id}"/>
+
+            <div class="form-group">
+                <label class="form-label">Tên chương trình</label>
+                <input type="text" class="form-input" th:field="*{name}" placeholder="Ví dụ: Summer Sale" required/>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Mức giảm giá (%)</label>
+                <input type="number" class="form-input" th:field="*{discountPercent}"
+                       min="0" max="100" step="0.1" placeholder="0 - 100" required/>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Ngày bắt đầu</label>
+                <input type="date" class="form-input" th:field="*{startDate}" required/>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Ngày kết thúc</label>
+                <input type="date" class="form-input" th:field="*{endDate}"/>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Áp dụng cho chi nhánh</label>
+
+                <select name="branchIds"
+                        multiple
+                        class="form-select modern-select">
+                    <option value="0">Tất cả chi nhánh</option>
+
+                    <option th:each="b : ${branchesList}"
+                            th:value="${b.id}"
+                            th:text="${b.name}">
+                    </option>
+                </select>
+
+                <small class="hint">Giữ CTRL / CMD để chọn nhiều</small>
+            </div>
+
+
+
+            <div class="checkbox">
+                <input type="checkbox" th:field="*{active}"/>
+                <label class="form-check-label">Kích hoạt</label>
+            </div>
+
+            <button type="submit" class="btn-save">💾 Lưu</button>
+            <a th:href="@{/admin/promotions}" class="btn-cancel">Hủy</a>
+        </form>
+
     </div>
+</div>
 
-    <div class="mb-3">
-        <label class="form-label">Discount (%)</label>
-        <input type="number" class="form-control"
-               th:field="*{discountPercent}" min="0" max="100" step="0.1"/>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Start Date</label>
-        <input type="date" class="form-control" th:field="*{startDate}" required/>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">End Date</label>
-        <input type="date" class="form-control" th:field="*{endDate}"/>
-    </div>
-
-    <div class="form-check mb-3">
-        <input type="checkbox" class="form-check-input" th:field="*{active}" id="activeCheck"/>
-        <label class="form-check-label" for="activeCheck">Active</label>
-    </div>
-
-    <button type="submit" class="btn btn-success">Save</button>
-    <a th:href="@{/admin/promotions}" class="btn btn-outline-light ms-2">Cancel</a>
-</form>
 </body>
 </html>

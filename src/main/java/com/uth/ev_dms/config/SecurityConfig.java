@@ -48,10 +48,11 @@ public class SecurityConfig {
                 // CSRF: nới lỏng cho các tuyến đang test
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/evm/**", "/dealer/**"))
 
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/css/**","/js/**","/image/**","/images/**","/fonts/**","/webjars/**",
-                                "/favicon.ico","/login","/error","/error/**"
+                                "/favicon.ico","/login","/error","/error/**","/api/dealers/**"
                         ).permitAll()
 
                         // ===== Admin
@@ -81,6 +82,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,  "/evm/orders/pending").hasAnyRole("EVM_STAFF","ADMIN")
                         .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate").hasAnyRole("EVM_STAFF","ADMIN")
                         .requestMatchers("/evm/orders/**").hasAnyRole("EVM_STAFF","ADMIN")
+
+                        .requestMatchers("/dealer/dashboard-manager").hasRole("DEALER_MANAGER")
+                        .requestMatchers("/dealer/dashboard").hasRole("DEALER_STAFF")
+
 
                         .anyRequest().authenticated()
                 )

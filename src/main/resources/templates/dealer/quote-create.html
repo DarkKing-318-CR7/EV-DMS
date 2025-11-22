@@ -1,337 +1,78 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout :: layout(~{::content})">
-<head>
-    <meta charset="UTF-8" />
-    <title>Tạo báo giá</title>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 
-    <!-- giữ theme tổng thể của app -->
-    <link rel="stylesheet" th:href="@{/css/quote-create.css}"/>
+<th:block th:replace="layout :: layout(~{::content})">
 
-    <style>
-        :root{
-            --glass: rgba(255,255,255,.06);
-            --glass2: rgba(255,255,255,.1);
-            --border: rgba(255,255,255,.12);
-            --muted: #a6adbb;
-            --text: #e8ecff;
-            --ok: #22c55e; --warn:#f59e0b; --bad:#ef4444; --pri:#6366f1;
-        }
-        .shell{max-width: 980px; margin: 34px auto 64px; color: var(--text);}
-        .panel{
-            background: var(--glass);
-            border:1px solid var(--border);
-            border-radius: 18px;
-            padding: 22px 22px 16px;
-            box-shadow: 0 12px 34px rgba(0,0,0,.45);
-            backdrop-filter: blur(10px);
-        }
-        .head{
-            display:flex; align-items:center; gap:16px; margin-bottom:10px;
-            border-bottom:1px solid var(--border); padding-bottom:12px;
-        }
-        .head h1{margin:0;font-size:28px;font-weight:800}
-        .muted{color:var(--muted)}
-        .grid{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
-        .field{display:flex; flex-direction:column; gap:6px}
-        .label{font-weight:700}
-        .ipt, .sel{
-            background:rgba(255,255,255,.08);
-            border:1px solid rgba(255,255,255,.18);
-            color:#fff; border-radius:12px; padding:10px 12px; outline:none;
-        }
-        .ipt::placeholder{color:#bac0d0}
-        .row-between{display:flex; justify-content:space-between; align-items:center; gap:12px}
-        .btn{border:none; border-radius:12px; padding:10px 14px; font-weight:700; color:#0b1220; cursor:pointer}
-        .btn-pri{background:#8b5cf6; color:#fff}
-        .btn-sec{background:transparent; color:#e5e7eb; border:1px solid var(--border)}
-        .btn-lite{background:rgba(255,255,255,.1); color:#fff}
-        .btn-danger{background:#ef4444; color:#fff}
-        .btn-sm{padding:6px 10px; border-radius:10px; font-weight:600}
-        .btn-icon{display:inline-flex; align-items:center; gap:6px}
-        .table{
-            width:100%; border-collapse:separate; border-spacing:0 8px; margin-top:4px
-        }
-        .th, .td{padding:10px 12px}
-        .thead .th{
-            color:#a5b4fc; font-weight:800; font-size:.86rem;
-            border-bottom:1px solid var(--border);
-        }
-        .tbody .tr{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px}
-        .tbody .td:first-child{border-radius:12px 0 0 12px}
-        .tbody .td:last-child {border-radius:0 12px 12px 0; text-align:right}
-        .qty{width:90px}
-        .price{width:160px}
-        .right{text-align:right}
-        .totals{
-            margin-top:14px; padding-top:12px; border-top:1px dashed var(--border);
-            display:grid; gap:8px
-        }
-        .totals .line{display:flex; justify-content:space-between}
-        .totals .sum{font-size:1.2rem; font-weight:800}
-        .tag{display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:rgba(255,255,255,.06)}
-    </style>
-</head>
+    <!-- CONTENT FRAGMENT -->
+    <th:block th:fragment="content">
 
-<body>
-<div th:fragment="content" class="shell">
-    <div class="panel">
+        <div class="quote-wrapper">
 
-        <!-- Server inject danh sách trims -->
-        <script th:inline="javascript">
-            /*<![CDATA[*/
-            window._trims = /*[[${vehicles}]]*/ []; // [{trimId, trimName, vehicleName, price}]
-            /*]]>*/
-        </script>
+            <h1>Create New Quote</h1>
 
-        <div class="head">
-            <h1>Tạo báo giá</h1>
-            <span class="tag">Draft</span>
-            <span class="muted">Nhập khách hàng, thêm xe và khuyến mãi</span>
-        </div>
+            <!-- ERROR MESSAGE -->
+            <div th:if="${errorMessage != null}"
+                 style="color: red; font-weight: bold; margin: 8px 0 15px 0;">
+                <span th:text="${errorMessage}"></span>
+            </div>
 
-        <form th:action="@{/dealer/quotes/my/save}" method="post" th:object="${quote}" id="quoteForm">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <!-- END ERROR MESSAGE -->
 
-            <!-- Thông tin chung -->
-            <div class="grid">
-                <div class="field">
-                    <span class="label">Khách hàng (ID)</span>
-                    <input class="ipt" id="customerId" th:field="*{customerId}" type="number"
-                           placeholder="Ví dụ: 123" required autocomplete="off"
-                           onfocus="this.removeAttribute('readonly')">
+            <form th:action="@{/dealer/quotes/my/save}"
+                  method="post"
+                  th:object="${quote}"
+                  class="quote-form">
+
+                <!-- Customer -->
+                <div class="row">
+                    <div class="form-label">Customer ID:</div>
+                    <input type="number"
+                           th:field="*{customerId}"
+                           class="input-field"
+                           required/>
                 </div>
-                <div class="field">
-                    <span class="label">Trạng thái</span>
-                    <select class="sel" id="status" th:field="*{status}">
+
+                <!-- Status -->
+                <div class="row">
+                    <div class="form-label">Status:</div>
+                    <select th:field="*{status}" class="input-field">
                         <option value="DRAFT">DRAFT</option>
                         <option value="PENDING">PENDING</option>
                     </select>
                 </div>
-            </div>
 
-            <!-- Items -->
-            <div class="row-between" style="margin-top:16px">
-                <h3 style="margin:0;font-size:18px">Danh sách xe</h3>
-                <button type="button" id="addItemBtn" class="btn btn-lite btn-sm btn-icon">➕ Thêm xe</button>
-            </div>
-
-            <div class="table-wrap">
-                <table class="table">
-                    <thead class="thead">
-                    <tr class="tr">
-                        <th class="th">Model / Trim</th>
-                        <th class="th right" style="width:120px">Số lượng</th>
-                        <th class="th right" style="width:160px">Đơn giá</th>
-                        <th class="th right" style="width:110px"></th>
-                    </tr>
-                    </thead>
-                    <tbody class="tbody" id="itemBody">
-                    <!-- dòng item render bằng JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Khuyến mãi -->
-            <div class="row-between" style="margin-top:10px">
-                <h3 style="margin:0;font-size:18px">Khuyến mãi</h3>
-                <button type="button" id="addPromoBtn" class="btn btn-lite btn-sm btn-icon">🎁 Thêm KM</button>
-            </div>
-            <div id="promoList" style="display:grid; gap:8px; margin-top:6px"></div>
-
-            <!-- Tổng tiền -->
-            <div class="totals">
-                <div class="line">
-                    <span class="muted">Tạm tính</span>
-                    <span id="subTotal" class="muted">0 ₫</span>
+                <!-- Items -->
+                <div class="row">
+                    <div class="form-label">Quote Items:</div>
+                    <button type="button" class="btn-add" id="add-item-btn">+ Add Item</button>
                 </div>
-                <div class="line">
-                    <span class="muted">Giảm giá (tổng %)</span>
-                    <span id="discountPct" class="muted">0%</span>
+                <div id="items-container"></div>
+
+                <!-- Promotions -->
+                <div class="row">
+                    <div class="form-label">Promotions:</div>
+                    <button type="button" class="btn-add" id="addPromoBtn">+ Add Promotion</button>
                 </div>
-                <div class="line sum">
-                    <span>Tổng cộng</span>
-                    <span id="grandTotal">0 ₫</span>
+                <div id="promo-rows-container"></div>
+
+                <!-- Total -->
+                <div class="row total-row">
+                    <div class="form-label">Total Amount:</div>
+                    <span id="totalAmountDisplay">0 ₫</span>
                 </div>
 
-                <!-- bind về server -->
-                <input type="hidden" id="totalAmount" th:field="*{totalAmount}">
-            </div>
+                <div class="actions">
+                    <button type="submit" class="btn-save">Save Quote</button>
+                    <a th:href="@{/dealer/quotes/my}" class="btn-cancel">Cancel</a>
+                </div>
 
-            <!-- Actions -->
-            <div class="row-between" style="margin-top:16px">
-                <a th:href="@{/dealer/quotes/my}" class="btn btn-sec">Hủy</a>
-                <button class="btn btn-pri btn-icon" type="submit">💾 Lưu báo giá</button>
-            </div>
-        </form>
+            </form>
+        </div>
 
-        <!-- ========== Templates ========== -->
-        <template id="tplItemRow">
-            <tr class="tr js-row">
-                <td class="td">
-                    <select class="sel js-trim" style="width:100%"></select>
-                    <input type="hidden" class="js-hidden-vehicle" />
-                </td>
-                <td class="td right">
-                    <input type="number" min="1" value="1" class="ipt qty js-qty">
-                    <input type="hidden" class="js-hidden-qty" />
-                </td>
-                <td class="td right">
-                    <input type="number" step="1" class="ipt price js-price" placeholder="Đơn giá">
-                    <input type="hidden" class="js-hidden-price" />
-                </td>
-                <td class="td">
-                    <button type="button" class="btn btn-danger btn-sm js-del">🗑 Xóa</button>
-                </td>
-            </tr>
-        </template>
+        <script th:src="@{/js/quote-create.js}"></script>
+        <link rel="stylesheet" th:href="@{/css/quote-create.css}">
 
-        <template id="tplPromoRow">
-            <div class="row-between js-promo" style="background:rgba(255,255,255,.06); padding:8px 12px; border:1px solid rgba(255,255,255,.1); border-radius:10px">
-                <select class="sel js-promo-sel" style="flex:1; max-width:360px">
-                    <option value="">-- Chọn khuyến mãi --</option>
-                    <option th:each="p: ${promotions}"
-                            th:value="${p.id}"
-                            th:data-pct="${p.discountPercent}"
-                            th:text="${p.name + ' (' + p.discountPercent + '%)'}">
-                    </option>
-                </select>
-                <span class="muted" style="min-width:70px; text-align:right">-<span class="js-pct">0</span>%</span>
-                <button type="button" class="btn btn-danger btn-sm js-promo-del">🗑</button>
-            </div>
-        </template>
+    </th:block> <!-- END CONTENT FRAGMENT -->
 
-        <!-- ========== JS ========== -->
-        <script>
-            const itemBody  = document.getElementById('itemBody');
-            const tplItem   = document.getElementById('tplItemRow');
-            const tplPromo  = document.getElementById('tplPromoRow');
-            const promoList = document.getElementById('promoList');
-
-            const subTotalEl   = document.getElementById('subTotal');
-            const discountEl   = document.getElementById('discountPct');
-            const grandTotalEl = document.getElementById('grandTotal');
-            const totalInput   = document.getElementById('totalAmount');
-
-            function money(n){ return Number(n||0).toLocaleString('vi-VN') + ' ₫'; }
-
-            function fillTrimOptions(select){
-                const opts = ['<option value="">-- Chọn xe / trim --</option>'];
-                (window._trims || []).forEach(t=>{
-                    const price = Number(t.price || 0);
-                    opts.push(`<option value="${t.trimId}" data-price="${price}">
-            ${t.vehicleName} - ${t.trimName} (${price.toLocaleString('vi-VN')} ₫)
-          </option>`);
-                });
-                select.innerHTML = opts.join('');
-            }
-
-            function addItemRow(initial = {}){
-                const row = tplItem.content.firstElementChild.cloneNode(true);
-                const idx = itemBody.children.length;
-
-                const sel   = row.querySelector('.js-trim');
-                const qty   = row.querySelector('.js-qty');
-                const price = row.querySelector('.js-price');
-
-                const hVeh  = row.querySelector('.js-hidden-vehicle');
-                const hQty  = row.querySelector('.js-hidden-qty');
-                const hPri  = row.querySelector('.js-hidden-price');
-
-                // name để Spring bind: items[i].vehicleId/quantity/unitPrice
-                hVeh.name = `items[${idx}].vehicleId`;
-                hQty.name = `items[${idx}].quantity`;
-                hPri.name = `items[${idx}].unitPrice`;
-
-                fillTrimOptions(sel);
-                if (initial.vehicleId) sel.value = String(initial.vehicleId);
-                qty.value = initial.quantity ?? 1;
-
-                const defaultPrice = Number(sel.selectedOptions[0]?.dataset.price || 0);
-                price.value = initial.unitPrice ?? defaultPrice;
-
-                const sync = ()=>{
-                    hVeh.value = sel.value || '';
-                    hQty.value = qty.value || 0;
-                    hPri.value = price.value || 0;
-                    recalc();
-                };
-
-                sel.addEventListener('change', ()=>{
-                    const p = Number(sel.selectedOptions[0]?.dataset.price || 0);
-                    if (initial.unitPrice == null) price.value = Math.round(p);
-                    sync();
-                });
-                qty.addEventListener('input', sync);
-                price.addEventListener('input', sync);
-                row.querySelector('.js-del').addEventListener('click', ()=>{
-                    row.remove(); reindexItems(); recalc();
-                });
-
-                itemBody.appendChild(row);
-                sync();
-            }
-
-            function reindexItems(){
-                [...itemBody.children].forEach((tr, i)=>{
-                    tr.querySelector('.js-hidden-vehicle').name = `items[${i}].vehicleId`;
-                    tr.querySelector('.js-hidden-qty').name     = `items[${i}].quantity`;
-                    tr.querySelector('.js-hidden-price').name   = `items[${i}].unitPrice`;
-                });
-            }
-
-            function addPromoRow(){
-                const row = tplPromo.content.firstElementChild.cloneNode(true);
-                const sel = row.querySelector('.js-promo-sel');
-                const pctSpan = row.querySelector('.js-pct');
-
-                sel.addEventListener('change', ()=>{
-                    const pct = Number(sel.selectedOptions[0]?.dataset.pct || 0);
-                    pctSpan.textContent = pct;
-                    recalc();
-                });
-                row.querySelector('.js-promo-del').addEventListener('click', ()=>{
-                    row.remove(); recalc();
-                });
-
-                promoList.appendChild(row);
-            }
-
-            function currentDiscountPercent(){
-                // cộng dồn % các khuyến mãi, giới hạn 80% cho an toàn
-                let sum = 0;
-                promoList.querySelectorAll('.js-promo-sel').forEach(s=>{
-                    sum += Number(s.selectedOptions[0]?.dataset.pct || 0);
-                });
-                return Math.min(sum, 80);
-            }
-
-            function recalc(){
-                let sub = 0;
-                itemBody.querySelectorAll('.js-row').forEach(tr=>{
-                    const q = Number(tr.querySelector('.js-qty').value || 0);
-                    const p = Number(tr.querySelector('.js-price').value || 0);
-                    sub += q*p;
-                });
-
-                const pct = currentDiscountPercent();
-                const total = Math.max(0, Math.round(sub * (1 - pct/100)));
-
-                subTotalEl.textContent   = money(sub);
-                discountEl.textContent   = pct + '%';
-                grandTotalEl.textContent = money(total);
-                totalInput.value = total;
-            }
-
-            // Init
-            document.getElementById('addItemBtn').addEventListener('click', addItemRow);
-            document.getElementById('addPromoBtn').addEventListener('click', addPromoRow);
-            addItemRow();        // có sẵn 1 dòng
-            recalc();
-
-            document.getElementById('quoteForm').addEventListener('submit', recalc);
-        </script>
-    </div>
-</div>
-</body>
+</th:block>
 </html>

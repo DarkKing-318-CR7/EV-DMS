@@ -29,4 +29,6 @@ public interface SalesService {
     // === Payment ===
     Payment makeCashPayment(Long orderId, BigDecimal amount);
     Payment makeInstallmentPayment(Long orderId, BigDecimal amount);
+
+
 }

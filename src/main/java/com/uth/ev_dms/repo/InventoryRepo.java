@@ -5,6 +5,9 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import com.uth.ev_dms.domain.Trim;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -107,10 +110,57 @@ public interface InventoryRepo extends JpaRepository<Inventory, Long> {
     @Query("select sum(i.qtyOnHand) from Inventory i")
     Long sumQty();
 
-    @Query("SELECT SUM(i.qtyOnHand) FROM Inventory i")
+    // Tổng tồn kho toàn hệ thống (dùng cho dashboard Admin)
+    @Query("select coalesce(sum(i.qtyOnHand), 0) from Inventory i")
     Long sumTotalQty();
 
-// Chi nhánh
+    // Chi nhánh
+    // ===== LẤY CÁC TRIM CÒN HÀNG THEO DEALER =====
+    @Query("""
+           select distinct i.trim
+           from Inventory i
+           where i.dealer.id = :dealerId
+             and coalesce(i.qtyOnHand, 0) > 0
+           """)
+    List<Trim> findAvailableTrimsByDealer(@Param("dealerId") Long dealerId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Inventory i SET i.qtyOnHand = i.qtyOnHand - :qty " +
+            "WHERE i.dealer.id = :dealerId AND i.trim.id = :trimId AND i.qtyOnHand >= :qty")
+    int reduceInventory(@Param("dealerId") Long dealerId,
+                        @Param("trimId") Long trimId,
+                        @Param("qty") Integer qty);
+
+
+
+
+    // === TOTAL INVENTORY BY DEALER ===
+    @Query("""
+    select coalesce(sum(i.qtyOnHand), 0)
+    from Inventory i
+    where i.dealer.id = :dealerId""")
+    Integer totalByDealer(@Param("dealerId") Long dealerId);
+
+
+    // === INVENTORY GROUP BY MODEL ===
+    @Query("""
+    select i.trim.vehicle.modelName, sum(i.qtyOnHand)
+    from Inventory i
+    where i.dealer.id = :dealerId
+    group by i.trim.vehicle.modelName
+""")
+    List<Object[]> totalGroupByModel(@Param("dealerId") Long dealerId);
+
+    // === LOW STOCK ALERT (< 3 units) ===
+    @Query("""
+    select i.trim.vehicle.modelName, sum(i.qtyOnHand)
+    from Inventory i
+    where i.dealer.id = :dealerId
+      and i.qtyOnHand < 3
+    group by i.trim.vehicle.modelName
+""")
+    List<Object[]> findLowStockModels(@Param("dealerId") Long dealerId);
 
 
 }

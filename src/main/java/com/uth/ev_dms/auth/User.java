@@ -1,6 +1,7 @@
 package com.uth.ev_dms.auth;
 
 import com.uth.ev_dms.domain.Dealer;
+import com.uth.ev_dms.domain.DealerBranch;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -43,9 +44,11 @@ public class User {
     private Set<Role> roles = new HashSet<>(); // ✅ mutable set
 
     @ManyToOne
-    @JoinColumn(name = "dealer_id", nullable = true)
+    @JoinColumn(name = "dealer_id")
     private Dealer dealer;
 
+    @ManyToOne
+    @JoinColumn(name = "dealer_branch_id")
+    private DealerBranch dealerBranch;
 
-  
 }

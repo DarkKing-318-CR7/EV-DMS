@@ -1,16 +1,20 @@
 package com.uth.ev_dms.service.dto;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CreateQuoteDTO {
+
     private Long customerId;
     private Long dealerId;
     private Long vehicleTrimId;
     private String region;
     private String status;
     private BigDecimal totalAmount;
-    private List<CreateQuoteItemDTO> items;
+
+    // ALWAYS initialize to avoid NullPointerException
+    private List<CreateQuoteItemDTO> items = new ArrayList<>();
 
     // ===== Getters & Setters =====
     public Long getCustomerId() { return customerId; }
@@ -32,5 +36,7 @@ public class CreateQuoteDTO {
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
 
     public List<CreateQuoteItemDTO> getItems() { return items; }
-    public void setItems(List<CreateQuoteItemDTO> items) { this.items = items; }
+    public void setItems(List<CreateQuoteItemDTO> items) {
+        this.items = (items != null) ? items : new ArrayList<>();
+    }
 }
