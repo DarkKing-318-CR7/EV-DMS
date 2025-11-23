@@ -7,7 +7,7 @@ import com.uth.ev_dms.domain.Trim;
 import com.uth.ev_dms.domain.Vehicle;
 import com.uth.ev_dms.service.ProductService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;

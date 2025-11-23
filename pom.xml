@@ -10,7 +10,7 @@
 
     <modules>
         <module>auth-service</module>
-        <module>crm-service</module>
+        <module>crm_service</module>
         <module>catalog-service</module>
         <module>inventory-service</module>
         <module>sales-service</module>

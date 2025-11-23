@@ -12,7 +12,7 @@ import com.uth.ev_dms.repo.VehicleRepo;
 import com.uth.ev_dms.repo.OrderRepo;
 import com.uth.ev_dms.service.OrderService;
 import com.uth.ev_dms.service.PaymentService;
-import com.uth.ev_dms.service.dto.OrderItemDto;
+import com.uth.ev_dms.dto.OrderItemDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;

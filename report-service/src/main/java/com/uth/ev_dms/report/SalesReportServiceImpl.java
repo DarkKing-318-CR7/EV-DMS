@@ -1,5 +1,8 @@
 package com.uth.ev_dms.report;
 
+import com.uth.ev_dms.client.OrderClient;
+import com.uth.ev_dms.client.dto.OrderSummaryDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -8,7 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class SalesReportServiceImpl implements SalesReportService {
+
+    private final OrderClient orderClient;
 
     @Override
     public List<SalesReportRow> getSalesReport(String dealer,
@@ -16,36 +22,40 @@ public class SalesReportServiceImpl implements SalesReportService {
                                                LocalDate fromDate,
                                                LocalDate toDate) {
 
-        // TODO: sau này thay bằng query DB thật
-        List<SalesReportRow> list = new ArrayList<>();
+        // 1. Gọi order-service lấy danh sách orders trong khoảng thời gian
+        List<OrderSummaryDto> orders =
+                orderClient.listOrders(null, null, fromDate, toDate);
 
-        SalesReportRow r1 = new SalesReportRow();
-        r1.setDealerName("Dealer HCM");
-        r1.setModelName("EV-100");
-        r1.setQuantity(5);
-        r1.setTotalRevenue(new BigDecimal("250000.00"));
-        r1.setDate(LocalDate.now().minusDays(2));
-        list.add(r1);
+        List<SalesReportRow> result = new ArrayList<>();
 
-        SalesReportRow r2 = new SalesReportRow();
-        r2.setDealerName("Dealer HN");
-        r2.setModelName("EV-200");
-        r2.setQuantity(3);
-        r2.setTotalRevenue(new BigDecimal("210000.00"));
-        r2.setDate(LocalDate.now().minusDays(1));
-        list.add(r2);
+        for (OrderSummaryDto o : orders) {
 
-        SalesReportRow r3 = new SalesReportRow();
-        r3.setDealerName("Dealer HCM");
-        r3.setModelName("EV-100");
-        r3.setQuantity(2);
-        r3.setTotalRevenue(new BigDecimal("100000.00"));
-        r3.setDate(LocalDate.now());
-        list.add(r3);
+            // 2. Filter theo dealer (nếu user có chọn)
+            if (dealer != null && !dealer.isBlank()) {
+                String d = "Dealer " + o.getDealerId();
+                if (!d.toLowerCase().contains(dealer.toLowerCase())) {
+                    continue;
+                }
+            }
 
-        // Ở bản demo này mình bỏ qua filter, chỉ return tất cả.
-        // Khi bạn kết nối DB thật thì lọc ngay trong query.
+            // 3. Tạm thời chưa có modelName từ order-service,
+            //    mình cho "N/A" hoặc sau này sẽ nối với inventory-service.
+            String modelName = "N/A";
+            if (model != null && !model.isBlank()) {
+                // chưa có model thực, filter model tạm bỏ qua
+                // continue; // nếu muốn hard filter
+            }
 
-        return list;
+            SalesReportRow row = new SalesReportRow();
+            row.setDealerName("Dealer " + o.getDealerId());
+            row.setModelName(modelName);
+            row.setQuantity(1); // mỗi order = 1, sau này có thể sum số lượng item
+            row.setTotalRevenue(o.getTotalAmount() != null ? o.getTotalAmount() : BigDecimal.ZERO);
+            row.setDate(o.getCreatedAt() != null ? o.getCreatedAt().toLocalDate() : null);
+
+            result.add(row);
+        }
+
+        return result;
     }
 }

@@ -13,7 +13,7 @@ spring:
           filters:
             - StripPrefix=0
 
-        - id: crm-service
+        - id: crm_service
           uri: http://localhost:9001
           predicates:
             - Path=/crm/**

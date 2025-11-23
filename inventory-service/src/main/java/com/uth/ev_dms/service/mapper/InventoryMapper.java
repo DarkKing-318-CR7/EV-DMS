@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Objects;
 
 @Component
 public class InventoryMapper {
@@ -85,4 +86,7 @@ public class InventoryMapper {
         return inv;
     }
 
+    private Integer defaultZero(Integer value) {
+        return Objects.requireNonNullElse(value, 0);
+    }
 }
