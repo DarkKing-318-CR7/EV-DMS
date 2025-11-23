@@ -34,7 +34,7 @@ public class StaffCustomerController {
         return "dealer/customers-page/my-list";
     }
 
-    @GetMapping("/new")
+    @GetMapping("/form")
     public String newForm(Model model) {
         model.addAttribute("c", new Customer());
 

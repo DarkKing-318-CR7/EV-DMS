@@ -1,7 +1,8 @@
 package com.uth.ev_dms.controllers;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -10,18 +11,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class DealerController {
 
     @GetMapping({"", "/", "/home"})
-    public String home(Model model) {
-        model.addAttribute("pageTitle", "Dealer Home");
-        model.addAttribute("activePage", "home");
-        return "dealer/dashboard";
+    public String home(Authentication auth) {
+
+        if (auth == null) return "redirect:/login";
+
+        // MANAGER
+        if (hasRole(auth, "DEALER_MANAGER")) {
+            return "manager/dashboard";
+        }
+
+        // STAFF
+        if (hasRole(auth, "DEALER_STAFF")) {
+            return "staff/dashboard";
+        }
+
+        return "staff/dashboard";
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-        model.addAttribute("pageTitle", "Dealer Dashboard");
-        model.addAttribute("activePage", "dashboard");
-        return "dealer/dashboard";
+    private boolean hasRole(Authentication auth, String role) {
+        return auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals("ROLE_" + role));
     }
-
-//    @GetMapping("/vehicles") public String vehicles() { return "dealer/vehicles"; }
 }

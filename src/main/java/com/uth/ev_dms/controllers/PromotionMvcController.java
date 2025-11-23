@@ -33,10 +33,10 @@ public class PromotionMvcController {
         // Lấy dealerId và region từ Dealer (KHÔNG dùng dealerBranch)
         Long dealerId = (u.getDealer() != null) ? u.getDealer().getId() : null;
         String region = (u.getDealer() != null) ? u.getDealer().getRegion() : null;
+        Long branchId = (u.getDealerBranch() != null) ? u.getDealerBranch().getId() : null;
 
         // Lấy danh sách promotion hợp lệ
-        List<Promotion> promos = promotionService.getValidPromotionsForQuote(dealerId, null, region);
-
+        List<Promotion> promos = promotionService.getValidPromotionsForQuote(dealerId, null, branchId);
         model.addAttribute("promotions", promos);
         model.addAttribute("readOnly", true);
 
@@ -55,9 +55,10 @@ public class PromotionMvcController {
         // Lấy dealer + region theo mô hình cũ
         Long dealerId = (u.getDealer() != null) ? u.getDealer().getId() : null;
         String region = (u.getDealer() != null) ? u.getDealer().getRegion() : null;
+        Long branchId = (u.getDealerBranch() != null) ? u.getDealerBranch().getId() : null;
 
         // Lấy đúng promotion hợp lệ theo dealer + region
-        List<Promotion> promos = promotionService.getValidPromotionsForQuote(dealerId, null, region);
+        List<Promotion> promos = promotionService.getValidPromotionsForQuote(dealerId, null, branchId);
 
         model.addAttribute("promotions", promos);
         model.addAttribute("readOnly", false);

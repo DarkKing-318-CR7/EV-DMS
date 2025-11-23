@@ -66,7 +66,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Cacheable(
             value = CacheConfig.CacheNames.CUSTOMERS_ALL,
-            key = "#id"
+            key = "#p0"
     )
     public Customer findById(Long id) {
         return repo.findById(id).orElse(null);
@@ -81,13 +81,21 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Cacheable(
             value = CacheConfig.CacheNames.CUSTOMERS_BY_OWNER,
-            key = "#ownerId"
+            key = "#ownerId != null ? #ownerId : -1"   // 🔥 FIX QUAN TRỌNG: key luôn != null
     )
     public List<Customer> findMine(Long ownerId) {
+
+        // Nếu null → trả về empty list, không cache null key
+        if (ownerId == null) {
+            return List.of();
+        }
+
         return repo.findByOwnerId(ownerId);
     }
 
-    // SEARCH thường không cache (vì dynamic) nhưng nếu bạn muốn → thêm TTL + Redis
+    // =========================================================
+    // ========================== SEARCH ========================
+    // =========================================================
 
     @Override
     public List<Customer> searchAll(String kw) {

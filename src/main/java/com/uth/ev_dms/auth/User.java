@@ -1,6 +1,7 @@
 package com.uth.ev_dms.auth;
 
 import com.uth.ev_dms.domain.Dealer;
+import com.uth.ev_dms.domain.DealerBranch;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,18 +38,24 @@ public class User {
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "users_roles",
+    @JoinTable(
+            name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>(); // ✅ mutable set
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
+    // ===== Dealer (Parent Dealer) =====
     @ManyToOne
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
 
+    // ===== Dealer Branch (Chi nhánh Dealer) =====
+    @ManyToOne
+    @JoinColumn(name = "dealer_branch_id")
+    private DealerBranch dealerBranch;
+
+    // ===== Firebase Cloud Messaging Token =====
     @Column(name = "fcm_token")
     private String fcmToken;
-
-
-
 }

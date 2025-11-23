@@ -7,7 +7,6 @@ import com.uth.ev_dms.service.SalesService;
 import com.uth.ev_dms.service.dto.CreateQuoteDTO;
 import com.uth.ev_dms.service.dto.CreateQuoteItemDTO;
 import com.uth.ev_dms.service.vm.NifiService;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,7 @@ public class SalesServiceImpl implements SalesService {
     private final TrimRepo trimRepo;
     private final InventoryRepo inventoryRepo;
 
-    private final NifiService nifiService; // ⬅️ NI-FI ADDED
+    private final NifiService nifiService; // 👍 retained
 
     // FULL Constructor
     public SalesServiceImpl(
@@ -61,24 +60,25 @@ public class SalesServiceImpl implements SalesService {
     }
 
     // ==============================
-    // CREATE QUOTE WITH INVENTORY CHECK
+    // CREATE QUOTE WITH INVENTORY
     // ==============================
     @Override
     @Transactional
     public Quote createQuote(CreateQuoteDTO dto) {
+
         Quote q = new Quote();
         q.setCustomerId(dto.getCustomerId());
         q.setStatus(dto.getStatus() != null ? dto.getStatus() : "DRAFT");
 
-        // ====== GET CURRENT USER & DEALER ======
+        // ====== GET CURRENT USER ======
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null) {
+        if (auth != null) {
             userRepo.findByUsername(auth.getName()).ifPresent(u -> {
-                if (u.getDealer() == null) {
+                if (u.getDealer() == null)
                     throw new IllegalStateException("User không thuộc dealer nào → Không thể tạo quote");
-                }
 
                 q.setDealerId(u.getDealer().getId());
+                q.setDealerBranchId(u.getDealerBranch() != null ? u.getDealerBranch().getId() : null);
                 q.setSalesStaffId(u.getId());
                 q.setCreatedBy(u.getId());
 
@@ -95,14 +95,14 @@ public class SalesServiceImpl implements SalesService {
 
         Quote saved = quoteRepo.save(q);
 
-        if (dto.getItems() == null || dto.getItems().isEmpty()) {
+        if (dto.getItems() == null || dto.getItems().isEmpty())
             throw new IllegalArgumentException("Quote must contain at least one item.");
-        }
 
         BigDecimal total = BigDecimal.ZERO;
 
-        // ====== LOOP OVER ITEMS ======
+        // ====== LOOP QUOTE ITEMS ======
         for (CreateQuoteItemDTO item : dto.getItems()) {
+
             if (item.getTrimId() == null || item.getQuantity() == null) continue;
 
             Integer available = inventoryRepo.sumQtyByTrimAndDealer(item.getTrimId(), q.getDealerId());
@@ -119,7 +119,9 @@ public class SalesServiceImpl implements SalesService {
             Trim trim = trimRepo.findById(item.getTrimId())
                     .orElseThrow(() -> new IllegalArgumentException("Trim not found: " + item.getTrimId()));
 
-            BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : trim.getCurrentPrice();
+            BigDecimal unitPrice = item.getUnitPrice() != null
+                    ? item.getUnitPrice() : trim.getCurrentPrice();
+
             BigDecimal amount = unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
 
             QuoteItem qi = new QuoteItem();
@@ -130,13 +132,14 @@ public class SalesServiceImpl implements SalesService {
             qi.setLineAmount(amount);
 
             quoteItemRepo.save(qi);
+
             total = total.add(amount);
         }
 
         saved.setTotalAmount(total);
         saved.setFinalAmount(total);
 
-        // ➤ Send NiFi event for Quote Created
+        // 🔥 SEND NIFI EVENT
         nifiService.sendToNifi(saved);
 
         return quoteRepo.save(saved);
@@ -148,6 +151,7 @@ public class SalesServiceImpl implements SalesService {
     @Override
     @Transactional
     public Quote applyPromotions(Long quoteId, List<Long> promotionIds) {
+
         Quote q = quoteRepo.findById(quoteId).orElseThrow(() ->
                 new RuntimeException("Quote not found: " + quoteId));
 
@@ -159,7 +163,7 @@ public class SalesServiceImpl implements SalesService {
                 promotionIds,
                 q.getDealerId(),
                 q.getVehicleTrimId(),
-                q.getRegion(),
+                q.getDealerBranchId(),   // ✔ dùng branchId theo version mới
                 LocalDate.now()
         );
 
@@ -168,24 +172,24 @@ public class SalesServiceImpl implements SalesService {
 
         Quote saved = quoteRepo.save(q);
 
-        // ➤ NiFi: Promotion applied
+        // 🔥 EVENT: PROMOTION APPLIED
         nifiService.sendToNifi(saved);
 
         return saved;
     }
 
     // ==============================
-    // APPROVE → CREATE ORDER
+    // APPROVE QUOTE → ORDER
     // ==============================
     @Override
     @Transactional
     public OrderHdr approveQuote(Long quoteId) {
+
         Quote quote = quoteRepo.findById(quoteId)
                 .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
 
-        if (quote.getItems() == null || quote.getItems().isEmpty()) {
+        if (quote.getItems() == null || quote.getItems().isEmpty())
             throw new IllegalStateException("Order has no items");
-        }
 
         quote.setStatus("APPROVED");
         quoteRepo.save(quote);
@@ -196,17 +200,18 @@ public class SalesServiceImpl implements SalesService {
         order.setStatus(OrderStatus.NEW);
         order.setCustomerId(quote.getCustomerId());
         order.setDealerId(quote.getDealerId());
+        order.setDealerBranchId(quote.getDealerBranchId());
         order.setCreatedAt(java.time.LocalDateTime.now());
         order.setSalesStaffId(quote.getSalesStaffId());
         order.setCreatedBy(quote.getCreatedBy());
 
-        BigDecimal total = quote.getFinalAmount() != null ? quote.getFinalAmount() : quote.getTotalAmount();
-        total = total != null ? total : BigDecimal.ZERO;
+        BigDecimal total = quote.getFinalAmount() != null ?
+                quote.getFinalAmount() : quote.getTotalAmount();
+        order.setTotalAmount(total != null ? total : BigDecimal.ZERO);
 
-        order.setTotalAmount(total);
         order.setDepositAmount(BigDecimal.ZERO);
         order.setPaidAmount(BigDecimal.ZERO);
-        order.setBalanceAmount(total);
+        order.setBalanceAmount(order.getTotalAmount());
 
         OrderHdr savedOrder = orderRepo.save(order);
 
@@ -220,14 +225,14 @@ public class SalesServiceImpl implements SalesService {
             orderItemRepo.save(oi);
         }
 
-        // ➤ NiFi: APPROVED QUOTE → ORDER
+        // 🔥 EVENT: ORDER CREATED
         nifiService.sendToNifi(savedOrder);
 
         return savedOrder;
     }
 
     // ==============================
-    // CHANGE STATUS
+    // STATUS CHANGE
     // ==============================
     @Override
     @Transactional
@@ -236,9 +241,7 @@ public class SalesServiceImpl implements SalesService {
         q.setStatus("PENDING");
         Quote saved = quoteRepo.save(q);
 
-        // ➤ NiFi Event
         nifiService.sendToNifi(saved);
-
         return saved;
     }
 
@@ -251,14 +254,12 @@ public class SalesServiceImpl implements SalesService {
 
         Quote saved = quoteRepo.save(q);
 
-        // ➤ NiFi: Reject event
         nifiService.sendToNifi(saved);
-
         return saved;
     }
 
     // ==============================
-    // FIND METHODS
+    // FIND
     // ==============================
     @Override
     public List<Quote> findPending() {
@@ -271,7 +272,7 @@ public class SalesServiceImpl implements SalesService {
     }
 
     // ==============================
-    // PAYMENT
+    // PAYMENTS
     // ==============================
     @Override
     @Transactional
@@ -279,14 +280,12 @@ public class SalesServiceImpl implements SalesService {
         OrderHdr order = orderRepo.findById(orderId).orElseThrow();
         Payment p = new Payment();
         p.setOrder(order);
-        p.setType(PaymentType.CASH);
         p.setAmount(amount);
+        p.setType(PaymentType.CASH);
 
         Payment saved = paymentRepo.save(p);
 
-        // ➤ NiFi Payment event
         nifiService.sendToNifi(saved);
-
         return saved;
     }
 
@@ -296,14 +295,12 @@ public class SalesServiceImpl implements SalesService {
         OrderHdr order = orderRepo.findById(orderId).orElseThrow();
         Payment p = new Payment();
         p.setOrder(order);
-        p.setType(PaymentType.INSTALLMENT);
         p.setAmount(amount);
+        p.setType(PaymentType.INSTALLMENT);
 
         Payment saved = paymentRepo.save(p);
 
-        // ➤ NiFi Payment event
         nifiService.sendToNifi(saved);
-
         return saved;
     }
 }

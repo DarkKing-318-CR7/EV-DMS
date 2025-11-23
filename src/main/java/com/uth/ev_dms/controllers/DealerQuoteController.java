@@ -86,10 +86,10 @@ public class DealerQuoteController {
 
         Long dealerId = (u.getDealer() != null) ? u.getDealer().getId() : null;
         String region  = (u.getDealer() != null) ? u.getDealer().getRegion() : null;
-
+        Long branchId = (u.getDealerBranch() != null) ? u.getDealerBranch().getId() : null;
         // khuyến mãi hợp lệ cho dealer + region hiện tại
         List<Promotion> promos =
-                promotionService.getValidPromotionsForQuote(dealerId, null, region);
+                promotionService.getValidPromotionsForQuote(dealerId, null, branchId);
         model.addAttribute("promotions", promos);
 
         // danh sách trims + price
@@ -146,9 +146,10 @@ public class DealerQuoteController {
         User u = userRepo.findByUsername(username).orElseThrow();
         Long dealerId = u.getDealer().getId();
         String region = u.getDealer().getRegion();
+        Long branchId = (u.getDealerBranch() != null) ? u.getDealerBranch().getId() : null;
 
         // Load promotions again
-        List<Promotion> promos = promotionService.getValidPromotionsForQuote(dealerId, null, region);
+        List<Promotion> promos = promotionService.getValidPromotionsForQuote(dealerId, null, branchId);
         model.addAttribute("promotions", promos);
 
         // Load vehicles again
@@ -251,15 +252,19 @@ public class DealerQuoteController {
     @ResponseBody
     public List<Map<String, Object>> getPromotionsApi() {
 
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication().getName();
+        // Lấy user hiện tại
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User u = userRepo.findByUsername(username).orElseThrow();
 
-        Long dealerId = (u.getDealer() != null) ? u.getDealer().getId() : null;
-        String region  = (u.getDealer() != null) ? u.getDealer().getRegion() : null;
+        Long dealerId  = (u.getDealer() != null) ? u.getDealer().getId() : null;
+        Long branchId  = (u.getDealerBranch() != null) ? u.getDealerBranch().getId() : null;
 
+        // Vì API này không có trim → truyền null
+        Long trimId = null;
+
+        // Lấy promotion hợp lệ theo dealer + branch
         List<Promotion> list =
-                promotionService.getValidPromotionsForQuote(dealerId, null, region);
+                promotionService.getValidPromotionsForQuote(dealerId, trimId, branchId);
 
         return list.stream().map(p -> {
             Map<String, Object> m = new HashMap<>();
@@ -267,8 +272,8 @@ public class DealerQuoteController {
 
             String name =
                     (p.getTitle() != null && !p.getTitle().isEmpty()) ? p.getTitle() :
-                            (p.getName() != null && !p.getName().isEmpty())   ? p.getName() :
-                                    (p.getDescription() != null)                      ? p.getDescription() :
+                            (p.getName() != null && !p.getName().isEmpty()) ? p.getName() :
+                                    (p.getDescription() != null) ? p.getDescription() :
                                             "Unnamed";
 
             m.put("name", name);

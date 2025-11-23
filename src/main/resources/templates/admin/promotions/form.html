@@ -35,13 +35,23 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Áp dụng cho vùng</label>
-                <select th:field="*{regions}" class="form-input" multiple>
-                    <option value="ALL">Tất cả vùng</option>
-                    <option th:each="r : ${regionsList}" th:value="${r.name}" th:text="${r.name}"></option>
+                <label class="form-label">Áp dụng cho chi nhánh</label>
+
+                <select name="branchIds"
+                        multiple
+                        class="form-select modern-select">
+                    <option value="0">Tất cả chi nhánh</option>
+
+                    <option th:each="b : ${branchesList}"
+                            th:value="${b.id}"
+                            th:text="${b.name}">
+                    </option>
                 </select>
+
                 <small class="hint">Giữ CTRL / CMD để chọn nhiều</small>
             </div>
+
+
 
             <div class="checkbox">
                 <input type="checkbox" th:field="*{active}"/>

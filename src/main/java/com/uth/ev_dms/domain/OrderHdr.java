@@ -14,10 +14,10 @@ public class OrderHdr {
     private Long id;
 
     private Long dealerId;
+    private Long dealerBranchId;   // 🔥 ADDED FIELD FIX ERROR
     private Long customerId;
-    private Long quoteId; // null neu tao manual
+    private Long quoteId;
 
-    // can cho "my orders"
     private Long salesStaffId;
 
     @Column(nullable = false, unique = true)
@@ -42,13 +42,11 @@ public class OrderHdr {
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private InstallmentPlan installmentPlan;
 
-    // NEW: nguoi tao don (nhan vien)
     @Column(name = "created_by")
     private Long createdBy;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // ====== Mốc thời gian timeline ======
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
@@ -58,36 +56,33 @@ public class OrderHdr {
     @Column(name = "delivered_at")
     private LocalDateTime deliveredAt;
 
-    // ===== Guard: đảm bảo tiền & trạng thái không-null trước khi lưu =====
+    // ===== Guard =====
     @PrePersist
     @PreUpdate
     private void ensureAmountsNotNull() {
         BigDecimal ZERO = BigDecimal.ZERO;
 
-        if (totalAmount == null)   totalAmount   = ZERO;
+        if (totalAmount == null)   totalAmount = ZERO;
         if (depositAmount == null) depositAmount = ZERO;
-        if (paidAmount == null)    paidAmount    = ZERO;
+        if (paidAmount == null)    paidAmount = ZERO;
 
-        // nếu balance null thì tự tính = total - deposit - paid
         if (balanceAmount == null) {
             balanceAmount = totalAmount.subtract(depositAmount).subtract(paidAmount);
         }
 
-        // không để số dư âm
         if (balanceAmount.compareTo(ZERO) < 0) {
             balanceAmount = ZERO;
         }
 
-        // trạng thái & thời gian tạo an toàn
         if (status == null)    status = OrderStatus.NEW;
         if (createdAt == null) createdAt = LocalDateTime.now();
     }
 
-    // helper
+    // ===== Helpers =====
     public void addItem(OrderItem it) { it.setOrder(this); items.add(it); }
     public void addPayment(Payment p) { p.setOrder(this); payments.add(p); }
 
-    // ===== Getter/Setter =====
+    // ===== Getters/Setters =====
     public Long getId() { return id; }
 
     private String customerName;
@@ -96,6 +91,9 @@ public class OrderHdr {
 
     public Long getDealerId() { return dealerId; }
     public void setDealerId(Long dealerId) { this.dealerId = dealerId; }
+
+    public Long getDealerBranchId() { return dealerBranchId; }      // 🔥 ADDED
+    public void setDealerBranchId(Long dealerBranchId) { this.dealerBranchId = dealerBranchId; } // 🔥 ADDED
 
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
@@ -139,7 +137,6 @@ public class OrderHdr {
     public BigDecimal getBalanceAmount() { return balanceAmount; }
     public void setBalanceAmount(BigDecimal balanceAmount) { this.balanceAmount = balanceAmount; }
 
-    // ===== Getter/Setter cho timeline =====
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
 

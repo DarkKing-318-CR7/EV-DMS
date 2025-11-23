@@ -11,7 +11,6 @@ import java.util.List;
 public interface CustomerRepo extends JpaRepository<Customer, Long> {
 
     List<Customer> findByOwnerId(Long ownerId);
-
     boolean existsBySdt(String sdt);
     boolean existsBySdtAndIdNot(String sdt, Long id);
 
@@ -35,4 +34,15 @@ public interface CustomerRepo extends JpaRepository<Customer, Long> {
         SELECT c FROM Customer c ORDER BY c.createdAt DESC
     """)
     List<Customer> findLatestCustomers(Pageable pageable);
+
+
+    @Query("""
+    select count(c) 
+    from Customer c 
+    where c.ownerId in (
+        select u.id from User u where u.dealer.id = :dealerId
+    )
+    """)
+    Integer countByDealer(@Param("dealerId") Long dealerId);
+
 }
