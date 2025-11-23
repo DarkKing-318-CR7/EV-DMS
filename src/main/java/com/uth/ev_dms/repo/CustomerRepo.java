@@ -28,4 +28,6 @@ public interface CustomerRepo extends JpaRepository<Customer, Long> {
                    or lower(c.sdt) like lower(concat('%', :kw, '%')) )
            """)
     List<Customer> searchMine(@Param("ownerId") Long ownerId, @Param("kw") String kw);
+    List<Customer> findByDealer_Id(Long dealerId);
+
 }

@@ -10,10 +10,11 @@ import java.time.LocalDateTime;
 @Table(name = "customers")
 @Getter @Setter
 public class Customer {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ten truong theo thoi quen cua ban
     private String ten;
     private String sdt;
     private String email;
@@ -23,7 +24,12 @@ public class Customer {
 
     @Enumerated(EnumType.STRING)
     private CustomerStatus status = CustomerStatus.ACTIVE;
+
     @Column(name = "ngaytao")
     private LocalDateTime ngaytao = LocalDateTime.now();
 
+    // ⭐⭐ THÊM MỚI – KHÔNG ĐỤNG CODE CŨ
+    @ManyToOne
+    @JoinColumn(name = "dealer_id")
+    private Dealer dealer;
 }

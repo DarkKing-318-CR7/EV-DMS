@@ -43,6 +43,9 @@ public class TestDrive {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id")
+    private DealerBranch branch;
 
     @PrePersist
     public void prePersist() {

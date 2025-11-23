@@ -33,4 +33,20 @@ public interface TestDriveRepo extends JpaRepository<TestDrive, Long> {
           )
     """)
     List<TestDrive> findOverlap(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime);
+    // ⭐ THÊM MỚI — LỌC THEO ĐẠI LÝ CHO MANAGER
+    @org.springframework.data.jpa.repository.Query("""
+    SELECT t FROM TestDrive t
+    WHERE t.dealer.id = :dealerId
+      AND (:status IS NULL OR t.status = :status)
+      AND (:from IS NULL OR t.scheduleAt >= :from)
+      AND (:to IS NULL OR t.scheduleAt <= :to)
+    ORDER BY t.scheduleAt
+""")
+    List<TestDrive> findByDealerFilter(
+            Long dealerId,
+            LocalDateTime from,
+            LocalDateTime to,
+            TestDriveStatus status
+    );
+
 }

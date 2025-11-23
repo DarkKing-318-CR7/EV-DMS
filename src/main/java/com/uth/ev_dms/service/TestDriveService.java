@@ -27,5 +27,7 @@ public interface TestDriveService {
     TestDrive get(Long id);
     void delete(Long id);
     void createByStaff(TestDriveCreateForm form, Long staffId);
+    // ⭐ THÊM: Manager chỉ xem test drive của đại lý mình
+    List<TestDrive> listByDealer(Long dealerId, LocalDate from, LocalDate to, TestDriveStatus status);
 
 }

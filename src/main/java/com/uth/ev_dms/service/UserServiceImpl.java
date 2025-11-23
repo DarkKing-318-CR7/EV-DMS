@@ -65,4 +65,13 @@ public class UserServiceImpl implements UserService {
         }
         return false;
     }
+    @Override
+    public Long getBranchId(Principal principal) {
+        if (principal == null) return null;
+
+        return userRepository.findByUsername(principal.getName())
+                .map(u -> u.getBranch() != null ? u.getBranch().getId() : null)
+                .orElse(null);
+    }
+
 }

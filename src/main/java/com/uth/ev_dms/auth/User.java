@@ -46,6 +46,9 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
+    @ManyToOne
+    @JoinColumn(name = "branch_id")
+    private com.uth.ev_dms.domain.DealerBranch branch;
 
     @ManyToOne
     @JoinColumn(name = "region_id")

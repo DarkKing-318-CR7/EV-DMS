@@ -93,7 +93,6 @@ public class TestDriveServiceImpl implements TestDriveService {
     @Transactional
     public TestDrive save(TestDrive td) {
 
-        // ⭐ GIỮ NGUYÊN CODE CŨ
         if (td.getStatus() == null) {
             td.setStatus(TestDriveStatus.REQUESTED);
         }
@@ -120,7 +119,6 @@ public class TestDriveServiceImpl implements TestDriveService {
     @Transactional
     public void createByStaff(TestDriveCreateForm form, Long staffId) {
 
-        // ⭐ GIỮ NGUYÊN TOÀN BỘ LOGIC CŨ
 
         // Lấy staff
         User staff = userRepo.findById(staffId)
@@ -142,11 +140,10 @@ public class TestDriveServiceImpl implements TestDriveService {
                 form.getDate() + "T" + form.getTime()
         );
 
-        // ⭐ THÊM — KHÔNG ĐỤNG scheduleAt cũ
+
         LocalDateTime startTime = scheduleAt;
         LocalDateTime endTime = scheduleAt.plusMinutes(30); // slot 30 phút
 
-        // ⭐ THÊM CHECK TRÙNG LỊCH — KHÔNG ĐỤNG CODE CŨ
         List<TestDrive> overlaps = testDriveRepo.findOverlap(
                 form.getVehicleId(),
                 startTime,
@@ -168,14 +165,22 @@ public class TestDriveServiceImpl implements TestDriveService {
                 .assignedStaff(staff)
                 .createdBy(staff)
                 .dealer(staff.getDealer())
-
-                // ⭐ THÊM — KHÔNG ĐỤNG CODE CŨ
+                .branch(staff.getBranch())
                 .startTime(startTime)
                 .endTime(endTime)
 
                 .build();
 
         testDriveRepo.save(td);
+    }
+    // ⭐ THÊM MỚI — Manager chỉ xem lịch theo đại lý
+    @Override
+    public List<TestDrive> listByDealer(Long dealerId, LocalDate from, LocalDate to, TestDriveStatus status) {
+
+        LocalDateTime start = (from == null) ? null : from.atStartOfDay();
+        LocalDateTime end   = (to == null)   ? null : to.atTime(LocalTime.MAX);
+
+        return repo.findByDealerFilter(dealerId, start, end, status);
     }
 
 }

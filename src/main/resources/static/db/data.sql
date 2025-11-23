@@ -80,4 +80,19 @@ VALUES
 
 -- Lịch bị hủy
 ('Nguyen Van G', '0909666555', 'Hyundai Kona EV', 'Đại lý EV Quận 10', '2025-11-01 10:00:00', 'Khách bận, hủy lịch', 'CANCELLED', 3, NULL);
+INSERT INTO users_roles (user_id, role_id)
+VALUES ((SELECT id FROM users WHERE username = 'admin2'),
+        (SELECT id FROM roles WHERE name = 'ROLE_ADMIN'));
+
+INSERT INTO users_roles (user_id, role_id)
+VALUES ((SELECT id FROM users WHERE username = 'manager2'),
+        (SELECT id FROM roles WHERE name = 'ROLE_DEALER_MANAGER'));
+
+INSERT INTO users_roles (user_id, role_id)
+VALUES ((SELECT id FROM users WHERE username = 'staff2'),
+        (SELECT id FROM roles WHERE name = 'ROLE_DEALER_STAFF'));
+
+INSERT INTO users_roles (user_id, role_id)
+VALUES ((SELECT id FROM users WHERE username = 'evm2'),
+        (SELECT id FROM roles WHERE name = 'ROLE_EVM_STAFF'));
 

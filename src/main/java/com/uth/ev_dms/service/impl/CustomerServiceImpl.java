@@ -42,6 +42,10 @@ public class CustomerServiceImpl implements CustomerService {
     public Customer findById(Long id) {
         return repo.findById(id).orElse(null);
     }
+    @Override
+    public List<Customer> findByDealer(Long dealerId) {
+        return repo.findByDealer_Id(dealerId);
+    }
 
     @Override public List<Customer> findAll() { return repo.findAll(); }
     @Override public List<Customer> findMine(Long ownerId) { return repo.findByOwnerId(ownerId); }

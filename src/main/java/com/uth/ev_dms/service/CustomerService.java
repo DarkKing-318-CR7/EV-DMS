@@ -14,6 +14,7 @@ public interface CustomerService {
 
     List<Customer> searchAll(String kw);
     List<Customer> searchMine(Long ownerId, String kw);
+    List<Customer> findByDealer(Long dealerId);
 
     void delete(Long id);
 }

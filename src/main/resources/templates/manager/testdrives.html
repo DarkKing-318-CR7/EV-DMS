@@ -27,6 +27,13 @@
       -webkit-font-smoothing: antialiased;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
+
+    /* ⭐ THÊM MAIN Ở ĐÂY ⭐ */
+    main.main {
+      margin-top: 90px;
+    }
+    /* ⭐ HẾT PHẦN THÊM ⭐ */
+
     .page{padding:22px}
     .shell{max-width:1160px;margin:0 auto}
 
@@ -75,168 +82,152 @@
 </head>
 
 <body>
-<div class="page">
-  <div class="shell">
 
-    <div class="glass d-flex align-items-center justify-content-between hdr mb-3">
-      <div>
-        <div class="hdr-title">Lịch lái thử</div>
-        <div class="hdr-sub">Manager</div>
-      </div>
-      <div class="hdr-actions d-flex gap-2">
-        <a class="btn btn-ghost btn-slim" th:href="@{/staff/testdrives}">
-          <i class="bi bi-arrow-return-right me-1"></i> Staff view
-        </a>
-        <a class="btn btn-primary btn-slim" th:href="@{/dealer/test-drive/form}">
-          <i class="bi bi-plus-circle me-1"></i> Tạo lịch
-        </a>
-      </div>
-    </div>
+<!-- ⭐ BẮT ĐẦU MAIN ⭐ -->
+<main class="main">
+  <!-- ⭐ ĐÃ BAO TOÀN BỘ NỘI DUNG ⭐ -->
 
-    <form class="glass-strong p-3 mb-3" method="get" th:action="@{/manager/testdrives}">
-      <div class="row g-3">
-        <div class="col-12 col-md-4">
-          <label>Từ ngày</label>
-          <div class="input-group">
-            <input type="date" class="form-control" name="from" th:value="${from}">
-            <span class="input-group-text ig-addon"><i class="bi bi-calendar-date"></i></span>
+  <div class="page">
+    <div class="shell">
+
+      <div class="glass d-flex align-items-center justify-content-between hdr mb-3">
+        <div>
+          <div class="hdr-title">Lịch lái thử</div>
+          <div class="hdr-sub">Manager</div>
+        </div>
+        <div class="hdr-actions d-flex gap-2">
+          <a class="btn btn-ghost btn-slim" th:href="@{/staff/testdrives}">
+            <i class="bi bi-arrow-return-right me-1"></i> Staff view
+          </a>
+          <a class="btn btn-primary btn-slim" th:href="@{/dealer/test-drive/form}">
+            <i class="bi bi-plus-circle me-1"></i> Tạo lịch
+          </a>
+        </div>
+      </div>
+
+      <form class="glass-strong p-3 mb-3" method="get" th:action="@{/manager/testdrives}">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label>Từ ngày</label>
+            <div class="input-group">
+              <input type="date" class="form-control" name="from" th:value="${from}">
+              <span class="input-group-text ig-addon"><i class="bi bi-calendar-date"></i></span>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label>Đến ngày</label>
+            <div class="input-group">
+              <input type="date" class="form-control" name="to" th:value="${to}">
+              <span class="input-group-text ig-addon"><i class="bi bi-calendar2-week"></i></span>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label>Trạng thái</label>
+            <select class="form-select" name="status">
+              <option value="">-- Tất cả --</option>
+              <option th:each="s : ${T(com.uth.ev_dms.domain.TestDriveStatus).values()}"
+                      th:value="${s}" th:text="${s}"
+                      th:selected="${status != null and status.name() == s.name()}">
+              </option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-1 d-flex align-items-end justify-content-end gap-2">
+            <button class="btn btn-darkglass btn-slim" type="submit">
+              <i class="bi bi-sliders me-1"></i> Lọc
+            </button>
+            <a class="btn btn-ghost btn-slim" th:href="@{/manager/testdrives}">Xóa lọc</a>
           </div>
         </div>
+      </form>
 
-        <div class="col-12 col-md-4">
-          <label>Đến ngày</label>
-          <div class="input-group">
-            <input type="date" class="form-control" name="to" th:value="${to}">
-            <span class="input-group-text ig-addon"><i class="bi bi-calendar2-week"></i></span>
-          </div>
-        </div>
+      <div class="glass p-0">
+        <div class="table-responsive">
+          <table class="table align-middle table-hover">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>Khách hàng</th>
+              <th>Điện thoại</th>
+              <th>Xe</th>
+              <th>Địa điểm</th>
+              <th>Thời gian</th>
+              <th>Ghi chú</th>
+              <th>Trạng thái</th>
+              <th class="text-end">Hành động</th>
+            </tr>
+            </thead>
 
-        <div class="col-12 col-md-3">
-          <label>Trạng thái</label>
-          <select class="form-select" name="status">
-            <option value="">-- Tất cả --</option>
+            <tbody>
+            <tr th:each="td : ${list}" class="row-grad">
+              <td th:text="${td.id}"></td>
+              <td th:text="${td.customerName}"></td>
+              <td th:text="${td.customerPhone}"></td>
+              <td th:text="${td.vehicleName}"></td>
+              <td th:text="${td.location}"></td>
+              <td th:text="${#temporals.format(td.scheduleAt, 'dd/MM/yyyy HH:mm')}"></td>
+              <td th:text="${td.notes}"></td>
 
-            <option th:each="s : ${T(com.uth.ev_dms.domain.TestDriveStatus).values()}"
-                    th:value="${s}"
-                    th:text="${s}"
-                    th:selected="${status != null and status.name() == s.name()}">
-            </option>
-          </select>
-        </div>
+              <td>
+                <span th:if="${td.status == null}" class="badge text-bg-light text-dark">UNKNOWN</span>
+                <span th:if="${td.status != null and td.status.name() == 'REQUESTED'}" class="badge text-bg-secondary">REQUESTED</span>
+                <span th:if="${td.status != null and td.status.name() == 'CONFIRMED'}" class="badge text-bg-info">CONFIRMED</span>
+                <span th:if="${td.status != null and td.status.name() == 'COMPLETED'}" class="badge text-bg-success">COMPLETED</span>
+                <span th:if="${td.status != null and td.status.name() == 'CANCELLED'}" class="badge text-bg-danger">CANCELLED</span>
+              </td>
 
-        <div class="col-12 col-md-1 d-flex align-items-end justify-content-end gap-2">
-          <button class="btn btn-darkglass btn-slim" type="submit">
-            <i class="bi bi-sliders me-1"></i> Lọc
-          </button>
-          <a class="btn btn-ghost btn-slim" th:href="@{/manager/testdrives}">Xóa lọc</a>
+              <td class="text-end">
+                <a th:href="@{/dealer/test-drive/detail/{id}(id=${td.id})}" class="btn btn-ghost btn-slim">
+                  <i class="bi bi-info-circle me-1"></i> Chi tiết
+                </a>
+
+                <form th:if="${td.status != null && td.status.name() == 'REQUESTED'}"
+                      th:action="@{|/manager/testdrives/${td.id}/approve|}" method="post" style="display:inline;">
+                  <button class="btn btn-success btn-slim ms-1">
+                    <i class="bi bi-check2-circle"></i> Duyệt
+                  </button>
+                </form>
+
+                <form th:if="${td.status != null && td.status.name() == 'CONFIRMED'}"
+                      th:action="@{|/manager/testdrives/${td.id}/complete|}" method="post" style="display:inline;">
+                  <button class="btn btn-primary btn-slim ms-1">
+                    <i class="bi bi-flag"></i> Hoàn tất
+                  </button>
+                </form>
+
+                <form th:if="${td.status == null || td.status.name() != 'COMPLETED'}"
+                      th:action="@{|/manager/testdrives/${td.id}/cancel|}" method="post" style="display:inline;">
+                  <button class="btn btn-warning btn-slim ms-1">
+                    <i class="bi bi-x-circle"></i> Hủy
+                  </button>
+                </form>
+
+                <a th:href="@{'/dealer/test-drive/delete/' + ${td.id}}"
+                   class="btn btn-outline-danger btn-slim ms-1"
+                   onclick="return confirm('Xóa lịch #' + [[${td.id}]] + '?');">
+                  <i class="bi bi-trash"></i> Xóa
+                </a>
+              </td>
+            </tr>
+
+            <tr th:if="${#lists.isEmpty(list)}">
+              <td colspan="9" class="text-center muted py-4">Không có dữ liệu</td>
+            </tr>
+
+            </tbody>
+          </table>
         </div>
       </div>
-    </form>
 
-    <div class="glass p-0">
-      <div class="table-responsive">
-        <table class="table align-middle table-hover">
-          <thead>
-          <tr>
-            <th style="width:70px">ID</th>
-            <th>Khách hàng</th>
-            <th>Điện thoại</th>
-            <th>Xe</th>
-            <th>Địa điểm</th>
-            <th style="width:170px">Thời gian</th>
-            <th>Ghi chú</th>
-            <th style="width:140px">Trạng thái</th>
-            <th style="width:160px" class="text-end">Hành động</th>
-          </tr>
-          </thead>
+      <div class="text-end mt-2 muted" th:text="${#lists.size(list)} + ' mục'"></div>
 
-          <tbody>
-          <tr th:each="td : ${list}" class="row-grad">
-            <td th:text="${td.id}"></td>
-            <td th:text="${td.customerName}"></td>
-            <td th:text="${td.customerPhone}"></td>
-            <td th:text="${td.vehicleName}"></td>
-            <td th:text="${td.location}"></td>
-            <td th:text="${#temporals.format(td.scheduleAt, 'dd/MM/yyyy HH:mm')}"></td>
-            <td th:text="${td.notes}"></td>
-
-            <!-- 🔥 FIXED ENUM STATUS (NO CRASH) -->
-            <td>
-              <span th:if="${td.status == null}"
-                    class="badge text-bg-light text-dark">UNKNOWN</span>
-
-              <span th:if="${td.status != null and td.status.name() == 'REQUESTED'}"
-                    class="badge text-bg-secondary">REQUESTED</span>
-
-              <span th:if="${td.status != null and td.status.name() == 'CONFIRMED'}"
-                    class="badge text-bg-info">CONFIRMED</span>
-
-              <span th:if="${td.status != null and td.status.name() == 'COMPLETED'}"
-                    class="badge text-bg-success">COMPLETED</span>
-
-              <span th:if="${td.status != null and td.status.name() == 'CANCELLED'}"
-                    class="badge text-bg-danger">CANCELLED</span>
-            </td>
-
-            <td class="text-end">
-
-              <a th:href="@{/dealer/test-drive/detail/{id}(id=${td.id})}"
-                 class="btn btn-ghost btn-slim">
-                <i class="bi bi-info-circle me-1"></i> Chi tiết
-              </a>
-
-              <!-- REQUESTED -->
-              <form th:if="${td.status != null and td.status.name() == 'REQUESTED'}"
-                    th:action="@{|/manager/testdrives/${td.id}/approve|}"
-                    method="post"
-                    style="display:inline;">
-                <button class="btn btn-success btn-slim ms-1">
-                  <i class="bi bi-check2-circle"></i> Duyệt
-                </button>
-              </form>
-
-              <!-- CONFIRMED -->
-              <form th:if="${td.status != null and td.status.name() == 'CONFIRMED'}"
-                    th:action="@{|/manager/testdrives/${td.id}/complete|}"
-                    method="post"
-                    style="display:inline;">
-                <button class="btn btn-primary btn-slim ms-1">
-                  <i class="bi bi-flag"></i> Hoàn tất
-                </button>
-              </form>
-
-              <!-- NOT COMPLETED -->
-              <form th:if="${td.status == null or td.status.name() != 'COMPLETED'}"
-                    th:action="@{|/manager/testdrives/${td.id}/cancel|}"
-                    method="post"
-                    style="display:inline;">
-                <button class="btn btn-warning btn-slim ms-1">
-                  <i class="bi bi-x-circle"></i> Hủy
-                </button>
-              </form>
-
-              <a th:href="@{'/dealer/test-drive/delete/' + ${td.id}}"
-                 class="btn btn-outline-danger btn-slim ms-1"
-                 onclick="return confirm('Xóa lịch #' + [[${td.id}]] + '?');">
-                <i class="bi bi-trash"></i> Xóa
-              </a>
-            </td>
-          </tr>
-
-          <tr th:if="${#lists.isEmpty(list)}">
-            <td colspan="9" class="text-center muted py-4">Không có dữ liệu</td>
-          </tr>
-
-          </tbody>
-        </table>
-      </div>
     </div>
-
-    <div class="text-end mt-2 muted"
-         th:text="${#lists.size(list)} + ' mục'"></div>
-
   </div>
-</div>
+
+  <!-- ⭐ KẾT THÚC MAIN ⭐ -->
+</main>
 
 </body>
 </html>
