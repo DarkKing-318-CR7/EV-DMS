@@ -1,140 +1,163 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:with="active='vehicles', pageTitle=${pageTitle}"
-      th:replace="~{layout :: layout(~{::main})}">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='vehicles', pageTitle=${vehicle != null ? vehicle.modelName : 'Chi Tiết Xe'}"
+      th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
 
-<main>
-
-    <!-- Header -->
-    <section class="page-header">
-        <div class="left">
-            <!-- Tên model -->
-            <h1 th:text="${vehicle.modelName}">Model Name</h1>
-
-            <!-- Model code / Brand / Body type ngắn gọn -->
-            <p class="subtitle" style="opacity:.8;font-size:.9rem;">
-                <span>Code: </span><span th:text="${vehicle.modelCode}">EV6</span>
-                •
-                <span th:text="${vehicle.brand}">EVM</span>
-                •
-                <span th:text="${vehicle.bodyType}">SUV</span>
-            </p>
+    <!-- Breadcrumb & Navigation -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <a th:href="@{/dealer/vehicles}" class="text-muted text-decoration-none">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Danh mục xe
+                </a>
+                <span class="text-muted">/</span>
+                <span class="text-info fw-semibold" th:text="${vehicle != null ? vehicle.modelName : 'Chi tiết'}">VF 8</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <h2 class="h3 fw-bold text-white mb-0" th:text="${vehicle != null ? vehicle.modelName : 'Thông tin xe'}">VinFast VF 8</h2>
+                <span class="badge-status badge-new" th:text="${vehicle != null ? vehicle.bodyType : 'SUV'}">SUV</span>
+                <span class="badge-status badge-approved" th:text="${vehicle != null ? vehicle.brand : 'VinFast'}">VinFast</span>
+            </div>
         </div>
-
-        <div class="right">
-            <a class="btn btn-outline" th:href="@{/dealer/vehicles}">
-                ← Back to list
+        <div class="d-flex gap-2">
+            <a th:href="@{/dealer/vehicles}" class="btn-ghost">
+                <i class="fa-solid fa-list me-1"></i> Tất Cả Dòng Xe
+            </a>
+            <a th:href="@{/dealer/quotes/my/new}" class="btn-electric">
+                <i class="fa-solid fa-file-invoice-dollar me-1"></i> Tạo Báo Giá
             </a>
         </div>
-    </section>
+    </div>
 
-
-    <!-- Thông tin cơ bản của Vehicle -->
-    <section class="card info-card">
-        <h2>Vehicle Info</h2>
-
-        <div class="info-grid">
-            <p>
-                <strong>Brand:</strong>
-                <span th:text="${vehicle.brand}">EVM</span>
-            </p>
-
-            <p>
-                <strong>Body Type:</strong>
-                <span th:text="${vehicle.bodyType}">SUV</span>
-            </p>
-
-            <p>
-                <strong>Model Code:</strong>
-                <span th:text="${vehicle.modelCode}">EV6</span>
-            </p>
-
-            <p>
-                <strong>Warranty:</strong>
-                <span th:text="${vehicle.warrantyMonths}">36</span> months
-            </p>
-
-            <p>
-                <strong>Regional Status:</strong>
-                <span th:text="${vehicle.regionalStatus}">For North only</span>
-            </p>
-
-            <p>
-                <strong>Sales Note:</strong>
-                <span th:text="${vehicle.salesNote}">Internal note...</span>
-            </p>
+    <!-- Main Vehicle Overview Card -->
+    <div class="glass-card mb-4" th:if="${vehicle != null}">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-4 text-center">
+                <div class="p-4 rounded-4" style="background: radial-gradient(circle at center, rgba(14, 165, 233, 0.15) 0%, rgba(15, 23, 42, 0.4) 70%); border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <i class="fa-solid fa-car-side fa-7x text-info mb-3" style="filter: drop-shadow(0 0 25px rgba(14, 165, 233, 0.4));"></i>
+                    <h4 class="text-white fw-bold mb-1" th:text="${vehicle.modelName}">VinFast VF 8</h4>
+                    <p class="text-muted small mb-0">Mã dòng xe: <span class="text-white fw-semibold" th:text="${vehicle.modelCode}">VF8</span></p>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <h5 class="text-white fw-bold mb-3">
+                    <i class="fa-solid fa-circle-info text-info me-2"></i>Thông Tin Kỹ Thuật & Chính Sách
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span class="text-muted small d-block mb-1">Thương hiệu</span>
+                            <span class="text-white fw-bold" th:text="${vehicle.brand}">VinFast</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span class="text-muted small d-block mb-1">Kiểu dáng thân xe</span>
+                            <span class="text-white fw-bold" th:text="${vehicle.bodyType}">SUV Cỡ D</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span class="text-muted small d-block mb-1">Thời gian bảo hành</span>
+                            <span class="text-white fw-bold" th:text="${vehicle.warrantyMonths ?: 120} + ' Tháng'">120 Tháng</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span class="text-muted small d-block mb-1">Phạm vi phân phối vùng</span>
+                            <span class="text-white fw-semibold" th:text="${vehicle.regionalStatus} ?: 'Toàn Quốc (Bắc - Trung - Nam)'">Toàn Quốc</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
+                            <span class="text-muted small d-block mb-1">Ghi chú bán hàng</span>
+                            <span class="text-white fw-semibold" th:text="${vehicle.salesNote} ?: 'Chính sách ưu đãi lệ phí trước bạ và gói sạc pin theo chương trình của hãng'">Chính sách hãng</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
 
+    <!-- Available Trims Section -->
+    <div class="glass-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="text-white fw-bold mb-1">
+                    <i class="fa-solid fa-sliders text-info me-2"></i>Các Phiên Bản Trim & Cấu Hình Chi Tiết
+                </h4>
+                <p class="text-muted small mb-0">Danh sách các phiên bản cấu hình pin, động cơ và trang bị cho dòng xe này.</p>
+            </div>
+        </div>
 
-    <!-- Danh sách các Trim của Vehicle -->
-    <section class="card table-card">
-        <h2>Available Trims</h2>
+        <div class="table-responsive">
+            <table class="table-custom w-100">
+                <thead>
+                <tr>
+                    <th>Phiên Bản Trim</th>
+                    <th>Tên Thương Mại</th>
+                    <th>Dung Lượng Pin</th>
+                    <th>Tầm Hoạt Động</th>
+                    <th>Công Suất</th>
+                    <th>Hệ Dẫn Động</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-end">Hành Động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${trims}">
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-bolt text-warning"></i>
+                            <div>
+                                <strong class="text-white" th:text="${t.trimName}">Eco Long Range</strong>
+                                <div class="text-muted small" th:if="${t.availabilityNote}" th:text="${t.availabilityNote}">Sẵn xe giao ngay</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="text-info fw-semibold" th:text="${t.regionalName} ?: ${t.trimName}">VF 8 Eco</span>
+                    </td>
+                    <td>
+                        <span class="badge-status badge-info" th:text="(${t.batteryKWh} ?: (${t.batterykwh} ?: '87.7')) + ' kWh'">87.7 kWh</span>
+                    </td>
+                    <td>
+                        <span class="text-white fw-semibold" th:text="(${t.rangeKm} ?: '471') + ' km (NEDC)'">471 km</span>
+                    </td>
+                    <td>
+                        <span class="text-white fw-semibold" th:text="(${t.powerHp} ?: '348') + ' HP'">348 HP</span>
+                    </td>
+                    <td>
+                        <span class="badge-status badge-new" th:text="${t.drive} ?: 'AWD'">AWD</span>
+                    </td>
+                    <td>
+                        <span th:if="${t.available == null or t.available}" class="badge-status badge-approved">
+                            <i class="fa-solid fa-check-circle me-1"></i>Đang Phân Phối
+                        </span>
+                        <span th:unless="${t.available == null or t.available}" class="badge-status badge-cancelled">
+                            <i class="fa-solid fa-clock me-1"></i>Tạm Hết Hàng
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a th:href="@{/dealer/quotes/my/new}" class="btn-ghost py-1 px-2" style="font-size: 13px;" title="Tạo Báo Giá">
+                            <i class="fa-solid fa-file-invoice me-1"></i> Báo Giá
+                        </a>
+                    </td>
+                </tr>
 
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Trim</th>
-                <th>Battery (kWh)</th>
-                <th>Range (km)</th>
-                <th>Power (hp)</th>
-                <th>Drive</th>
-                <th>Regional Name</th>
-                <th>Available?</th>
-                <th>Dealer Note</th>
+                <tr th:if="${#lists.isEmpty(trims)}">
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-inbox fa-3x mb-3 opacity-25"></i>
+                        <p class="mb-0">Chưa có thông tin phiên bản trim nào cho dòng xe này.</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-                <!-- Stock ở dealer -->
-                <th th:if="${canViewInventory}">Stock</th>
-            </tr>
-            </thead>
-
-            <tbody>
-
-            <!-- Lặp từng Trim -->
-            <tr th:each="t : ${vehicle.trims}">
-                <td th:text="${t.trimName}">GT-Line AWD</td>
-
-                <td th:text="${t.batteryKWh}">77</td>
-                <td th:text="${t.rangeKm}">520</td>
-                <td th:text="${t.powerHp}">430</td>
-
-                <!-- drive là enum DriveType -->
-                <td th:text="${t.drive}">AWD</td>
-
-                <!-- tên thương mại theo vùng -->
-                <td th:text="${t.regionalName}">EV6 GT-Line Long Range</td>
-
-                <td>
-                    <span th:text="${t.available} ? 'Yes' : 'No'">Yes</span>
-                </td>
-
-                <td th:text="${t.availabilityNote}">
-                    Limited stock in South region
-                </td>
-
-                <!-- tồn kho theo trim -->
-                <td th:if="${canViewInventory}"
-                    th:text="${stockByTrim != null && stockByTrim[t.id] != null ? stockByTrim[t.id] : 'N/A'}">
-                    12
-                </td>
-
-            </tr>
-
-            <!-- Nếu không có trim nào -->
-            <tr th:if="${#lists.isEmpty(vehicle.trims)}">
-                <td th:if="${canViewInventory}" colspan="9"
-                    style="text-align:center; opacity:0.6;">
-                    No trims available for this vehicle.
-                </td>
-                <td th:unless="${canViewInventory}" colspan="8"
-                    style="text-align:center; opacity:0.6;">
-                    No trims available for this vehicle.
-                </td>
-            </tr>
-
-            </tbody>
-        </table>
-    </section>
-
-</main>
+</div>
+</body>
 </html>

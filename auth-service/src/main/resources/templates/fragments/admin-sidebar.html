@@ -3,43 +3,73 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 <nav class="sidebar" sec:authorize="hasRole('ADMIN')" th:fragment="sidebar(active)">
+    <div class="sidebar-category">QUẢN TRỊ VIÊN</div>
     <ul>
-        <li th:classappend="${active=='dashboard' ? 'active' : ''}">
-            <a th:href="@{/admin/dashboard}">Dashboard</a>
+        <li th:classappend="${active=='dashboard' or active=='home' ? 'active' : ''}">
+            <a th:href="@{/admin/dashboard}">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Bàn điều khiển</span>
+            </a>
         </li>
+    </ul>
 
-        <li class="section">Products</li>
-        <li th:classappend="${active=='products' ? 'active' : ''}">
-            <a th:href="@{/admin/products}">Vehicles / Trims / Price Lists</a>
-        </li>
-
-        <li th:classappend="${active=='inventory' ? 'active' : ''}">
-            <a th:href="@{/admin/inventory}">Inventory &amp; Allocation</a>
-        </li>
-
+    <div class="sidebar-category">HỆ THỐNG PHÂN PHỐI</div>
+    <ul>
         <li th:classappend="${active=='dealers' ? 'active' : ''}">
-            <a th:href="@{/admin/dealers}">Dealers (CRUD, Contracts, Targets)</a>
+            <a th:href="@{/admin/dealers}">
+                <i class="fa-solid fa-building-flag"></i>
+                <span>Mạng lưới đại lý</span>
+            </a>
         </li>
-
-        <!-- ✅ ĐÃ SỬA: đổi /admin/users → /admin/user-mgmt -->
-        <li th:classappend="${active=='user-mgmt' ? 'active' : ''}">
-            <a th:href="@{/admin/user-mgmt}">Users &amp; Roles</a>
+        <li th:classappend="${active=='user-mgmt' or active=='users' ? 'active' : ''}">
+            <a th:href="@{/admin/users}">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Tài khoản &amp; Phân quyền</span>
+            </a>
         </li>
+    </ul>
 
+    <div class="sidebar-category">DANH MỤC &amp; KHO TỔNG</div>
+    <ul>
+        <li th:classappend="${active=='products' or active=='vehicles' ? 'active' : ''}">
+            <a th:href="@{/dealer/vehicles}">
+                <i class="fa-solid fa-car-rear"></i>
+                <span>Danh mục xe điện</span>
+            </a>
+        </li>
+        <li th:classappend="${active=='inventory' ? 'active' : ''}">
+            <a th:href="@{/admin/inventory}">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <span>Kho xe &amp; Phân bổ</span>
+            </a>
+        </li>
         <li th:classappend="${active=='promotions' ? 'active' : ''}">
-            <a th:href="@{/admin/promotions}">Promotions (Templates, Budget, Approval)</a>
+            <a th:href="@{/admin/promotions}">
+                <i class="fa-solid fa-gift"></i>
+                <span>Chính sách ưu đãi</span>
+            </a>
         </li>
+    </ul>
 
+    <div class="sidebar-category">THỐNG KÊ TOÀN DIỆN</div>
+    <ul>
         <li th:classappend="${active=='reports' ? 'active' : ''}">
-            <a th:href="@{/reports}">Reports (All)</a>
+            <a th:href="@{/reports}">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>Báo cáo toàn hệ thống</span>
+            </a>
         </li>
-
         <li th:classappend="${active=='settings' ? 'active' : ''}">
-            <a th:href="@{/admin/settings}">Settings (System Params, Audit Log)</a>
+            <a th:href="@{/admin/settings}">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Cấu hình &amp; Nhật ký</span>
+            </a>
         </li>
-
         <li th:classappend="${active=='support' ? 'active' : ''}">
-            <a th:href="@{/support}">Support</a>
+            <a th:href="@{/support}">
+                <i class="fa-solid fa-headset"></i>
+                <span>Hỗ trợ kỹ thuật</span>
+            </a>
         </li>
     </ul>
 </nav>

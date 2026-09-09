@@ -3,42 +3,73 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 <nav class="sidebar" sec:authorize="hasRole('DEALER_STAFF')" th:fragment="sidebar(active)">
+    <div class="sidebar-category">BÀN LÀM VIỆC</div>
     <ul>
-        <li th:classappend="${active=='dashboard' ? 'active' : ''}">
-            <a th:href="@{/staff/dashboard}">Dashboard</a>
+        <li th:classappend="${active=='dashboard' or active=='home' ? 'active' : ''}">
+            <a th:href="@{/staff/dashboard}">
+                <i class="fa-solid fa-house-laptop"></i>
+                <span>Bàn làm việc</span>
+            </a>
         </li>
+    </ul>
 
-        <li th:classappend="${active=='vehicles' ? 'active' : ''}">
-            <a th:href="@{/dealer/vehicles}">Vehicles</a>
+    <div class="sidebar-category">BÁN HÀNG &amp; HỢP ĐỒNG</div>
+    <ul>
+        <li th:classappend="${active=='create-quote' ? 'active' : ''}">
+            <a th:href="@{/dealer/quotes/my/new}">
+                <i class="fa-solid fa-file-circle-plus"></i>
+                <span>Tạo báo giá mới</span>
+            </a>
         </li>
-
-        <li th:classappend="${active=='customers' ? 'active' : ''}">
-            <a th:href="@{/staff/customers}">Customers (My Customers)</a>
-        </li>
-
-        <li th:classappend="${active=='testdrive' ? 'active' : ''}">
-            <a th:href="@{/dealer/test-drive}">Test Drive (My Schedule)</a>
-        </li>
-
         <li th:classappend="${active=='quotes' ? 'active' : ''}">
-            <a th:href="@{/dealer/quotes/my}">Quotes (My Quotes)</a>
+            <a th:href="@{/dealer/quotes/my}">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Báo giá của tôi</span>
+            </a>
         </li>
-
-
         <li th:classappend="${active=='orders' ? 'active' : ''}">
-            <a th:href="@{/dealer/orders/my}">Orders (My Orders)</a>
+            <a th:href="@{/dealer/orders/my}">
+                <i class="fa-solid fa-file-invoice"></i>
+                <span>Đơn hàng của tôi</span>
+            </a>
         </li>
+    </ul>
 
-        <li th:classappend="${active=='promotions' ? 'active' : ''}">
-            <a th:href="@{/staff/promotions}">Promotions (Apply to Quote)</a>
+    <div class="sidebar-category">XE &amp; KHÁCH HÀNG</div>
+    <ul>
+        <li th:classappend="${active=='vehicles' ? 'active' : ''}">
+            <a th:href="@{/dealer/vehicles}">
+                <i class="fa-solid fa-car"></i>
+                <span>Tra cứu mẫu xe</span>
+            </a>
         </li>
+        <li th:classappend="${active=='customers' ? 'active' : ''}">
+            <a th:href="@{/staff/customers}">
+                <i class="fa-solid fa-address-book"></i>
+                <span>Khách hàng của tôi</span>
+            </a>
+        </li>
+        <li th:classappend="${active=='testdrive' ? 'active' : ''}">
+            <a th:href="@{/staff/testdrives}">
+                <i class="fa-solid fa-id-card"></i>
+                <span>Lịch hẹn lái thử</span>
+            </a>
+        </li>
+    </ul>
 
+    <div class="sidebar-category">HIỆU SUẤT &amp; HỖ TRỢ</div>
+    <ul>
         <li th:classappend="${active=='reports' ? 'active' : ''}">
-            <a th:href="@{/reports}">Reports (My Performance)</a>
+            <a th:href="@{/reports}">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Hiệu suất cá nhân</span>
+            </a>
         </li>
-
         <li th:classappend="${active=='support' ? 'active' : ''}">
-            <a th:href="@{/support}">Support</a>
+            <a th:href="@{/support}">
+                <i class="fa-solid fa-headset"></i>
+                <span>Trợ giúp &amp; Hướng dẫn</span>
+            </a>
         </li>
     </ul>
 </nav>

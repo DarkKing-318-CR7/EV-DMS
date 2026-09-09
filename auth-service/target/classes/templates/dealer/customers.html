@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='customers', pageTitle='Hồ Sơ Khách Hàng CRM'"
+      th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
+
+    <!-- Page Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                <i class="fa-solid fa-users-line text-info me-2"></i>
+                Hồ Sơ Khách Hàng (CRM)
+            </h2>
+            <p class="text-muted mb-0">Quản lý thông tin, lịch sử chăm sóc, tư vấn mua xe và hỗ trợ sau bán lẻ.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn-electric" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                <i class="fa-solid fa-user-plus me-1"></i>
+                <span>Thêm Khách Hàng</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-blue">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Tổng Khách Hàng</span>
+                    <h3 class="stat-value" th:text="${customers != null ? #lists.size(customers) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-green">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Đang Tương Tác</span>
+                    <h3 class="stat-value" th:text="${customers != null ? #lists.size(customers) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-purple">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Hẹn Lái Thử</span>
+                    <h3 class="stat-value">Đầy Đủ</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-cyan">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Bảo Mật CRM</span>
+                    <h3 class="stat-value">Chính Hãng</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="glass-card mb-4 p-3">
+        <form method="get" th:action="@{/dealer/customers}" class="row g-3 align-items-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0" style="border-color: rgba(255,255,255,0.1); color: #94a3b8;">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" name="q" th:value="${q}" class="form-control-custom border-start-0" 
+                           placeholder="Tìm kiếm theo họ tên, số điện thoại, email...">
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn-ghost w-100">
+                    <i class="fa-solid fa-filter me-1"></i> Lọc dữ liệu
+                </button>
+                <a th:href="@{/dealer/customers}" class="btn-ghost" title="Làm mới bộ lọc">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Customer Table Glass Card -->
+    <div class="glass-card">
+        <div class="table-responsive">
+            <table class="table-custom w-100">
+                <thead>
+                <tr>
+                    <th>Khách Hàng</th>
+                    <th>Số Điện Thoại</th>
+                    <th>Email</th>
+                    <th>Địa Chỉ / Khu Vực</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-end">Hành Động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${customers}">
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold text-white shadow-sm"
+                                 style="width: 40px; height: 40px; background: linear-gradient(135deg, #0ea5e9, #6366f1); font-size: 15px;"
+                                 th:text="${c.ten != null && !#strings.isEmpty(c.ten) ? #strings.substring(c.ten,0,1).toUpperCase() : 'U'}">
+                                N
+                            </div>
+                            <div>
+                                <div class="fw-bold text-white" th:text="${c.ten}">Nguyễn Văn An</div>
+                                <div class="text-muted small" th:text="'Mã KH: #' + ${c.id}">Mã KH: #1</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="text-info fw-semibold" th:text="${c.sdt}">0901234567</span>
+                    </td>
+                    <td>
+                        <span class="text-muted" th:text="${c.email} ?: '—'">an.nguyen@email.com</span>
+                    </td>
+                    <td>
+                        <span class="text-white small" th:text="${c.diachi} ?: 'Hồ Chí Minh'">Hà Nội</span>
+                    </td>
+                    <td>
+                        <span class="badge-status badge-approved" th:if="${c.status == null or c.status == 'ACTIVE'}">
+                            <i class="fa-solid fa-circle-check me-1"></i>Hoạt Động
+                        </span>
+                        <span class="badge-status badge-new" th:if="${c.status == 'NEW'}">
+                            <i class="fa-solid fa-sparkles me-1"></i>Mới
+                        </span>
+                        <span class="badge-status badge-cancelled" th:if="${c.status != null and c.status != 'ACTIVE' and c.status != 'NEW'}">
+                            <i class="fa-solid fa-circle-pause me-1"></i>Tạm Dừng
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a th:if="${c.sdt}" th:href="'tel:' + ${c.sdt}" class="btn-ghost py-1 px-2" title="Gọi điện">
+                                <i class="fa-solid fa-phone text-success"></i>
+                            </a>
+                            <a th:href="@{/dealer/quotes/my/new}" class="btn-ghost py-1 px-2" title="Tạo báo giá">
+                                <i class="fa-solid fa-file-invoice text-info"></i>
+                            </a>
+                            <a th:href="@{/dealer/test-drives}" class="btn-ghost py-1 px-2" title="Đặt lái thử">
+                                <i class="fa-solid fa-car-side text-warning"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(customers)}">
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-address-book fa-3x mb-3 opacity-25"></i>
+                        <p class="mb-2">Không tìm thấy thông tin khách hàng nào phù hợp.</p>
+                        <button class="btn-electric btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                            <i class="fa-solid fa-plus me-1"></i> Thêm Khách Hàng Ngay
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal: Thêm Khách Hàng Mới -->
+    <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #111827; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; color: #f8fafc; backdrop-filter: blur(20px);">
+                <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+                    <h5 class="modal-title fw-bold text-white" id="addCustomerModalLabel">
+                        <i class="fa-solid fa-user-plus text-info me-2"></i>Thêm Khách Hàng Mới
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/dealer/customers/create}" method="post">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label-custom">Họ và Tên Khách Hàng <span class="text-danger">*</span></label>
+                            <input type="text" name="ten" class="form-control-custom" placeholder="Ví dụ: Nguyễn Văn Tuấn" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Số Điện Thoại <span class="text-danger">*</span></label>
+                            <input type="tel" name="sdt" class="form-control-custom" placeholder="Ví dụ: 0912345678" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Địa Chỉ Email</label>
+                            <input type="email" name="email" class="form-control-custom" placeholder="Ví dụ: tuan.nguyen@gmail.com">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Địa Chỉ Thường Trú / Khu Vực</label>
+                            <textarea name="diachi" class="form-control-custom" rows="2" placeholder="Ví dụ: Quận Cầu Giấy, Hà Nội"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                        <button type="button" class="btn-ghost" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn-electric">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Khách Hàng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

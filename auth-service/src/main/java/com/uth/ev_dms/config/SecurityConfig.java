@@ -45,7 +45,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/evm/**", "/dealer/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/evm/**", "/dealer/**", "/login"))
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -57,39 +57,19 @@ public class SecurityConfig {
                         // ===== Admin =====
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // ===== Manager: QUẢN LÝ STAFF =====
-                        .requestMatchers("/manager/users/**")
-                        .hasAnyRole("DEALER_MANAGER", "ADMIN")
-
-                        // ===== Dealer: My Orders =====
-                        .requestMatchers("/dealer/orders/my/**")
-                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
-
-                        // LIST ALL orders → only manager
-                        .requestMatchers(HttpMethod.GET, "/dealer/orders", "/dealer/orders/")
-                        .hasAnyRole("DEALER_MANAGER","ADMIN")
-
-                        // Order detail → staff + manager
-                        .requestMatchers(HttpMethod.GET, "/dealer/orders/*")
-                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
-
-                        // Dealer POST actions
-                        .requestMatchers(HttpMethod.POST, "/dealer/orders/*/allocate",
-                                "/dealer/orders/*/cancel",
-                                "/dealer/orders/*/pay-cash",
-                                "/dealer/orders/*/installment",
-                                "/dealer/orders/*/request-allocate")
-                        .hasAnyRole("DEALER_STAFF","DEALER_MANAGER","ADMIN")
-
                         // ===== EVM =====
-                        .requestMatchers(HttpMethod.GET,  "/evm/orders/pending")
-                        .hasAnyRole("EVM_STAFF","ADMIN")
+                        .requestMatchers("/evm/**").hasAnyRole("EVM_STAFF", "ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/evm/orders/*/approve-allocate")
-                        .hasAnyRole("EVM_STAFF","ADMIN")
+                        // ===== Manager =====
+                        .requestMatchers("/manager/**").hasAnyRole("DEALER_MANAGER", "ADMIN")
 
-                        .requestMatchers("/evm/orders/**")
-                        .hasAnyRole("EVM_STAFF","ADMIN")
+                        // ===== Staff & Dealer =====
+                        .requestMatchers("/staff/**").hasAnyRole("DEALER_STAFF", "DEALER_MANAGER", "ADMIN")
+                        .requestMatchers("/dealer/**").hasAnyRole("DEALER_STAFF", "DEALER_MANAGER", "ADMIN")
+
+                        // ===== Reports & Support =====
+                        .requestMatchers("/reports/**").hasAnyRole("DEALER_MANAGER", "EVM_STAFF", "ADMIN")
+                        .requestMatchers("/support/**").authenticated()
 
                         .anyRequest().authenticated()
                 )

@@ -13,14 +13,14 @@ public class InventoryClient {
     private String baseUrl;
 
     public void allocate(Long orderId) {
-        rest.postForObject(baseUrl + "/inventory/allocate/" + orderId, null, Void.class);
+        rest.postForObject(baseUrl + "/api/inventory/orders/" + orderId + "/allocate", null, Void.class);
     }
 
     public void release(Long orderId) {
-        rest.postForObject(baseUrl + "/inventory/release/" + orderId, null, Void.class);
+        rest.postForObject(baseUrl + "/api/inventory/orders/" + orderId + "/release", null, Void.class);
     }
 
     public void ship(Long orderId) {
-        rest.postForObject(baseUrl + "/inventory/ship/" + orderId, null, Void.class);
+        rest.postForObject(baseUrl + "/api/inventory/orders/" + orderId + "/ship", null, Void.class);
     }
 }

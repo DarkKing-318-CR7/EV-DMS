@@ -1,43 +1,85 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:replace="~{layout :: layout(~{::main})}">
-<main th:with="activePage='admin-dealers', pageTitle=${formTitle} ?: 'Create Dealer'">
-    <link rel="stylesheet" th:href="@{/css/forms.css}">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='dealers', pageTitle=${formTitle} ?: 'Thêm Đại Lý Mới'"
+      th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
 
-    <section class="page-header">
-        <h1 th:text="${pageTitle}">Create Dealer</h1>
-    </section>
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1" th:text="${formTitle} ?: 'Thêm Đại Lý Mới'">Thêm Đại Lý Mới</h2>
+            <p class="text-muted mb-0">Cấu hình thông tin đại lý ủy quyền và thông tin liên hệ showroom.</p>
+        </div>
+        <a class="btn btn-glass" th:href="@{/admin/dealers}">
+            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
 
-    <form th:object="${dealer}" th:action="${formAction}" method="post" novalidate class="card form-card">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="glass-card p-4 p-md-5">
+                <form th:object="${dealer}" th:action="${formAction}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-white fw-semibold">Mã Đại Lý *</label>
+                            <input type="text" class="form-control-glass" th:field="*{code}" placeholder="VD: DLR01" required />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label text-white fw-semibold">Tên Đại Lý *</label>
+                            <input type="text" class="form-control-glass" th:field="*{name}" placeholder="VD: VinFast Thăng Long" required />
+                        </div>
 
-        <div class="grid">
-            <div class="field"><label>Code *</label><input th:field="*{code}" required/></div>
-            <div class="field col-2"><label>Name *</label><input th:field="*{name}" required/></div>
-            <div class="field"><label>Region</label><input th:field="*{region}"/></div>
-            <div class="field"><label>Phone</label><input th:field="*{phone}"/></div>
-            <div class="field"><label>Email</label><input th:field="*{email}"/></div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white fw-semibold">Khu Vực</label>
+                            <input type="text" class="form-control-glass" th:field="*{region}" placeholder="VD: Miền Bắc" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white fw-semibold">Số Điện Thoại</label>
+                            <input type="text" class="form-control-glass" th:field="*{phone}" placeholder="VD: 0901234567" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white fw-semibold">Email Liên Hệ</label>
+                            <input type="email" class="form-control-glass" th:field="*{email}" placeholder="VD: info@thanglong.vinfast.vn" />
+                        </div>
 
-            <div class="field col-2"><label>Address Line 1</label><input th:field="*{addressLine1}"/></div>
-            <div class="field col-2"><label>Address Line 2</label><input th:field="*{addressLine2}"/></div>
-            <div class="field"><label>Ward</label><input th:field="*{ward}"/></div>
-            <div class="field"><label>District</label><input th:field="*{district}"/></div>
-            <div class="field"><label>Province</label><input th:field="*{province}"/></div>
+                        <div class="col-12">
+                            <label class="form-label text-white fw-semibold">Địa Chỉ Chi Tiết (Dòng 1)</label>
+                            <input type="text" class="form-control-glass" th:field="*{addressLine1}" placeholder="VD: Số 68 Đường Phạm Văn Đồng" />
+                        </div>
 
-            <div class="field">
-                <label>Status</label>
-                <select th:field="*{status}">
-                    <option th:value="ACTIVE">ACTIVE</option>
-                    <option th:value="INACTIVE">INACTIVE</option>
-                </select>
+                        <div class="col-md-4">
+                            <label class="form-label text-white fw-semibold">Phường / Xã</label>
+                            <input type="text" class="form-control-glass" th:field="*{ward}" placeholder="VD: Mai Dịch" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white fw-semibold">Quận / Huyện</label>
+                            <input type="text" class="form-control-glass" th:field="*{district}" placeholder="VD: Cầu Giấy" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white fw-semibold">Tỉnh / Thành Phố</label>
+                            <input type="text" class="form-control-glass" th:field="*{province}" placeholder="VD: Hà Nội" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-white fw-semibold">Trạng Thái Hoạt Động</label>
+                            <select class="form-select-glass" th:field="*{status}">
+                                <option value="ACTIVE">ACTIVE (Đang hoạt động)</option>
+                                <option value="INACTIVE">INACTIVE (Tạm ngưng)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-3 mt-4 pt-3" style="border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                        <a class="btn btn-glass px-4" th:href="@{/admin/dealers}">Hủy Bỏ</a>
+                        <button class="btn-electric px-4" type="submit">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Đại Lý
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Save</button>
-            <a class="btn" th:href="@{/admin/dealers}">Cancel</a>
-        </div>
-    </form>
-
-</main>
+</div>
+</body>
 </html>

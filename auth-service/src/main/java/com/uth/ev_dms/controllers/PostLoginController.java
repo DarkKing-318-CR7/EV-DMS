@@ -40,17 +40,26 @@ public class PostLoginController {
     public String postLogin(Authentication auth) {
         if (auth == null) return "redirect:/login";
 
-        // 1) Admin -> dashboard riêng
+        // 1) Admin -> dashboard admin
         if (hasRole(auth, "ADMIN")) {
             return "redirect:/admin/dashboard";
         }
 
-        // 2) EVM staff: TẠM THỜI cũng cho vào dealer home
+        // 2) EVM staff -> dashboard EVM
         if (hasRole(auth, "EVM_STAFF")) {
+            return "redirect:/evm/dashboard";
+        }
+
+        // 3) Dealer Manager -> trang chủ Dealer
+        if (hasRole(auth, "DEALER_MANAGER")) {
             return "redirect:/dealer/home";
         }
 
-        // 3) Còn lại (manager, staff) cũng vào dealer home
+        // 4) Dealer Staff -> dashboard Staff
+        if (hasRole(auth, "DEALER_STAFF")) {
+            return "redirect:/staff/dashboard";
+        }
+
         return "redirect:/dealer/home";
     }
 

@@ -9,9 +9,20 @@ services:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: ev_dms
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - evdms-data:/var/lib/mysql
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: evdms-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
 #  evdms-app:
 #    build: .

@@ -1,116 +1,164 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi"
-      th:replace="layout :: layout(~{::content})">
+      th:with="active='dashboard', pageTitle='Bàn Làm Việc Nhân Viên Kinh Doanh'"
+      th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
 
-<content>
+    <!-- Staff Hero Banner -->
+    <div class="glass-card mb-4 p-4 p-md-5 position-relative overflow-hidden" 
+         style="background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.2) 0%, rgba(15, 23, 42, 0.6) 80%); border: 1px solid rgba(16, 185, 129, 0.25);">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" 
+                     style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <i class="fa-solid fa-user-check text-emerald"></i>
+                    <span class="text-emerald fw-semibold small">Bàn Làm Việc Tư Vấn Bán Hàng (Dealer Sales Consultant)</span>
+                </div>
+                <h1 class="display-6 fw-bold text-white mb-2">Xin Chào Tư Vấn Viên</h1>
+                <p class="text-muted fs-6 mb-4" style="max-width: 680px;">
+                    Theo dõi danh sách khách hàng tiềm năng, lịch hẹn lái thử xe điện trong ngày và các dòng xe đang được khách hàng quan tâm nhiều nhất.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a th:href="@{/dealer/quotes/my/new}" class="btn-electric">
+                        <i class="fa-solid fa-file-circle-plus me-1"></i> Tạo Báo Giá Mới
+                    </a>
+                    <a th:href="@{/dealer/test-drive}" class="btn btn-glass">
+                        <i class="fa-solid fa-calendar-plus me-1"></i> Đặt Lịch Lái Thử
+                    </a>
+                    <a th:href="@{/dealer/customers}" class="btn btn-glass">
+                        <i class="fa-solid fa-user-plus me-1"></i> Thêm Khách Hàng
+                    </a>
+                    <a th:href="@{/dealer/vehicles}" class="btn btn-glass">
+                        <i class="fa-solid fa-car me-1"></i> Tra Cứu Xe
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                <div class="p-4 rounded-4" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="text-emerald mb-2" style="font-size: 2.5rem;">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <h5 class="text-white fw-bold mb-1">Mục Tiêu Doanh Số</h5>
+                    <p class="text-muted small mb-0">Chăm sóc khách hàng &amp; chuyển đổi cơ hội thành hợp đồng ký kết</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <style>
-        .dash-box {
-            background: rgba(0,0,0,.45);
-            border: 1px solid rgba(255,255,255,.12);
-            backdrop-filter: blur(12px);
-            border-radius: 18px;
-            padding: 18px 22px;
-            color: #fff;
-            min-height: 200px;
-        }
-    </style>
+    <!-- Staff 3-Column Highlights -->
+    <div class="row g-4">
 
-    <div class="container py-4">
-
-        <h1 class="mb-4 text-center fw-bold" style="color:white;">Dashboard Staff</h1>
-
-        <div class="row g-4">
-
-            <!-- ======================= HOT CARS ======================= -->
-            <div class="col-md-4">
-                <div class="dash-box">
-                    <h5 class="mb-3">🔥 Dòng xe hot (7 ngày gần nhất)</h5>
-
-                    <table class="table table-dark table-striped table-sm rounded-4">
+        <!-- Hot Models This Week -->
+        <div class="col-lg-4">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold text-white mb-0">
+                        <i class="fa-solid fa-fire text-amber me-2"></i>Dòng Xe Bán Chạy (7 ngày)
+                    </h5>
+                    <span class="badge-custom badge-active">Hot</span>
+                </div>
+                <div class="glass-table-wrapper">
+                    <table class="table align-middle mb-0">
                         <thead>
-                        <tr>
-                            <th>Model</th>
-                            <th>Lượt đặt</th>
-                        </tr>
+                            <tr>
+                                <th>Phiên Bản / Mẫu</th>
+                                <th class="text-end">Lượt Đặt</th>
+                            </tr>
                         </thead>
                         <tbody>
-
-                        <!-- car = Object[] -->
-                        <tr th:each="car : ${hotCars}">
-                            <td th:text="${car[0]}"></td>   <!-- trimName -->
-                            <td th:text="${car[1]}"></td>   <!-- count -->
-                        </tr>
-
-                        <tr th:if="${hotCars == null or hotCars.size() == 0}">
-                            <td colspan="2" class="text-center text-muted">Không có dữ liệu</td>
-                        </tr>
+                            <tr th:each="car : ${hotCars}">
+                                <td>
+                                    <div class="fw-semibold text-white" th:text="${car[0]}">VF 8 Plus</div>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge-custom badge-delivered" th:text="${car[1]}">5</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${hotCars == null or #lists.isEmpty(hotCars)}">
+                                <td colspan="2" class="text-center py-4 text-muted">Chưa có lượt đặt xe tuần này</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- ======================= RECENT CUSTOMERS ======================= -->
-            <div class="col-md-4">
-                <div class="dash-box">
-                    <h5 class="mb-3">👤 Khách hàng mới tạo gần đây</h5>
-
-                    <table class="table table-dark table-striped table-sm rounded-4">
+        <!-- Latest CRM Customers -->
+        <div class="col-lg-4">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold text-white mb-0">
+                        <i class="fa-solid fa-users text-cyan me-2"></i>Khách Hàng Mới Nhất
+                    </h5>
+                    <a th:href="@{/dealer/customers}" class="btn btn-glass btn-glass-sm" style="font-size: 11px;">Xem hết</a>
+                </div>
+                <div class="glass-table-wrapper">
+                    <table class="table align-middle mb-0">
                         <thead>
-                        <tr>
-                            <th>Tên</th>
-                            <th>SDT</th>
-                            <th>Ngày tạo</th>
-                        </tr>
+                            <tr>
+                                <th>Họ Tên</th>
+                                <th>Số ĐT</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="c : ${recentCustomers}">
-                            <td th:text="${c.ten}"></td>
-                            <td th:text="${c.sdt}"></td>
-                            <td th:text="${#temporals.format(c.createdAt, 'dd/MM')}"></td>
-                        </tr>
-
-                        <tr th:if="${recentCustomers == null or recentCustomers.size() == 0}">
-                            <td colspan="3" class="text-center text-muted">Không có dữ liệu</td>
-                        </tr>
+                            <tr th:each="c : ${latestCustomers}">
+                                <td>
+                                    <div class="fw-semibold text-white" th:text="${c.ten}">Nguyễn Văn A</div>
+                                    <div class="text-muted small" th:text="${c.email != null ? c.email : 'Chưa có email'}">email</div>
+                                </td>
+                                <td>
+                                    <span class="text-cyan small fw-medium" th:text="${c.sdt}">0901234567</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${latestCustomers == null or #lists.isEmpty(latestCustomers)}">
+                                <td colspan="2" class="text-center py-4 text-muted">Chưa có khách hàng mới</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- ======================= TODAY TEST DRIVES ======================= -->
-            <div class="col-md-4">
-                <div class="dash-box">
-                    <h5 class="mb-3">🚗 Lịch lái thử hôm nay</h5>
-
-                    <table class="table table-dark table-striped table-sm rounded-4">
+        <!-- Today's Test Drives -->
+        <div class="col-lg-4">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold text-white mb-0">
+                        <i class="fa-solid fa-car-side text-indigo me-2"></i>Lái Thử Hôm Nay
+                    </h5>
+                    <a th:href="@{/dealer/test-drive}" class="btn btn-glass btn-glass-sm" style="font-size: 11px;">Chi tiết</a>
+                </div>
+                <div class="glass-table-wrapper">
+                    <table class="table align-middle mb-0">
                         <thead>
-                        <tr>
-                            <th>Khách hàng</th>
-                            <th>Xe</th>
-                            <th>Giờ</th>
-                        </tr>
+                            <tr>
+                                <th>Khách &amp; Mẫu Xe</th>
+                                <th class="text-end">Giờ Hẹn</th>
+                            </tr>
                         </thead>
                         <tbody>
-
-                        <tr th:each="td : ${todayTestDrives}">
-                            <td th:text="${td.customerName}"></td>
-                            <td th:text="${td.vehicleName}"></td>
-                            <td th:text="${#temporals.format(td.scheduleAt, 'HH:mm')}"></td>
-                        </tr>
-
-                        <tr th:if="${todayTestDrives == null or todayTestDrives.size() == 0}">
-                            <td colspan="3" class="text-center text-muted">Không có lịch hôm nay</td>
-                        </tr>
-
+                            <tr th:each="td : ${todayTestDrives}">
+                                <td>
+                                    <div class="fw-semibold text-white" th:text="${td.customerName}">Trần Bình</div>
+                                    <div class="text-indigo small" th:text="${td.vehicleName}">VinFast VF 9</div>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge-custom badge-allocated" 
+                                          th:text="${td.scheduleAt != null ? #temporals.format(td.scheduleAt, 'HH:mm') : '--:--'}">14:00</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${todayTestDrives == null or #lists.isEmpty(todayTestDrives)}">
+                                <td colspan="2" class="text-center py-4 text-muted">Không có lịch hẹn hôm nay</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
 
     </div>
 
-</content>
+</div>
+</body>
 </html>

@@ -1,26 +1,56 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<div th:fragment="topbar" class="topbar">
+<div th:fragment="topbar" class="app-topbar">
 
     <!-- Logo / Brand -->
-    <div class="brand">
-        <i class="fa-solid fa-bolt"></i>
-        <span>EV-DMS Dealer</span>
-    </div>
+    <a th:href="@{/post-login}" class="topbar-brand">
+        <div class="topbar-logo-icon">
+            <i class="fa-solid fa-bolt-lightning"></i>
+        </div>
+        <div>
+            <div class="topbar-brand-title">EV-DMS PORTAL</div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="topbar-brand-badge">VINFAST NETWORK</span>
+                <span class="text-muted" style="font-size: 11px;">v2.5</span>
+            </div>
+        </div>
+    </a>
 
-    <!-- Search Bar -->
-    <div class="search">
+    <!-- Topbar Global Search -->
+    <div class="topbar-search d-none d-lg-block">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" placeholder="Search vehicles, orders, quotes..." />
+        <input type="text" placeholder="Tìm kiếm nhanh đơn hàng, xe, khách hàng... (Ctrl + K)" />
     </div>
 
-    <!-- User Info -->
-    <div class="user">
-        <i class="fa-solid fa-user"></i>
-        <span th:text="${user != null ? user.email : 'dealer@example.com'}">dealer@example.com</span>
-        <form th:action="@{/logout}" method="post" style="display:inline;">
-            <button type="submit" class="btn">Logout</button>
+    <!-- User Profile & Actions -->
+    <div class="topbar-actions">
+        <!-- Notification bell -->
+        <button class="btn btn-glass btn-glass-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Thông báo hệ thống">
+            <i class="fa-regular fa-bell"></i>
+        </button>
+
+        <!-- User profile badge -->
+        <div class="user-profile-badge">
+            <div class="user-avatar">
+                <i class="fa-solid fa-user-shield text-cyan"></i>
+            </div>
+            <div class="user-meta">
+                <span class="user-name" sec:authentication="name">User</span>
+                <span class="user-role-tag" sec:authorize="hasRole('ADMIN')">System Admin</span>
+                <span class="user-role-tag" sec:authorize="hasRole('DEALER_MANAGER')">Dealer Manager</span>
+                <span class="user-role-tag" sec:authorize="hasRole('DEALER_STAFF')">Dealer Staff</span>
+                <span class="user-role-tag" sec:authorize="hasRole('EVM_STAFF')">EVM Staff (Hãng)</span>
+            </div>
+        </div>
+
+        <!-- Logout Form -->
+        <form th:action="@{/logout}" method="post" class="m-0">
+            <button type="submit" class="btn-logout" title="Đăng xuất khỏi hệ thống">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span class="d-none d-md-inline">Đăng xuất</span>
+            </button>
         </form>
     </div>
 

@@ -1,79 +1,197 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout :: layout(~{::content})">
-<link rel="stylesheet" th:href="@{/css/quotes.css}">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='quotes', pageTitle='Danh Sách Báo Giá'"
+      th:replace="~{layout :: layout(~{::content})}">
 <body>
 <div th:fragment="content">
-    <div class="container">
-        <h1 th:text="${role == 'MANAGER' ? 'Pending Quotes (Manager Review)' : 'My Quotes'}"></h1>
 
-        <div th:if="${role == 'STAFF'}" class="actions" style="margin-bottom:16px;">
-            <a class="btn btn-primary" href="/dealer/quotes/my/new">+ Create New Quote</a>
+    <!-- Page Header & Action -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                <i class="fa-solid fa-file-lines text-info me-2"></i>
+                <span th:text="${role == 'MANAGER' ? 'Xét Duyệt Báo Giá Đại Lý (Manager)' : 'Quản Lý Báo Giá Bán Lẻ'}">Danh Sách Báo Giá</span>
+            </h2>
+            <p class="text-muted mb-0">Quản lý các bản chào giá, phê duyệt mức chiết khấu xe điện và chính sách khuyến mãi.</p>
         </div>
-
-        <table class="table">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Customer</th>
-                <th>Total</th>
-                <th>Discount</th>
-                <th>Final</th>
-                <th>Status</th>
-                <th>Reject Reason</th>
-                <th>Action</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="q : ${quotes}">
-                <td th:text="${q.id}"></td>
-                <td th:text="${q.customerId}"></td>
-                <td th:text="${#numbers.formatDecimal(q.totalAmount,1,2)}"></td>
-                <td th:text="${#numbers.formatDecimal(q.appliedDiscount,1,2)}"></td>
-                <td th:text="${#numbers.formatDecimal(q.finalAmount,1,2)}"></td>
-
-
-                <td>
-                    <th:block th:switch="${q.status}">
-                        <span class="badge bg-success"   th:case="'APPROVED'">APPROVED</span>
-                        <span class="badge bg-danger"    th:case="'REJECTED'">REJECTED</span>
-                        <span class="badge bg-warning"   th:case="'PENDING'">PENDING</span>
-                        <span class="badge bg-secondary" th:case="*">[[${q.status}]]</span>
-                    </th:block>
-                </td>
-
-                <td th:text="${q.rejectComment}"></td>
-
-                <td>
-                    <!-- Staff submit -->
-                    <form th:if="${role == 'STAFF' and q.status == 'DRAFT'}"
-                          th:action="@{|/dealer/quotes/submit/${q.id}|}"
-                          method="post" style="display:inline;">
-                        <button class="btn btn-sm btn-success" type="submit">Submit</button>
-                    </form>
-
-                    <!-- Manager approve / reject -->
-                    <div th:if="${role == 'MANAGER'}" style="display:flex;gap:6px;">
-                        <form th:action="@{|/dealer/quotes/approve/${q.id}|}" method="post" style="display:inline;">
-                            <button class="btn btn-sm btn-primary" type="submit">Approve</button>
-                        </form>
-                        <form th:action="@{|/dealer/quotes/reject/${q.id}|}" method="post" style="display:inline;">
-                            <input type="text" name="comment" placeholder="Reason..." required
-                                   style="padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);
-                            background:rgba(255,255,255,0.08);color:#fff;width:120px;">
-                            <button class="btn btn-sm btn-danger" type="submit">Reject</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-
-        <div style="margin-top:16px;">
-            <a th:if="${role == 'STAFF'}" href="/dealer/dashboard" class="btn btn-secondary">← Back to Dashboard</a>
-            <a th:if="${role == 'MANAGER'}" href="/dealer/dashboard" class="btn btn-secondary">← Back to Manager Dashboard</a>
+        <div class="d-flex gap-2">
+            <a th:href="@{/dealer/quotes/my/new}" class="btn-electric">
+                <i class="fa-solid fa-plus me-1"></i>
+                <span>Tạo Báo Giá Mới</span>
+            </a>
         </div>
     </div>
+
+    <!-- Navigation Tabs -->
+    <div class="d-flex gap-2 mb-4">
+        <a th:href="@{/dealer/quotes}" class="btn-electric py-2 px-3" style="font-size: 14px;">
+            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Danh Sách Báo Giá
+        </a>
+        <a th:href="@{/dealer/orders}" class="btn-ghost py-2 px-3" style="font-size: 14px;">
+            <i class="fa-solid fa-list-check me-1"></i> Quản Lý Đơn Hàng
+        </a>
+        <a th:href="@{/dealer/vehicles}" class="btn-ghost py-2 px-3" style="font-size: 14px;">
+            <i class="fa-solid fa-car me-1"></i> Danh Mục Xe Phân Phối
+        </a>
+    </div>
+
+    <!-- Quick Stat KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-blue">
+                    <i class="fa-solid fa-file-lines"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Tổng Báo Giá</span>
+                    <h3 class="stat-value" th:text="${quotes != null ? #lists.size(quotes) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-purple">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Chờ Duyệt Mức Giá</span>
+                    <h3 class="stat-value text-warning" th:text="${quotes != null ? #lists.size(quotes.?[status == 'PENDING']) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-green">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Đã Phê Duyệt</span>
+                    <h3 class="stat-value text-success" th:text="${quotes != null ? #lists.size(quotes.?[status == 'APPROVED']) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-cyan">
+                    <i class="fa-solid fa-pen-ruler"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Bản Thảo / Sửa</span>
+                    <h3 class="stat-value text-cyan" th:text="${quotes != null ? #lists.size(quotes.?[status == 'DRAFT']) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quotes Table Glass Card -->
+    <div class="glass-card">
+        <div class="table-responsive">
+            <table class="table-custom w-100">
+                <thead>
+                <tr>
+                    <th style="width: 80px;">Mã BG</th>
+                    <th>Khách Hàng</th>
+                    <th class="text-end">Tổng Giá Gốc</th>
+                    <th class="text-end">Chiết Khấu</th>
+                    <th class="text-end">Giá Cuối Cùng</th>
+                    <th>Trạng Thái</th>
+                    <th>Phản Hồi Duyệt</th>
+                    <th class="text-end">Thao Tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="q : ${quotes}">
+                    <td>
+                        <span class="fw-bold text-info" th:text="'#' + ${q.id}">#1</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold text-white shadow-sm"
+                                 style="width: 32px; height: 32px; background: linear-gradient(135deg, #0ea5e9, #6366f1); font-size: 12px;">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <span class="text-white fw-semibold" th:text="'Khách hàng #' + ${q.customerId}">Khách hàng #1</span>
+                        </div>
+                    </td>
+                    <td class="text-end text-muted" 
+                        th:text="${#numbers.formatDecimal((q.totalAmount != null ? q.totalAmount : 0), 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                        1,200,000,000 ₫
+                    </td>
+                    <td class="text-end text-warning" 
+                        th:text="'-' + ${#numbers.formatDecimal((q.appliedDiscount != null ? q.appliedDiscount : 0), 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                        -50,000,000 ₫
+                    </td>
+                    <td class="text-end fw-bold text-success fs-6" 
+                        th:text="${#numbers.formatDecimal((q.finalAmount != null ? q.finalAmount : (q.totalAmount != null ? q.totalAmount : 0)), 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                        1,150,000,000 ₫
+                    </td>
+                    <td>
+                        <th:block th:switch="${q.status}">
+                            <span class="badge-status badge-approved" th:case="'APPROVED'">
+                                <i class="fa-solid fa-circle-check me-1"></i>Đã Duyệt
+                            </span>
+                            <span class="badge-status badge-pending" th:case="'PENDING'">
+                                <i class="fa-solid fa-clock me-1"></i>Chờ Duyệt
+                            </span>
+                            <span class="badge-status badge-cancelled" th:case="'REJECTED'">
+                                <i class="fa-solid fa-ban me-1"></i>Từ Chối
+                            </span>
+                            <span class="badge-status badge-new" th:case="'DRAFT'">
+                                <i class="fa-solid fa-pen me-1"></i>Bản Nháp
+                            </span>
+                            <span class="badge-status badge-new" th:case="*" th:text="${q.status}">UNKNOWN</span>
+                        </th:block>
+                    </td>
+                    <td>
+                        <span class="text-muted small" th:text="${q.rejectComment} ?: '—'">—</span>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-2">
+                            <!-- Staff submit draft to pending -->
+                            <form th:if="${role == 'STAFF' and q.status == 'DRAFT'}"
+                                  th:action="@{|/dealer/quotes/submit/${q.id}|}" method="post" class="m-0">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <button class="btn btn-sm btn-outline-info py-1 px-2" type="submit">
+                                    <i class="fa-solid fa-paper-plane me-1"></i>Gửi Duyệt
+                                </button>
+                            </form>
+
+                            <!-- Manager approve & reject -->
+                            <div th:if="${role == 'MANAGER' and q.status == 'PENDING'}" class="d-inline-flex gap-1">
+                                <form th:action="@{|/dealer/quotes/approve/${q.id}|}" method="post" class="m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button class="btn btn-sm btn-outline-success py-1 px-2" type="submit" title="Duyệt báo giá">
+                                        <i class="fa-solid fa-check me-1"></i>Duyệt
+                                    </button>
+                                </form>
+                                <form th:action="@{|/dealer/quotes/reject/${q.id}|}" method="post" class="d-inline-flex gap-1 m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <input type="text" name="comment" placeholder="Lý do..." required
+                                           class="form-control form-control-sm"
+                                           style="width: 110px; background: #1e293b; color: #fff; border-color: rgba(255,255,255,0.15); font-size: 12px;">
+                                    <button class="btn btn-sm btn-outline-danger py-1 px-2" type="submit" title="Từ chối báo giá">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${quotes == null or #lists.isEmpty(quotes)}">
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-file-invoice fa-3x mb-3 opacity-25"></i>
+                        <p class="mb-2">Hiện chưa có bản báo giá nào.</p>
+                        <a th:href="@{/dealer/quotes/my/new}" class="btn-electric btn-sm mt-2">
+                            <i class="fa-solid fa-plus me-1"></i> Tạo Báo Giá Mới
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>

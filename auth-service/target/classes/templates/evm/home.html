@@ -1,19 +1,174 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout :: layout (~{::body})">
-<head>
-    <title>EVM Dashboard - EV-DMS</title>
-</head>
-
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='dashboard', pageTitle='Trung Tâm Điều Hành Hãng Xe EVM'"
+      th:replace="~{layout :: layout(~{::content})}">
 <body>
-<div class="dashboard-container">
-    <h1 class="page-title">EVM Dashboard</h1>
-    <p class="text-muted">Key performance indicators and system overview for EV Manufacturer.</p>
+<div th:fragment="content">
 
-    <div class="stats">
-        <p><strong>Total Promotions:</strong> <span th:text="${totalPromotions}">0</span></p>
-        <p><strong>Active Promotions:</strong> <span th:text="${activePromotions}">0</span></p>
+    <!-- EVM Hero Banner -->
+    <div class="glass-card mb-4 p-4 p-md-5 position-relative overflow-hidden" 
+         style="background: radial-gradient(circle at top right, rgba(6, 182, 212, 0.2) 0%, rgba(15, 23, 42, 0.6) 80%); border: 1px solid rgba(6, 182, 212, 0.25);">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" 
+                     style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3);">
+                    <i class="fa-solid fa-industry text-cyan"></i>
+                    <span class="text-cyan fw-semibold small">Trụ Sở Hãng Sản Xuất Xe Điện (EVM Headquarters)</span>
+                </div>
+                <h1 class="display-6 fw-bold text-white mb-2">Hệ Thống Phân Phối &amp; Điều Vận Toàn Quốc</h1>
+                <p class="text-muted fs-6 mb-4" style="max-width: 680px;">
+                    Trung tâm điều phối xe điện từ các nhà máy sản xuất đến hệ thống đại lý 3S/4S ủy quyền, kiểm soát giá đề xuất (MSRP) và các chiến dịch khuyến mãi toàn quốc.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a th:href="@{/evm/orders}" class="btn-electric">
+                        <i class="fa-solid fa-truck-ramp-box me-1"></i> Điều Phối Xe Đại Lý
+                    </a>
+                    <a th:href="@{/evm/inventory}" class="btn btn-glass">
+                        <i class="fa-solid fa-warehouse me-1"></i> Kho Tổng Nhà Máy
+                    </a>
+                    <a th:href="@{/evm/promotions}" class="btn btn-glass">
+                        <i class="fa-solid fa-bullhorn me-1"></i> Chiến Dịch Khuyến Mãi
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                <div class="p-4 rounded-4" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="text-cyan mb-2" style="font-size: 2.5rem;">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <h5 class="text-white fw-bold mb-1">Mạng Lưới EV Toàn Quốc</h5>
+                    <p class="text-muted small mb-0">Giám sát tồn kho chuỗi cung ứng &amp; trạng thái cấp xe thời gian thực</p>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- EVM Stat Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card cyan">
+                <div class="stat-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                <div class="stat-label">Tổng Chương Trình Khuyến Mãi</div>
+                <div class="stat-value" th:text="${totalPromotions}">0</div>
+                <div class="stat-footer text-cyan">
+                    <i class="fa-solid fa-layer-group me-1"></i> Toàn bộ chiến dịch hãng
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card emerald">
+                <div class="stat-icon"><i class="fa-solid fa-tags"></i></div>
+                <div class="stat-label">Chương Trình Đang Áp Dụng</div>
+                <div class="stat-value" th:text="${activePromotions}">0</div>
+                <div class="stat-footer text-emerald">
+                    <i class="fa-solid fa-circle-check me-1"></i> Đang có hiệu lực bán hàng
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card indigo">
+                <div class="stat-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                <div class="stat-label">Kênh Yêu Cầu Cấp Xe</div>
+                <div class="stat-value">24/7</div>
+                <div class="stat-footer text-indigo">
+                    <i class="fa-solid fa-network-wired me-1"></i> Kết nối mạng lưới đại lý
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card amber">
+                <div class="stat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="stat-label">Trạng Thái Hệ Thống</div>
+                <div class="stat-value">HOẠT ĐỘNG</div>
+                <div class="stat-footer text-amber">
+                    <i class="fa-solid fa-server me-1"></i> Microservices Online
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation Modules -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h5 class="fw-bold text-white mb-0">
+                        <i class="fa-solid fa-boxes-packing text-cyan me-2"></i>Quy Trình Điều Phối Chuỗi Cung Ứng
+                    </h5>
+                </div>
+                <div class="d-flex flex-column gap-3">
+                    <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold text-white">1. Tiếp nhận đơn đặt xe từ Đại lý</span>
+                            <span class="badge-custom badge-pending">Chờ phân bổ</span>
+                        </div>
+                        <p class="text-muted small mb-0">Đại lý lập đơn hàng theo hợp đồng bán lẻ hoặc bổ sung xe kho showroom.</p>
+                    </div>
+
+                    <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold text-white">2. Kiểm tra tồn kho &amp; Duyệt cấp xe</span>
+                            <span class="badge-custom badge-allocated">Đã duyệt</span>
+                        </div>
+                        <p class="text-muted small mb-0">EVM Staff đối soát số VIN từ Kho Tổng Nhà Máy và phân bổ về đại lý.</p>
+                    </div>
+
+                    <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold text-white">3. Xuất xưởng và Vận chuyển</span>
+                            <span class="badge-custom badge-delivered">Hoàn tất</span>
+                        </div>
+                        <p class="text-muted small mb-0">Bàn giao xe kèm hồ sơ gốc, phiếu kiểm định xuất xưởng cho đại lý.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h5 class="fw-bold text-white mb-0">
+                        <i class="fa-solid fa-screwdriver-wrench text-cyan me-2"></i>Thao Tác Quản Trị Phân Phối
+                    </h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <a th:href="@{/evm/orders}" class="d-block p-3 rounded-3 text-decoration-none transition-hover" 
+                           style="background: rgba(6, 182, 212, 0.06); border: 1px solid rgba(6, 182, 212, 0.2);">
+                            <i class="fa-solid fa-clipboard-list text-cyan fs-4 mb-2"></i>
+                            <h6 class="text-white fw-bold mb-1">Đơn Cần Phân Bổ</h6>
+                            <p class="text-muted small mb-0">Xem và phê duyệt các yêu cầu cấp xe</p>
+                        </a>
+                    </div>
+                    <div class="col-sm-6">
+                        <a th:href="@{/evm/inventory}" class="d-block p-3 rounded-3 text-decoration-none transition-hover" 
+                           style="background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.2);">
+                            <i class="fa-solid fa-cubes-stacked text-indigo fs-4 mb-2"></i>
+                            <h6 class="text-white fw-bold mb-1">Kho Nhà Máy</h6>
+                            <p class="text-muted small mb-0">Theo dõi số lượng xe sẵn sàng xuất xưởng</p>
+                        </a>
+                    </div>
+                    <div class="col-sm-6">
+                        <a th:href="@{/evm/products}" class="d-block p-3 rounded-3 text-decoration-none transition-hover" 
+                           style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2);">
+                            <i class="fa-solid fa-car text-emerald fs-4 mb-2"></i>
+                            <h6 class="text-white fw-bold mb-1">Dòng Xe &amp; Phiên Bản</h6>
+                            <p class="text-muted small mb-0">Xem catalog xe và cấu hình thông số kỹ thuật</p>
+                        </a>
+                    </div>
+                    <div class="col-sm-6">
+                        <a th:href="@{/evm/promotions}" class="d-block p-3 rounded-3 text-decoration-none transition-hover" 
+                           style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2);">
+                            <i class="fa-solid fa-badge-percent text-amber fs-4 mb-2"></i>
+                            <h6 class="text-white fw-bold mb-1">Quản Lý Khuyến Mãi</h6>
+                            <p class="text-muted small mb-0">Ban hành chiết khấu và ưu đãi toàn mạng lưới</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>

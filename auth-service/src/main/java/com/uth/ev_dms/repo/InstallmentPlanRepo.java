@@ -4,4 +4,5 @@ import com.uth.ev_dms.domain.InstallmentPlan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface InstallmentPlanRepo extends JpaRepository<InstallmentPlan, Long> {
+    boolean existsByOrderId(Long orderId);
 }

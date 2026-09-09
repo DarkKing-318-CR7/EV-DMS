@@ -1,46 +1,72 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:with="active=${active}, pageTitle=${pageTitle}"
-      th:replace="~{layout :: layout(~{::main})}">
-<main>
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Reports Dashboard</h2>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active=${active} ?: 'reports', pageTitle='Trung Tâm Báo Cáo & Phân Tích'"
+      th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
 
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                <i class="fa-solid fa-chart-pie text-info me-2"></i>
+                Trung Tâm Báo Cáo & Phân Tích Dữ Liệu
+            </h2>
+            <p class="text-muted mb-0">Hệ thống phân tích chuyên sâu các chỉ số kinh doanh, chuỗi cung ứng xe và hoạt động chăm sóc khách hàng.</p>
+        </div>
+    </div>
+
+    <!-- Analytics Category Cards -->
     <div class="row g-4">
         <div class="col-md-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <i class="bi bi-bar-chart-line fs-1 text-primary mb-3"></i>
-                    <h5 class="card-title">Sales Report</h5>
-                    <p class="text-muted">View all sales performance and trends.</p>
-                    <a th:href="@{/reports/advanced-sale}" class="btn btn-outline-primary w-100">View Sales</a>
+            <div class="glass-card h-100 p-4 text-center d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-4 mb-3"
+                         style="width: 68px; height: 68px; background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.3);">
+                        <i class="fa-solid fa-chart-line fa-2x text-info"></i>
+                    </div>
+                    <h4 class="text-white fw-bold mb-2">Báo Cáo Doanh Thu</h4>
+                    <p class="text-muted small mb-4">Theo dõi toàn diện doanh số bán hàng, doanh thu thực thu theo từng showroom và nhân viên.</p>
                 </div>
+                <a th:href="@{/reports/sale}" class="btn-electric w-100 py-2">
+                    <i class="fa-solid fa-arrow-right me-1"></i> Xem Báo Cáo Doanh Thu
+                </a>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <i class="bi bi-car-front fs-1 text-success mb-3"></i>
-                    <h5 class="card-title">Vehicles Report</h5>
-                    <p class="text-muted">Track vehicle inventory and allocation data.</p>
-                    <a th:href="@{/reports/vehicles}" class="btn btn-outline-success w-100">View Vehicles</a>
+            <div class="glass-card h-100 p-4 text-center d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-4 mb-3"
+                         style="width: 68px; height: 68px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3);">
+                        <i class="fa-solid fa-car-side fa-2x text-success"></i>
+                    </div>
+                    <h4 class="text-white fw-bold mb-2">Báo Cáo Dòng Xe & Kho</h4>
+                    <p class="text-muted small mb-4">Theo dõi cơ cấu tồn kho, số lượng đã phân bổ và tình trạng giao nhận xe trên toàn quốc.</p>
                 </div>
+                <a th:href="@{/reports/vehicles}" class="btn-ghost w-100 py-2">
+                    <i class="fa-solid fa-arrow-right me-1"></i> Xem Báo Cáo Xe
+                </a>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center">
-                    <i class="bi bi-clipboard-data fs-1 text-warning mb-3"></i>
-                    <h5 class="card-title">Custom Reports</h5>
-                    <p class="text-muted">Generate on-demand reports for managers.</p>
-                    <a href="#" class="btn btn-outline-warning w-100 disabled">Coming Soon</a>
-
+            <div class="glass-card h-100 p-4 text-center d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-4 mb-3"
+                         style="width: 68px; height: 68px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3);">
+                        <i class="fa-solid fa-users-viewfinder fa-2x text-purple"></i>
+                    </div>
+                    <h4 class="text-white fw-bold mb-2">Báo Cáo Lái Thử & CRM</h4>
+                    <p class="text-muted small mb-4">Tỷ lệ chuyển đổi từ khách hàng hẹn lái thử trải nghiệm thành hợp đồng mua xe chính thức.</p>
                 </div>
+                <a th:href="@{/dealer/test-drive}" class="btn-ghost w-100 py-2">
+                    <i class="fa-solid fa-arrow-right me-1"></i> Quản Lý Lái Thử
+                </a>
             </div>
         </div>
     </div>
+
 </div>
-</main>
+</body>
 </html>

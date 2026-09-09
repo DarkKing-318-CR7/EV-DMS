@@ -1,93 +1,416 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dealer Login • EV-DMS</title>
-    <link rel="stylesheet" href="/css/login.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css">
-    <link href="https://fonts.googleapis.com/css2?family=Spartan:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+    <title>Đăng Nhập • EV-DMS Portal</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 & FontAwesome 6 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-base: #0a0e17;
+            --accent-cyan: #06b6d4;
+            --accent-sky: #38bdf8;
+            --accent-indigo: #6366f1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                url('/image/dark-sunset.jpg');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .login-backdrop-blur {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 14, 23, 0.78);
+            backdrop-filter: blur(16px);
+            z-index: 1;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 1050px;
+            background: rgba(17, 24, 39, 0.82);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+        }
+
+        @media (max-width: 900px) {
+            .login-container {
+                grid-template-columns: 1fr;
+                max-width: 480px;
+            }
+            .login-left {
+                display: none;
+            }
+        }
+
+        /* Left showcase */
+        .login-left {
+            padding: 48px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #06b6d4, #6366f1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #fff;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .hero-text h1 {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.25;
+            margin: 32px 0 16px;
+            background: linear-gradient(120deg, #fff 40%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-text p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        .feature-item i {
+            color: var(--accent-cyan);
+            font-size: 15px;
+        }
+
+        /* Demo Quick Accounts Box */
+        .demo-accounts-box {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+        }
+
+        .demo-accounts-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--accent-sky);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .demo-buttons-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-demo {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .btn-demo:hover {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: rgba(6, 182, 212, 0.5);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* Right Form */
+        .login-right {
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-heading {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .form-desc {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 28px;
+        }
+
+        .input-group-glass {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group-glass label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        .input-glass {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 12px 16px 12px 46px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-glass:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-sky);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
+        }
+
+        .btn-submit-login {
+            width: 100%;
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
+            transition: all 0.25s ease;
+        }
+
+        .btn-submit-login:hover {
+            background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.5);
+        }
+    </style>
 </head>
 <body>
-<div class="overlay"></div>
+
+<div class="login-backdrop-blur"></div>
 
 <div class="login-container">
-    <!-- Left info -->
-    <div>
-        <div class="logo">
-            <i class="fas fa-bolt"></i>
-            <span>EV-DMS</span>
+    <!-- Left Showcase -->
+    <div class="login-left">
+        <div>
+            <div class="brand-header">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                </div>
+                <div>
+                    <div class="brand-title">EV-DMS</div>
+                    <div class="brand-subtitle">Electric Vehicle Dealer Management System</div>
+                </div>
+            </div>
+
+            <div class="hero-text">
+                <h1>Hệ Thống Bán Xe Điện Thông Minh</h1>
+                <p>Nền tảng quản lý phân phối xe điện đa kênh: kết nối Hãng xe (EVM), Đại lý bán lẻ, Đơn hàng, Quản lý kho xe và Lịch hẹn lái thử tập trung.</p>
+            </div>
+
+            <div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Showroom xe điện &amp; cấu hình Trim thời gian thực</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Tạo báo giá, đơn hàng, trả thẳng &amp; trả góp ngân hàng</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Hãng xe duyệt phân bổ và điều phối kho nhà máy</span>
+                </div>
+            </div>
         </div>
-        <div class="register">
-            <div>Welcome to Dealer Portal</div>
-            <p>
-                Sign in to access your dealership dashboard — manage vehicle inventory,
-                create sales quotes, and track orders efficiently with EVM.
-            </p>
-            <div class="social">
-                <a data-toggle="tooltip" title="Vehicle Management"><i class="fas fa-car"></i></a>
-                <a data-toggle="tooltip" title="Dealer Network"><i class="fas fa-network-wired"></i></a>
-                <a data-toggle="tooltip" title="Reports"><i class="fas fa-chart-line"></i></a>
+
+        <!-- Quick Demo Switcher -->
+        <div class="demo-accounts-box">
+            <div class="demo-accounts-title">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Tài khoản Demo (1-Click điền sẵn)</span>
+            </div>
+            <div class="demo-buttons-grid">
+                <button type="button" class="btn-demo" onclick="fillAccount('admin', '123456')">
+                    <i class="fa-solid fa-shield-halved text-info"></i>
+                    <span>Admin</span>
+                </button>
+                <button type="button" class="btn-demo" onclick="fillAccount('manager1', '123456')">
+                    <i class="fa-solid fa-user-tie text-warning"></i>
+                    <span>Dealer Manager</span>
+                </button>
+                <button type="button" class="btn-demo" onclick="fillAccount('staff1', '123456')">
+                    <i class="fa-solid fa-id-badge text-success"></i>
+                    <span>Dealer Staff</span>
+                </button>
+                <button type="button" class="btn-demo" onclick="fillAccount('evm1', '123456')">
+                    <i class="fa-solid fa-industry text-primary"></i>
+                    <span>EVM Staff (Hãng)</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Right login form -->
-    <div class="form-login">
-        <form th:action="@{/login}" method="post" class="form" id="form-login">
-            <h3 class="heading">Dealer Login</h3>
+    <!-- Right Login Form -->
+    <div class="login-right">
+        <h2 class="form-heading">Đăng Nhập Cổng Quản Trị</h2>
+        <p class="form-desc">Vui lòng nhập thông tin đăng nhập được cấp bởi hệ thống.</p>
 
-            <!-- thong bao khi that bai / dang xuat -->
-            <div th:if="${param.error}" class="alert alert-danger">Sai tai khoan hoac mat khau.</div>
-            <div th:if="${param.logout}" class="alert alert-success">Ban da dang xuat.</div>
+        <!-- Error / Logout Alerts -->
+        <div th:if="${param.error}" class="alert alert-danger py-2 px-3 mb-3" style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3); color: #fb7185; border-radius: 12px; font-size: 13px;">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+            Tài khoản hoặc mật khẩu không chính xác.
+        </div>
+        <div th:if="${param.logout}" class="alert alert-success py-2 px-3 mb-3" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399; border-radius: 12px; font-size: 13px;">
+            <i class="fa-solid fa-circle-check me-1"></i>
+            Bạn đã đăng xuất thành công.
+        </div>
 
-            <div class="form-group">
-                <label for="username" class="form-label">Email / Username</label>
-                <!-- TEN FIELD PHAI LA 'username' -->
-                <input id="username" name="username" type="text" placeholder="admin hoac dealer@evdms.com" class="form-control" required>
-            </div>
+        <form action="/login" method="post">
 
-            <div class="form-group">
-                <label for="password" class="form-label">Password</label>
-                <!-- TEN FIELD PHAI LA 'password' -->
-                <input id="password" name="password" type="password" placeholder="Enter password" class="form-control" required>
-            </div>
-
-            <!-- CSRF token (bat buoc neu khong disable CSRF) -->
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-
-            <div class="sign-up">
-                <div>
-                    <button type="submit" class="form-submit">Login</button>
-                    <i class="fas fa-chevron-right"></i>
+            <div class="input-group-glass">
+                <label for="username">Tên tài khoản / Email</label>
+                <div class="input-wrapper">
+                    <i class="fa-regular fa-user"></i>
+                    <input type="text" id="username" name="username" class="input-glass" placeholder="admin, manager1, staff1..." required autofocus />
                 </div>
             </div>
+
+            <div class="input-group-glass">
+                <label for="password">Mật khẩu</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" name="password" class="input-glass" placeholder="••••••••" required />
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit-login">
+                <span>Vào Hệ Thống</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
         </form>
     </div>
 </div>
 
-<!-- <script src="/js/validate.js"></script> -->
-<!--<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        Validator({
-            form: '#form-login',
-            formGroupSelector: '.form-group',
-            errorSelector: '.form-message',
-            rules: [
-                // kiem tra rong thay vi bat buoc la email
-                Validator.isRequired('#username'),
-                Validator.minLength('#password', 6),
-            ],
-            onSubmit: function (data) {
-                // Khi form hop le -> gui that toi Spring Security
-                document.querySelector('#form-login').submit();
-            }
-        });
-    });
-</script>-->
+<script>
+    function fillAccount(username, password) {
+        document.getElementById('username').value = username;
+        document.getElementById('password').value = password;
+        // visual hint
+        const btn = document.querySelector('.btn-submit-login');
+        btn.focus();
+    }
+</script>
+
 </body>
 </html>

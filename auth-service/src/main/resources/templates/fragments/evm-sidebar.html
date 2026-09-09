@@ -3,34 +3,61 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 <nav class="sidebar" sec:authorize="hasRole('EVM_STAFF')" th:fragment="sidebar(active)">
+    <div class="sidebar-category">HÃNG XE EVM</div>
     <ul>
-        <li th:classappend="${active=='dashboard' ? 'active' : ''}">
-            <a th:href="@{/evm/dashboard}">Dashboard</a>
+        <li th:classappend="${active=='dashboard' or active=='home' ? 'active' : ''}">
+            <a th:href="@{/evm/dashboard}">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Tổng quan hãng</span>
+            </a>
         </li>
+    </ul>
 
-        <li class="section">Products</li>
-        <li th:classappend="${active=='products' ? 'active' : ''}">
-            <a th:href="@{/evm/products}">Products (view/maintain theo scope)</a>
+    <div class="sidebar-category">PHÂN PHỐI &amp; ĐƠN HÀNG</div>
+    <ul>
+        <li th:classappend="${active=='dealer-orders' or active=='orders' ? 'active' : ''}">
+            <a th:href="@{/evm/orders}">
+                <i class="fa-solid fa-truck-ramp-box"></i>
+                <span>Phân bổ xe đại lý</span>
+            </a>
         </li>
-
         <li th:classappend="${active=='inventory' ? 'active' : ''}">
-            <a th:href="@{/evm/inventory}">Inventory &amp; Allocation (khu vực)</a>
+            <a th:href="@{/evm/inventory}">
+                <i class="fa-solid fa-industry"></i>
+                <span>Kho nhà máy tổng</span>
+            </a>
         </li>
+    </ul>
 
-        <li th:classappend="${active=='dealer-orders' ? 'active' : ''}">
-            <a th:href="@{/evm/orders}">Dealer Orders (Approve/Allocate)</a>
+    <div class="sidebar-category">SẢN PHẨM &amp; CHÍNH SÁCH</div>
+    <ul>
+        <li th:classappend="${active=='products' ? 'active' : ''}">
+            <a th:href="@{/evm/products}">
+                <i class="fa-solid fa-car-battery"></i>
+                <span>Dòng xe &amp; Phiên bản</span>
+            </a>
         </li>
-
         <li th:classappend="${active=='promotions' ? 'active' : ''}">
-            <a th:href="@{/evm/promotions}">Promotions (Create/Apply phạm vi)</a>
+            <a th:href="@{/evm/promotions}">
+                <i class="fa-solid fa-bullhorn"></i>
+                <span>Khuyến mãi toàn quốc</span>
+            </a>
         </li>
+    </ul>
 
+    <div class="sidebar-category">BÁO CÁO &amp; GIÁM SÁT</div>
+    <ul>
         <li th:classappend="${active=='reports' ? 'active' : ''}">
-            <a th:href="@{/reports}">Reports (khu vực/Dealer phụ trách)</a>
+            <a th:href="@{/reports}">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Báo cáo theo khu vực</span>
+            </a>
         </li>
-
         <li th:classappend="${active=='support' ? 'active' : ''}">
-            <a th:href="@{/support}">Support</a>
+            <a th:href="@{/support}">
+                <i class="fa-solid fa-headset"></i>
+                <span>Hỗ trợ hệ thống</span>
+            </a>
         </li>
     </ul>
 </nav>

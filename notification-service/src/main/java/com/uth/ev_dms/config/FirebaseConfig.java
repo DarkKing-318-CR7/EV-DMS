@@ -14,21 +14,30 @@ import java.io.InputStream;
 public class FirebaseConfig {
 
     @PostConstruct
-    public void init() throws IOException {
+    public void init() {
         if (!FirebaseApp.getApps().isEmpty()) {
             return; // đã init rồi
         }
 
-        ClassPathResource resource =
-                new ClassPathResource("firebase-service-account.json");
+        try {
+            ClassPathResource resource =
+                    new ClassPathResource("firebase-service-account.json");
 
-        try (InputStream serviceAccount = resource.getInputStream()) {
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .build();
+            if (!resource.exists()) {
+                System.out.println("⚠️ [FirebaseConfig] File 'firebase-service-account.json' không tồn tại. Firebase chạy ở chế độ MOCK (không gửi push thật).");
+                return;
+            }
 
-            FirebaseApp.initializeApp(options);
-            System.out.println("✅ Firebase initialized");
+            try (InputStream serviceAccount = resource.getInputStream()) {
+                FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                        .build();
+
+                FirebaseApp.initializeApp(options);
+                System.out.println("✅ Firebase initialized thành công");
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ [FirebaseConfig] Không thể khởi tạo Firebase: " + e.getMessage());
         }
     }
 }

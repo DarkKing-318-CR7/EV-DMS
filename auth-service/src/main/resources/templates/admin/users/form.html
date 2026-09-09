@@ -1,72 +1,123 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:with="active='vehicles', pageTitle=${pageTitle}"
-      th:replace="~{layout :: layout(~{::main})}">
-<main>
-<head>
-    <meta charset="UTF-8">
-    <title th:text="${#strings.isEmpty(userForm.id) ? 'Create User' : 'Edit User'}">User</title>
-    <style>
-        label { display:block; margin-top:10px }
-        input, select { min-width: 260px; }
-    </style>
-</head>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='users', pageTitle=${#strings.isEmpty(userForm.id) ? 'Thêm Người Dùng Mới' : 'Cập Nhật Người Dùng'}"
+      th:replace="~{layout :: layout(~{::content})}">
 <body>
-<h1 th:text="${#strings.isEmpty(userForm.id) ? 'Create User' : 'Edit User'}">User</h1>
+<div th:fragment="content">
 
-<form th:object="${userForm}"
-      th:action="${#strings.isEmpty(userForm.id) ? @{/admin/user-mgmt} : @{/admin/user-mgmt/{id}(id=${userForm.id})}}"
-      method="post">
-
-    <!-- Username: chỉ cho nhập khi tạo mới -->
-    <div th:if="${#strings.isEmpty(userForm.id)}">
-        <label>Username</label>
-        <input type="text" th:field="*{username}" required>
+    <!-- Breadcrumb & Navigation -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <a th:href="@{/admin/user-mgmt}" class="text-muted text-decoration-none">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Quản trị người dùng
+                </a>
+                <span class="text-muted">/</span>
+                <span class="text-info fw-semibold" th:text="${#strings.isEmpty(userForm.id) ? 'Thêm mới' : 'Chỉnh sửa'}">Thao tác</span>
+            </div>
+            <h2 class="h3 fw-bold text-white mb-0">
+                <i class="fa-solid fa-user-shield text-info me-2"></i>
+                <span th:text="${#strings.isEmpty(userForm.id) ? 'Tạo Tài Khoản Người Dùng Mới' : 'Cập Nhật Thông Tin Tài Khoản'}">Tài Khoản</span>
+            </h2>
+        </div>
+        <div>
+            <a th:href="@{/admin/user-mgmt}" class="btn-ghost">
+                <i class="fa-solid fa-xmark me-1"></i> Hủy Bỏ
+            </a>
+        </div>
     </div>
-    <div th:if="${!#strings.isEmpty(userForm.id)}">
-        <label>Username</label>
-        <input type="text" th:value="${userForm.username}" disabled>
+
+    <!-- Form Glass Card -->
+    <div class="row justify-content-center">
+        <div class="col-xl-7 col-lg-9">
+            <div class="glass-card p-4 p-md-5">
+                <form th:object="${userForm}"
+                      th:action="${#strings.isEmpty(userForm.id) ? @{/admin/user-mgmt} : @{/admin/user-mgmt/{id}(id=${userForm.id})}}"
+                      method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                    <!-- Username -->
+                    <div class="mb-3" th:if="${#strings.isEmpty(userForm.id)}">
+                        <label class="form-label-custom">Tên Đăng Nhập (Username) <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{username}" class="form-control-custom" placeholder="Ví dụ: manager_hcm" required />
+                    </div>
+                    <div class="mb-3" th:if="${!#strings.isEmpty(userForm.id)}">
+                        <label class="form-label-custom">Tên Đăng Nhập (Username)</label>
+                        <input type="text" th:value="${userForm.username}" class="form-control-custom opacity-50" disabled />
+                    </div>
+
+                    <!-- Full Name -->
+                    <div class="mb-3">
+                        <label class="form-label-custom">Họ và Tên Đầy Đủ</label>
+                        <input type="text" th:field="*{fullName}" class="form-control-custom" placeholder="Ví dụ: Nguyễn Văn Quản Trị" />
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label class="form-label-custom">Địa Chỉ Email</label>
+                        <input type="email" th:field="*{email}" class="form-control-custom" placeholder="Ví dụ: admin@evdms.com" />
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label class="form-label-custom">
+                            Mật Khẩu 
+                            <small class="text-muted" th:if="${!#strings.isEmpty(userForm.id)}">(Để trống nếu không muốn thay đổi)</small>
+                            <span class="text-danger" th:if="${#strings.isEmpty(userForm.id)}">*</span>
+                        </label>
+                        <input type="password" th:field="*{password}" class="form-control-custom" placeholder="••••••••" 
+                               th:required="${#strings.isEmpty(userForm.id)}" />
+                    </div>
+
+                    <!-- Role -->
+                    <div class="mb-3">
+                        <label class="form-label-custom">Vai Trò & Quyền Hạn (Role) <span class="text-danger">*</span></label>
+                        <select th:field="*{roleName}" class="form-control-custom">
+                            <option value="ROLE_ADMIN">ROLE_ADMIN — Toàn quyền quản trị hệ thống</option>
+                            <option value="ROLE_DEALER_MANAGER">ROLE_DEALER_MANAGER — Giám đốc đại lý showroom</option>
+                            <option value="ROLE_DEALER_STAFF">ROLE_DEALER_STAFF — Nhân viên tư vấn bán xe</option>
+                            <option value="ROLE_EVM_STAFF">ROLE_EVM_STAFF — Chuyên viên điều phối hãng EVM</option>
+                        </select>
+                    </div>
+
+                    <!-- Dealer -->
+                    <div class="mb-3">
+                        <label class="form-label-custom">Đại Lý Trực Thuộc</label>
+                        <select th:field="*{dealerId}" class="form-control-custom">
+                            <option th:value="">-- Không trực thuộc đại lý (Hãng / Admin) --</option>
+                            <option th:each="d : ${dealers}" th:value="${d.id}" th:text="${d.name}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Region -->
+                    <div class="mb-3">
+                        <label class="form-label-custom">Khu Vực Quản Lý (Vùng miền)</label>
+                        <select th:field="*{regionId}" class="form-control-custom">
+                            <option th:value="">-- Toàn quốc --</option>
+                            <option th:each="r : ${regions}" th:value="${r.id}" th:text="${r.name}"></option>
+                        </select>
+                    </div>
+
+                    <!-- Enabled Checkbox -->
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" role="switch" id="enabledSwitch" th:field="*{enabled}">
+                        <label class="form-check-label text-white" for="enabledSwitch">Kích hoạt tài khoản (Cho phép đăng nhập)</label>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-end gap-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.08);">
+                        <a th:href="@{/admin/user-mgmt}" class="btn-ghost">
+                            Hủy Bỏ
+                        </a>
+                        <button type="submit" class="btn-electric">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Thông Tin
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <label>Full name</label>
-    <input type="text" th:field="*{fullName}">
-
-    <label>Email</label>
-    <input type="email" th:field="*{email}">
-
-    <label>Password</label>
-    <input type="password" th:field="*{password}">
-    <small th:if="${!#strings.isEmpty(userForm.id)}">(Để trống nếu không đổi)</small>
-
-    <label>Role</label>
-    <select th:field="*{roleName}">
-        <option value="ROLE_ADMIN">ROLE_ADMIN</option>
-        <option value="ROLE_DEALER_MANAGER">ROLE_DEALER_MANAGER</option>
-        <option value="ROLE_DEALER_STAFF">ROLE_DEALER_STAFF</option>
-        <option value="ROLE_EVM_STAFF">ROLE_EVM_STAFF</option>
-    </select>
-
-    <label>Dealer</label>
-    <select th:field="*{dealerId}">
-        <option th:value="">-- none --</option>
-        <option th:each="d : ${dealers}" th:value="${d.id}" th:text="${d.name}"></option>
-    </select>
-
-    <label>Region</label>
-    <select th:field="*{regionId}">
-        <option th:value="">-- none --</option>
-        <option th:each="r : ${regions}" th:value="${r.id}" th:text="${r.name}"></option>
-    </select>
-
-    <label>
-        <input type="checkbox" th:field="*{enabled}"> Enabled
-    </label>
-
-    <div style="margin-top:14px">
-        <button type="submit">Save</button>
-        <a th:href="@{/admin/user-mgmt}">Cancel</a>
-    </div>
-</form>
+</div>
 </body>
-</main>
 </html>

@@ -1,52 +1,83 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:replace="~{layout :: layout(~{::main})}">
-<main th:with="activePage='admin-dealers', pageTitle='Dealers'">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='dealers', pageTitle='Quản Lý Mạng Lưới Đại Lý'"
+      th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
 
-    <section class="page-header">
-        <div class="header-left">
-            <h1 th:text="${pageTitle}">Dealers</h1>
+    <!-- Page Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                <i class="fa-solid fa-building-flag text-purple me-2"></i>
+                Mạng Lưới Đại Lý Phân Phối
+            </h2>
+            <p class="text-muted mb-0">Hệ thống showroom ủy quyền 3S/4S trên toàn quốc.</p>
         </div>
-        <div class="header-right">
-            <a class="btn btn-gradient" th:href="@{/admin/dealers/create}">
-                <i class="fas fa-plus"></i> New Dealer
+        <div>
+            <a class="btn-electric" th:href="@{/admin/dealers/create}">
+                <i class="fa-solid fa-plus me-1"></i> Thêm Đại Lý Mới
             </a>
         </div>
-    </section>
+    </div>
 
-    <section class="card table-card">
-        <table class="table table-hover">
-            <thead>
-            <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Region</th>
-                <th>Status</th>
-                <th style="width:180px;">Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="d : ${dealers}">
-                <td th:text="${d.code}">DLR01</td>
-                <td><a th:href="@{|/admin/dealers/${d.id}|}" th:text="${d.name}">Dealer A</a></td>
-                <td th:text="${d.region}">South</td>
-                <td><span class="badge" th:text="${d.status}">ACTIVE</span></td>
-                <td class="actions">
-                    <a class="btn btn-outline" th:href="@{|/admin/dealers/${d.id}/edit|}">Edit</a>
-                    <form th:action="@{|/admin/dealers/${d.id}/delete|}" method="post" style="display:inline"
-                          onsubmit="return confirm('Delete this dealer?');">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button class="btn btn-danger" type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
+    <!-- Dealers Table Glass Card -->
+    <div class="glass-card p-4">
+        <div class="glass-table-wrapper">
+            <table class="table align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>Mã ĐL</th>
+                    <th>Tên Đại Lý</th>
+                    <th>Khu Vực</th>
+                    <th>Liên Hệ</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-end" style="width: 160px;">Thao Tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${dealers}">
+                    <td>
+                        <span class="badge-custom badge-secondary fw-semibold" th:text="${d.code}">DLR01</span>
+                    </td>
+                    <td>
+                        <a th:href="@{|/admin/dealers/${d.id}|}" class="fw-bold text-white text-decoration-none" th:text="${d.name}">VinFast Thăng Long</a>
+                        <div class="text-muted small" th:text="${d.addressLine1 != null ? d.addressLine1 : ''}">Hà Nội</div>
+                    </td>
+                    <td>
+                        <span class="text-cyan small fw-medium" th:text="${d.region}">Miền Bắc</span>
+                    </td>
+                    <td>
+                        <div class="small text-white" th:text="${d.phone != null ? d.phone : '--'}">0901234567</div>
+                        <div class="small text-muted" th:text="${d.email != null ? d.email : '--'}">email@vinfast.vn</div>
+                    </td>
+                    <td>
+                        <span class="badge-custom badge-active" th:if="${d.status != null and d.status.name() == 'ACTIVE'}">Hoạt động</span>
+                        <span class="badge-custom badge-inactive" th:if="${d.status == null or d.status.name() != 'ACTIVE'}">Tạm khóa</span>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a class="btn btn-glass btn-glass-sm" th:href="@{|/admin/dealers/${d.id}/edit|}" title="Sửa thông tin">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+                            <form th:action="@{|/admin/dealers/${d.id}/delete|}" method="post" class="d-inline"
+                                  onsubmit="return confirm('Bạn có chắc muốn xóa đại lý này không?');">
+                                <button class="btn btn-glass btn-glass-sm text-danger" type="submit" title="Xóa đại lý">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
 
-            <tr th:if="${#lists.isEmpty(dealers)}">
-                <td colspan="5" class="text-center text-muted py-4">No dealers yet.</td>
-            </tr>
-            </tbody>
-        </table>
-    </section>
+                <tr th:if="${dealers == null or #lists.isEmpty(dealers)}">
+                    <td colspan="6" class="text-center text-muted py-4">Chưa có đại lý nào trong hệ thống.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-</main>
+</div>
+</body>
 </html>

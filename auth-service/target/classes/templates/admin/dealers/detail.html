@@ -1,42 +1,83 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en"
-      th:replace="~{layout :: layout(~{::main})}">
-<main th:with="activePage='admin-dealers', pageTitle=${dealer.name}">
-    <link rel="stylesheet" th:href="@{/css/detail.css}">
-    <section class="page-header">
-        <div class="header-left">
-            <h1 th:text="${dealer.name}">Dealer A</h1>
-        </div>
-        <div class="header-right">
-            <a class="btn btn-outline" th:href="@{|/admin/dealers/${dealer.id}/edit|}">Edit</a>
-            <a class="btn" th:href="@{/admin/dealers}">Back</a>
-        </div>
-    </section>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='dealers', pageTitle=${dealer.name}"
+      th:replace="~{layout :: layout(~{::content})}">
+<body>
+<div th:fragment="content">
 
-    <section class="card">
-        <div class="card-body">
-            <p><b>Code:</b> <span th:text="${dealer.code}">DLR01</span></p>
-            <p><b>Region:</b> <span th:text="${dealer.region}">South</span></p>
-            <p><b>Status:</b> <span class="badge" th:text="${dealer.status}">ACTIVE</span></p>
-            <p>
-                <b>Contact:</b>
-                <span th:text="${dealer.phone}">090...</span> ·
-                <span th:text="${dealer.email}">a@b.com</span>
-            </p>
-            <p>
-                <b>Address:</b>
-                <span th:text="${dealer.addressLine1}"></span>,
-                <span th:text="${dealer.ward}"></span>,
-                <span th:text="${dealer.district}"></span>,
-                <span th:text="${dealer.province}"></span>
-            </p>
+    <!-- Page Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge-custom badge-secondary fw-semibold" th:text="${dealer.code}">DLR01</span>
+                <span class="badge-custom badge-active" th:if="${dealer.status != null and dealer.status.name() == 'ACTIVE'}">Hoạt động</span>
+                <span class="badge-custom badge-inactive" th:if="${dealer.status == null or dealer.status.name() != 'ACTIVE'}">Tạm khóa</span>
+            </div>
+            <h2 class="h3 fw-bold text-white mb-0" th:text="${dealer.name}">VinFast Thăng Long</h2>
         </div>
-    </section>
+        <div class="d-flex gap-2">
+            <a class="btn btn-glass" th:href="@{/admin/dealers}">
+                <i class="fa-solid fa-arrow-left me-1"></i> Danh Sách
+            </a>
+            <a class="btn-electric" th:href="@{|/admin/dealers/${dealer.id}/edit|}">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Chỉnh Sửa
+            </a>
+        </div>
+    </div>
 
-    <section class="mt-4">
-        <h3>Main Branch (auto)</h3>
-        <p>Chi nhánh chính được tạo tự động khi tạo Dealer. (CRUD chi nhánh đang tắt theo scope 1:1)</p>
-    </section>
+    <!-- Dealer Detail Info Card -->
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold text-white mb-3">
+                    <i class="fa-solid fa-circle-info text-cyan me-2"></i>Thông Tin Đại Lý
+                </h5>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Khu vực quản lý</div>
+                        <div class="text-white fw-semibold fs-6" th:text="${dealer.region != null ? dealer.region : '--'}">Miền Bắc</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Số điện thoại showroom</div>
+                        <div class="text-white fw-semibold fs-6" th:text="${dealer.phone != null ? dealer.phone : '--'}">0901234567</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Email liên hệ</div>
+                        <div class="text-cyan fw-semibold fs-6" th:text="${dealer.email != null ? dealer.email : '--'}">info@thanglong.vinfast.vn</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Trạng thái</div>
+                        <div class="text-emerald fw-semibold fs-6" th:text="${dealer.status}">ACTIVE</div>
+                    </div>
+                    <div class="col-12 pt-2" style="border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                        <div class="text-muted small">Địa chỉ đại lý</div>
+                        <div class="text-white fs-6">
+                            <span th:text="${dealer.addressLine1}">Địa chỉ</span>,
+                            <span th:text="${dealer.ward}">Phường</span>,
+                            <span th:text="${dealer.district}">Quận</span>,
+                            <span th:text="${dealer.province}">Hà Nội</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-</main>
+        <div class="col-lg-4">
+            <div class="glass-card p-4 h-100">
+                <h5 class="fw-bold text-white mb-3">
+                    <i class="fa-solid fa-code-branch text-purple me-2"></i>Chi Nhánh Showroom
+                </h5>
+                <p class="text-muted small">
+                    Chi nhánh chính 3S/4S được kích hoạt tự động đồng bộ theo thông tin đại lý ủy quyền.
+                </p>
+                <div class="p-3 rounded-3" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2);">
+                    <div class="text-white fw-bold mb-1">Cơ sở vật chất chuẩn VinFast</div>
+                    <div class="text-muted small">Bao gồm khu trưng bày Showroom, xưởng dịch vụ Service và trạm sạc siêu nhanh SuperCharge.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
 </html>

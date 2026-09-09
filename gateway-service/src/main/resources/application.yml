@@ -9,52 +9,52 @@ spring:
         - id: auth-service
           uri: http://localhost:9000
           predicates:
-            - Path=/login,/logout,/post-login,/admin/**,/dealer/**,/evm/**,/manager/**,/staff/**,/css/**,/js/**,/image/**,/webjars/**
+            - Path=/login,/logout,/post-login,/admin/**,/dealer/**,/evm/**,/manager/**,/staff/**,/reports,/reports/**,/support,/support/**,/css/**,/js/**,/image/**,/webjars/**
           filters:
             - StripPrefix=0
 
         - id: crm_service
           uri: http://localhost:9001
           predicates:
-            - Path=/crm/**
+            - Path=/api/crm/**,/api/v1/crm/**,/crm/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
         - id: catalog-service
           uri: http://localhost:9002
           predicates:
-            - Path=/catalog/**
+            - Path=/api/catalog/**,/catalog/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
         # Route tới inventory-service (REST API)
         - id: inventory-service-api
           uri: http://localhost:9003
           predicates:
-            - Path=/api/inventory/**
+            - Path=/api/inventory/**,/api/admin/inventories/**
           filters:
-            - StripPrefix=1
-
-        - id: order-service
-          uri: http://localhost:9004
-          predicates:
-            - Path=/orders/**
-          filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
         - id: sales-service
+          uri: http://localhost:9004
+          predicates:
+            - Path=/api/sales/**,/sales/**
+          filters:
+            - StripPrefix=0
+
+        - id: order-service
           uri: http://localhost:9005
           predicates:
-            - Path=/sales/**
+            - Path=/api/orders/**,/orders/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
         - id: report-service
           uri: http://localhost:9006
           predicates:
-            - Path=/report/**
+            - Path=/api/reports/**,/report/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
 
 management:
   endpoints:

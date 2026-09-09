@@ -1,12 +1,181 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventory • EV-DMS</title>
-  <link rel="stylesheet" href="/css/inventory.css">
-</head>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:with="active='inventory', pageTitle='Quản Lý Kho Xe Showroom'"
+      th:replace="~{layout :: layout(~{::content})}">
 <body>
-  Inventory
+<div th:fragment="content">
+
+    <!-- Page Header & Action -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-white mb-1">
+                <i class="fa-solid fa-warehouse text-info me-2"></i>
+                Quản Lý Tồn Kho Xe Điện Showroom
+            </h2>
+            <p class="text-muted mb-0">Theo dõi số lượng xe thực tế, số lượng đã giữ chỗ cho khách và khả dụng bàn giao tại từng chi nhánh.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/dealer/quotes/my/new}" class="btn-electric">
+                <i class="fa-solid fa-cart-plus me-1"></i>
+                <span>Tạo Đơn Xuất Kho</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stat KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-blue">
+                    <i class="fa-solid fa-car-rear"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Tổng Xe Trong Kho</span>
+                    <h3 class="stat-value" th:text="${inventories != null ? #aggregates.sum(inventories.![qtyOnHand ?: 0]) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-green">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Khả Dụng Giao Ngay</span>
+                    <h3 class="stat-value text-success" 
+                        th:text="${inventories != null ? (#aggregates.sum(inventories.![qtyOnHand ?: 0]) - #aggregates.sum(inventories.![reserved ?: 0])) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-purple">
+                    <i class="fa-solid fa-bookmark"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Đã Giữ Chỗ / Cọc</span>
+                    <h3 class="stat-value text-warning" th:text="${inventories != null ? #aggregates.sum(inventories.![reserved ?: 0]) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon stat-cyan">
+                    <i class="fa-solid fa-cubes-stacked"></i>
+                </div>
+                <div>
+                    <span class="stat-label">Phiên Bản Xe Lưu Kho</span>
+                    <h3 class="stat-value text-cyan" th:text="${inventories != null ? #lists.size(inventories) : 0}">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Table Glass Card -->
+    <div class="glass-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="text-white fw-bold mb-1">
+                    <i class="fa-solid fa-layer-group text-info me-2"></i>Bảng Phân Bổ Tồn Kho Chi Tiết
+                </h5>
+                <p class="text-muted small mb-0">Cập nhật theo thời gian thực từ cơ sở dữ liệu phân phối.</p>
+            </div>
+            <a th:href="@{/dealer/vehicles}" class="btn-ghost btn-sm">
+                <i class="fa-solid fa-list me-1"></i> Xem Danh Mục Dòng Xe
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table-custom w-100">
+                <thead>
+                <tr>
+                    <th>Dòng Xe & Phiên Bản</th>
+                    <th>Vị Trí Lưu Kho / Đại Lý</th>
+                    <th class="text-center">Tổng Tồn Kho</th>
+                    <th class="text-center">Đã Đặt Cọc</th>
+                    <th class="text-center">Khả Dụng Bán</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-end">Hành Động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="inv : ${inventories}">
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-3 shadow-sm"
+                                 style="width: 42px; height: 42px; background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.3);">
+                                <i class="fa-solid fa-car text-info"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-white fs-6" 
+                                     th:text="${inv.trim != null && inv.trim.vehicle != null ? inv.trim.vehicle.modelName : 'Dòng Xe EV'}">
+                                    VinFast VF 8
+                                </div>
+                                <div class="text-info small" 
+                                     th:text="'Phiên bản: ' + (${inv.trim != null ? inv.trim.trimName : 'Standard'})">
+                                    Trim: Plus AWD
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <span class="text-white fw-semibold" 
+                                  th:text="${inv.dealer != null ? inv.dealer.name : (inv.branch != null ? inv.branch.name : 'Kho Tổng Đại Lý')}">
+                                Showroom Trung Tâm
+                            </span>
+                            <div class="text-muted small" 
+                                 th:text="${inv.locationType} ?: 'Trưng bày Showroom'">Trưng bày Showroom</div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="fw-bold text-white fs-6" th:text="${inv.qtyOnHand} ?: 0">10</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="fw-semibold text-warning" th:text="${inv.reserved} ?: 0">2</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge-status badge-approved fs-6" 
+                              th:text="(${inv.qtyOnHand ?: 0} - ${inv.reserved ?: 0})">8</span>
+                    </td>
+                    <td>
+                        <span th:if="${(inv.qtyOnHand ?: 0) - (inv.reserved ?: 0) > 5}" class="badge-status badge-approved">
+                            <i class="fa-solid fa-circle-check me-1"></i>Sẵn Sàng Giao
+                        </span>
+                        <span th:if="${(inv.qtyOnHand ?: 0) - (inv.reserved ?: 0) > 0 and (inv.qtyOnHand ?: 0) - (inv.reserved ?: 0) <= 5}" class="badge-status badge-pending">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Sắp Hết Xe
+                        </span>
+                        <span th:if="${(inv.qtyOnHand ?: 0) - (inv.reserved ?: 0) <= 0}" class="badge-status badge-cancelled">
+                            <i class="fa-solid fa-circle-xmark me-1"></i>Tạm Cháy Hàng
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-2">
+                            <a th:href="@{/dealer/quotes/my/new}" class="btn-ghost py-1 px-2" title="Tạo Báo Giá Bán Xe Này">
+                                <i class="fa-solid fa-file-invoice text-info"></i>
+                            </a>
+                            <a th:if="${inv.trim != null && inv.trim.vehicle != null}" 
+                               th:href="@{|/dealer/vehicles/${inv.trim.vehicle.id}|}" class="btn-ghost py-1 px-2" title="Xem Thông Số Xe">
+                                <i class="fa-solid fa-eye text-primary"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${inventories == null or #lists.isEmpty(inventories)}">
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-boxes-stacked fa-3x mb-3 opacity-25"></i>
+                        <p class="mb-2">Chưa có thông tin tồn kho cho showroom này.</p>
+                        <a th:href="@{/dealer/vehicles}" class="btn-electric btn-sm mt-2">
+                            <i class="fa-solid fa-car me-1"></i> Xem Danh Mục Xe Phân Phối
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
 </body>
 </html>

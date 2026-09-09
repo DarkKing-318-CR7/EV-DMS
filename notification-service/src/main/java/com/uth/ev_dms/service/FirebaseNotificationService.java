@@ -43,6 +43,11 @@ public class FirebaseNotificationService {
                 .putData("icon", "/image/icon.png")
                 .build();
 
+        if (com.google.firebase.FirebaseApp.getApps().isEmpty()) {
+            System.out.println("ℹ️ [MOCK] Đơn hàng " + orderId + " đã duyệt. Mock FCM notification gửi tới user " + staffId + ": " + NotificationTemplate.orderApprovedTitle(orderId));
+            return;
+        }
+
         try {
             String response = FirebaseMessaging.getInstance().send(message);
             System.out.println("📲 FCM gửi OK → " + response);
